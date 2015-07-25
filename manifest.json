@@ -1,0 +1,11 @@
+{
+    "name": "Jasmin",
+    "identifier": "net.delabarre.jasmin",
+    "description": "Upnp client pour Freebox par Olivier Oeuillot",
+    "entryPoints": {
+        "main": {
+            "file": "main.qml",
+            "default": true
+        }
+    }
+}
