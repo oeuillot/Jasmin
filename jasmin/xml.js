@@ -627,7 +627,7 @@ function _unescape(t) {
         return t;
     }
 
-    ret.join(t.substring(idx));
+    ret.push(t.substring(idx));
 
     return ret.join('');
 };

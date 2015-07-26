@@ -6,7 +6,7 @@
 .import "jstoxml.js" as JsToXML
 .import "util.js" as Util
 
-var LOG_TRANSPORT = false;
+var LOG_TRANSPORT = true;
 
 var XMLSOAP_XMLNS={
     "": "http://schemas.xmlsoap.org/soap/envelope/"
@@ -78,7 +78,7 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
 
             var soapBody = xmlDocument.byPath("Envelope/Body", XMLSOAP_XMLNS);
 
-            //           console.log("Soapbody=",soapBody);
+            //       console.log("Soapbody=",Util.inspect(soapBody, false, {}));
 
             if (!soapBody.length) {
                 var message="Soapbody is not found !";

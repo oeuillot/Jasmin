@@ -141,7 +141,7 @@ UpnpServer.prototype._fillDeviceDescription=function(xmlDocument) {
         throw new Error("No content directory service !");
     }
 
-    var controlURL=Web.Http.URL.prototype.relative.call(this.urlBase, contentDirectoryService.controlURL);
+    var controlURL=this.relativeURL(contentDirectoryService.controlURL);
 
     console.log("controlURL=", controlURL);
 
@@ -274,28 +274,81 @@ UpnpServer.prototype.getSystemUpdateID=function() {
 
 
 UpnpServer.prototype.browseDirectChildren=function(objectId, filter, startingIndex, requestedCount, sortCriteria ) {
+
     return this.browse(objectId, "BrowseDirectChildren", filter, startingIndex, requestedCount, sortCriteria);
 }
 
 UpnpServer.prototype.browseMetadata=function(objectId) {
-    return this.browse(objectId, "BrowseMetadata", "*", 0, 0, "*");
+    return this.browse(objectId, "BrowseMetadata", null, 0, 0, null);
 }
 
-UpnpServer.prototype.browse=function(objectId, browseFlag, filter, startingIndex, requestedCount, sortCriteria ) {
+UpnpServer.prototype.relativeURL = function(url) {
+    return Web.Http.URL.prototype.relative.call(this.urlBase, url);
+}
+
+UpnpServer.prototype.browse=function(objectId, browseFlag, filters, startingIndex, requestedCount, sortCriteria) {
+
+    var xmlns={
+    };
+    xmlns[PURL_ELEMENT_XMLS]="dc";
+    xmlns[UPNP_SERVICE_XMLNS]="u";
+    xmlns[UPNP_METADATA_XMLNS]="upnp"
+    xmlns[DIDL_LITE_XMLNS]="didl"
+
+    var xmlnsAno=0;
+
+    function getPrefix(namespaceURI) {
+
+        var prefix=xmlns[namespaceURI];
+        if (prefix!==undefined) {
+            return prefix;
+        }
+
+        prefix="jasmin"+(++xmlnsAno);
+        xmlns[namespaceURI]=prefix;
+
+        return prefix;
+    }
+
+
+    var filterParams=[];
+    if (filters) {
+        filters.forEach(function(filter) {
+            var name=filter.name;
+            var prefix=getPrefix(filter.namespaceURI);
+
+            filterParams.push((prefix?(prefix+":"):"")+name);
+        });
+    }
+
+    var sortParams=[];
+    if (sortCriteria) {
+        sortCriteria.forEach(function(criteria) {
+            var name=criteria.name;
+            var prefix=getPrefix(criteria.namespaceURI);
+
+            sortParams.push((criteria.ascending?'+':'-')+(prefix?(prefix+":"):"")+name);
+        });
+      }
+
+    var attrs={};
+    for(var x in xmlns) {
+        var prefix=xmlns[x];
+        attrs["xmlns"+(prefix?(':'+prefix):'')]=x;
+    }
+
     var params={
         ObjectID: objectId,
         BrowseFlag: browseFlag,
-        Filter: (filter)?filter:"*",
+        Filter: (filterParams.length?filterParams.join():"*"),
                           StartingIndex: (typeof(startingIndex)==="number")?startingIndex:0,
-                                                                             RequestCount: (typeof(requestCount)==="number")?requestCount:64,
-                                                                                                                              SortCriteria: (sortCriteria)?sortCriteria:"*"
+                                                                             RequestedCount: (typeof(requestCount)==="number")?requestCount:0,
+                                                                                                                              SortCriteria: (sortParams.length?sortParams.join():"*"),
     };
 
     var deferred=this.soapTransport.sendAction("urn:schemas-upnp-org:service:ContentDirectory:1#Browse", {
                                                    _name: "u:Browse",
-                                                   _attrs: {
-                                                       "xmlns:u" :"urn:schemas-upnp-org:service:ContentDirectory:1"
-                                                   },
+                                                   _attrs: attrs,
                                                    _content: params
                                                });
 

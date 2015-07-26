@@ -4,19 +4,35 @@
 
 function fillModel(list, upnpServer, meta, timer) {
 
-    console.profile();
+    //console.profile();
     //console.log(Util.inspect(meta.result, false, {}));
 
-    var container=meta.result.byPath("DIDL-Lite/container", Jasmin.DIDL_XMLNS_SET, true);
+    var container=meta.result.byPath("DIDL-Lite/container", Jasmin.DIDL_XMLNS_SET);
     //console.log("Container=",Util.inspect(container));
 
     var objectID=container.attr("id");
     //console.log("ID="+objectID);
 
-    upnpServer.browseDirectChildren(objectID).then(function onSuccess(xml){
+    var filters=[{
+                     name: "title",
+                     namespaceURI: Jasmin.PURL_ELEMENT_XMLS
+                 }, {
+                     name: "date",
+                     namespaceURI: Jasmin.PURL_ELEMENT_XMLS
+                 }, {
+                     name: "res",
+                     namespaceURI: Jasmin.DIDL_LITE_XMLNS
+                 }, {
+                     name: "albumArtURI",
+                     namespaceURI: Jasmin.UPNP_METADATA_XMLNS
+                 }
+
+            ];
+
+    upnpServer.browseDirectChildren(objectID, filters, 0, 28).then(function onSuccess(xml){
 
         //console.log(Util.inspect(xml, false, {}));
-        console.profileEnd();
+        //console.profileEnd();
 
         function newSlot() {
             return {
@@ -44,7 +60,7 @@ function fillModel(list, upnpServer, meta, timer) {
 
             slot["item"+slotIdx]=item;
 
-           // console.log("Item #"+slotIdx+" ",item.byPath);
+            // console.log("Item #"+slotIdx+" ",item.byPath);
 
             slotIdx++;
             if (slotIdx<=7) {

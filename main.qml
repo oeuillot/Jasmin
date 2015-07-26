@@ -7,6 +7,10 @@ import fbx.ui.layout 1.0
 Application {
     id: app
 
+    FontLoader {
+        source: "qrc:///components/fortawesome/fontawesome-webfont.ttf"
+    }
+
     JBackground {
         background: "jasmin"
     }

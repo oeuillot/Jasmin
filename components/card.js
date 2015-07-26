@@ -1,16 +1,47 @@
+.import QtQuick 2.0 as QtQuick
+.import Qt 2.0 as Qt
+
 .import "../jasmin/util.js" as Util
 .import "../jasmin/upnpServer.js" as Jasmin
 .import "../jasmin/xml.js" as Xml
 
-.import QtQuick 2.0 as QtQuick
-.import Qt 2.0 as Qt
+function addImage(image, res) {
+    var params = {
+         source: res
+    };
 
-function computeImage(xml, upnpClass, image, resImage) {
+    var parent=image.parent;
+
+    var img=resImage.createObject(parent, params);
+//            console.log("image="+img+" "+parent.width);
+
+    img.width=Qt.binding(function() { return parent.width - 2 });
+    img.height=Qt.binding(function() { return parent.height - 2 });
+
+    image.width=Qt.binding(function() { return parent.width - 2 });
+    image.height=Qt.binding(function() { return parent.height - 2 });
+}
+
+
+function computeImage(xml, upnpClass, image, resImage, upnpServer) {
     if (!upnpClass) {
         return "card/unknown.png";
     }
 
     if (upnpClass.indexOf("object.container.album")>=0 || upnpClass.indexOf("object.item.audioItem")>=0) {
+       //console.log("image=",Util.inspect(xml, false,{}));
+
+        var res=xml.byTagName("albumArtURI", Jasmin.UPNP_METADATA_XMLNS).first().text();
+
+        //console.log("Res="+res);
+        if (res) {
+            res=upnpServer.relativeURL(res).toString();
+
+            addImage(image, res);
+
+            //return "";
+        }
+
         return "card/music.png";
     }
 
@@ -19,25 +50,11 @@ function computeImage(xml, upnpClass, image, resImage) {
     }
 
     if (upnpClass.indexOf("object.item.imageItem")>=0) {
-        //console.log("image=",Util.inspect(xml, false,{}));
-
-        var parent=image.parent;
 
         var res=xml.byTagName("res", Jasmin.DIDL_LITE_XMLNS).text();
 
         if (res) {
-            var params = {
-                 source: res,
-            };
-
-            var img=resImage.createObject(parent, params);
-//            console.log("image="+img+" "+parent.width);
-
-            img.width=Qt.binding(function() { return parent.width - 2 });
-            img.height=Qt.binding(function() { return parent.height - 2 });
-
-            image.width=Qt.binding(function() { return parent.width - 2 });
-            image.height=Qt.binding(function() { return parent.height - 2 });
+            addImage(image, res);
 
             return "card/transparent.png";
         }
@@ -57,7 +74,7 @@ function computeLabel(xml) {
 }
 
 function computeInfo(xml, upnpClass) {
-    console.log(Util.inspect(xml, false, {}));
+    //console.log(Util.inspect(xml, false, {}));
 
     if (upnpClass.indexOf("object.container")>=0) {
         var childCount=xml.attr("childCount");

@@ -13,8 +13,12 @@ FocusScope {
 
     property alias title: label.text;
 
-    onXmlChanged: {
-        if (!xml.nodes) {
+    property var resImageSource;
+
+    property var upnpServer;
+
+    Component.onCompleted: {
+        if (!xml || !xml.nodes) {
             return;
         }
 
@@ -25,7 +29,7 @@ FocusScope {
         // console.log("upnpclass="+upnpClass);
 
         rectangle.visible=true;
-        image.source=CardScript.computeImage($xml, upnpClass, image, resImage);
+        image.source=CardScript.computeImage($xml, upnpClass, image, resImage, upnpServer);
         card.title= CardScript.computeLabel($xml, upnpClass);
         info.text= CardScript.computeInfo($xml, upnpClass);
     }
@@ -33,7 +37,7 @@ FocusScope {
     Item {
         id: rectangle
         width: 160
-        height: 180
+        height: 190
 
         visible: false
 
@@ -43,7 +47,7 @@ FocusScope {
             visible: rectangle.activeFocus
             anchors.fill: parent;
 
-            color: "red"
+            color: "transparent"
             opacity: 0.1
             radius: 5
         }
@@ -93,6 +97,10 @@ FocusScope {
                             anchors.centerIn: parent
                             asynchronous: true
                             fillMode: Image.PreserveAspectFit
+
+                            onSourceChanged: {
+                                card.resImageSource=source;
+                            }
                         }
                     }
                 }
