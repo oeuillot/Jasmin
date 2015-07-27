@@ -38,8 +38,9 @@ Page {
                 text: "192.168.3.32:10293/DeviceDescription.xml"
                 displayText: "URL du server"
 
+                property string text1: "192.168.3.32:10293/DeviceDescription.xml"
                 property string text2: "192.168.3.193:10293/DeviceDescription.xml"
-                property string text3: "localhost:10293"
+                property string text3: "localhost:10293/DeviceDescription.xml"
 
                 anchors.verticalCenter: parent.verticalCenter
 

@@ -1,6 +1,6 @@
 {
     "name": "Jasmin",
-    "identifier": "net.delabarre.jasmin",
+    "identifier": "net.oeuillot.jasmin",
     "description": "Upnp client pour Freebox par Olivier Oeuillot",
     "entryPoints": {
         "main": {

@@ -85,6 +85,9 @@ FocusScope {
                         opacity: 0.4
                         width: 64
                         height: 64
+
+                        sourceSize.width: 64
+                        sourceSize.height: 64
                     }
 
                     Component {
@@ -94,9 +97,13 @@ FocusScope {
                             objectName: 'res'
 
                             smooth: true
+                            antialiasing: true
                             anchors.centerIn: parent
                             asynchronous: true
                             fillMode: Image.PreserveAspectFit
+
+                            sourceSize.width: 256
+                            sourceSize.height: 256
 
                             onSourceChanged: {
                                 card.resImageSource=source;

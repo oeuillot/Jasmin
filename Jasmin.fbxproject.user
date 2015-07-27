@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 3.4.2, 2015-07-26T17:02:14. -->
+<!-- Written by QtCreator 3.4.2, 2015-07-27T22:00:35. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -134,7 +134,7 @@
   <valuemap type="QVariantMap">
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Freebox (192.168.3.63)</value>
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Freebox (192.168.3.63)</value>
-   <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">{6fb91927-b39f-44ad-b3d8-100fc851aaa4}</value>
+   <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">{fd2d7036-be8d-4bdd-9baa-b96391c7fc36}</value>
    <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">-1</value>
    <value type="int" key="ProjectExplorer.Target.ActiveDeployConfiguration">-1</value>
    <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">0</value>

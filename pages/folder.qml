@@ -74,7 +74,7 @@ Page {
             var xml=Xml.$XML(card.xml.nodes);
 
             var upnpClass=xml.byTagName("class", UpnpServer.UPNP_METADATA_XMLNS).text() || "object.item";
-            var objectID=xml.attr("id");
+            var objectID=xml.attr("id");           
 
             //console.log("upnpClass="+upnpClass);
 

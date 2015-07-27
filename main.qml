@@ -8,7 +8,8 @@ Application {
     id: app
 
     FontLoader {
-        source: "qrc:///components/fortawesome/fontawesome-webfont.ttf"
+        id: fontawesome
+        source: "components/fonts/fontawesome-webfont__ttf.png"
     }
 
     JBackground {

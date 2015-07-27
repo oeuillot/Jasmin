@@ -24,10 +24,6 @@ Item {
             var ctx = getContext('2d');
 
             var bg=backgroundColor;
-            if (backgroundReady) {
-                bg=ctx.createPattern(background, "no-repeat");
-            }
-
             ctx.beginPath();
             ctx.fillStyle = bg;
             ctx.strokeStyle = borderColor;
@@ -39,9 +35,34 @@ Item {
             ctx.lineTo(width, height-1);
             ctx.lineTo(0, height-1);
             ctx.lineTo(0, 12);
-            ctx.fill();
             ctx.stroke();
+            ctx.clip();
+
+            ctx.fillRect(0, 0, width, height);
+
+            //ctx.drawImage(background, 0, 0, 128, 128);
         }
+        /*
+        Component.onCompleted: {
+            console.log("Loadimge="+resImageSource);
+            loadImage(resImageSource);
+        }
+        onImageLoaded: {
+            var ctx = getContext('2d');
+            ctx.drawImage(resImageSource, 0, 0, 16, 16);
+
+            var data=ctx.getImageData(0, 0, 16, 16);
+
+            console.log("data="+data, data.width, data.height, data.data);
+
+            var bitmap=data.data;
+            for(var i=0;i<bitmap.length;i++) {
+                console.log("bit="+bitmap[i]);
+            }
+
+            unloadImage(resImageSource);
+        }
+        */
     }
 
     onBackgroundReadyChanged: {
@@ -52,7 +73,7 @@ Item {
     Item {
         id: rowInfo
         width: parent.width
-        height: 160;
+        height: row.height;
 
         Rectangle {
             anchors.topMargin: 40
@@ -62,22 +83,84 @@ Item {
             visible: false
         }
 
+
         Image {
             id: background
-            anchors.centerIn: parent
             source: (resImageSource?resImageSource:'')
             asynchronous: true
-            sourceSize: Qt.size(16, 16)
+            sourceSize.height: 8
+            sourceSize.width: 8
             width: parent.width;
-            height: parent.height
+            height: parent.height;
             visible: false
-        }
 
+            onStatusChanged: {
+                if (status!==Image.Ready || !resImageSource) {
+                    return;
+                }
+
+                fastBlur.visible=true;
+            }
+        }
         FastBlur {
-            visible: !!resImageSource
+            id: fastBlur
+            visible: false
             anchors.fill: background
             source: background
             radius: 128
+        }
+
+        Item {
+            id: row
+            anchors.left: parent.left;
+            anchors.right: parent.right;
+            anchors.top: parent.top;
+            height: childrenRect.height;
+
+            Rectangle {
+                id: infosColumn
+
+                anchors.left: parent.left;
+                anchors.top: parent.top;
+                anchors.right: imageColumn.right;
+
+                Row {
+                    Text {
+
+                    }
+                }
+
+                color: "blue"
+            }
+
+            Item {
+                id: imageColumn
+                anchors.top: parent.top;
+                anchors.right: parent.right;
+
+                anchors.margins: 30;
+
+                width: childrenRect.width;
+                height: childrenRect.height+30;
+
+                Image {
+                    id: image2
+                    width: 256
+                    height: 256
+                    x: 0
+                    y: 0
+
+                    sourceSize.width: 256
+                    sourceSize.height: 256
+
+                    antialiasing: true
+                    fillMode: Image.PreserveAspectFit
+
+                    source: (resImageSource?resImageSource:'')
+                    asynchronous: true
+
+                }
+            }
         }
     }
 }
