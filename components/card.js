@@ -2,7 +2,7 @@
 .import Qt 2.0 as Qt
 
 .import "../jasmin/util.js" as Util
-.import "../jasmin/upnpServer.js" as Jasmin
+.import "../jasmin/upnpServer.js" as UpnpServer
 .import "../jasmin/xml.js" as Xml
 
 function addImage(image, res) {
@@ -31,7 +31,7 @@ function computeImage(xml, upnpClass, image, resImage, upnpServer) {
     if (upnpClass.indexOf("object.container.album")>=0 || upnpClass.indexOf("object.item.audioItem")>=0) {
        //console.log("image=",Util.inspect(xml, false,{}));
 
-        var res=xml.byTagName("albumArtURI", Jasmin.UPNP_METADATA_XMLNS).first().text();
+        var res=xml.byTagName("albumArtURI", UpnpServer.UPNP_METADATA_XMLNS).first().text();
 
         //console.log("Res="+res);
         if (res) {
@@ -51,7 +51,7 @@ function computeImage(xml, upnpClass, image, resImage, upnpServer) {
 
     if (upnpClass.indexOf("object.item.imageItem")>=0) {
 
-        var res=xml.byTagName("res", Jasmin.DIDL_LITE_XMLNS).text();
+        var res=xml.byTagName("res", UpnpServer.DIDL_LITE_XMLNS).text();
 
         if (res) {
             addImage(image, res);
@@ -70,7 +70,7 @@ function computeImage(xml, upnpClass, image, resImage, upnpServer) {
 }
 
 function computeLabel(xml) {
-    return xml.byTagName("title", Jasmin.PURL_ELEMENT_XMLS).text();
+    return xml.byTagName("title", UpnpServer.PURL_ELEMENT_XMLS).text();
 }
 
 function computeInfo(xml, upnpClass) {
@@ -92,7 +92,7 @@ function computeInfo(xml, upnpClass) {
         }
     }
 
-    var date=xml.byTagName("date", Jasmin.PURL_ELEMENT_XMLS).text();
+    var date=xml.byTagName("date", UpnpServer.PURL_ELEMENT_XMLS).text();
     if (date) {
         var jdate=new Date(date);
 

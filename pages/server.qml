@@ -35,7 +35,7 @@ Page {
                 font.bold: true
                 color: "black"
                 width: 700
-                text: "192.168.3.32:10293/DeviceDescription.xml"
+                text: "localhost:10293/DeviceDescription.xml"
                 displayText: "URL du server"
 
                 property string text1: "192.168.3.32:10293/DeviceDescription.xml"

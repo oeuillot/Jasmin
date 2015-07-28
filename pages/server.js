@@ -1,10 +1,10 @@
-.import "../jasmin/upnpServer.js" as Jasmin
+.import "../jasmin/upnpServer.js" as UpnpServer
 
 function tryURL(url) {
 
-    console.log("Try "+url+" ("+Jasmin+")");
+    console.log("Try "+url+" ...");
 
-    var server=new Jasmin.UpnpServer(url);
+    var server=new UpnpServer.UpnpServer(url);
 
     var deferred = server.tryConnection();
 

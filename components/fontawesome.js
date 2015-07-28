@@ -1,3 +1,5 @@
+var Name = "fontawesome";
+
 var Icon = {
 	adjust: "\uf042",
 	adn: "\uf170",

@@ -76,7 +76,7 @@ Page {
             var upnpClass=xml.byTagName("class", UpnpServer.UPNP_METADATA_XMLNS).text() || "object.item";
             var objectID=xml.attr("id");           
 
-            //console.log("upnpClass="+upnpClass);
+           // console.log("upnpClass="+upnpClass);
 
             if (upnpClass==="object.container") {
                 if (!auto) {
@@ -100,9 +100,10 @@ Page {
             // console.log("CreateObject info="+infoComponent+" col="+row.parent+" "+card.resImageSource);
 
             info = infoComponent.createObject(row.parent.infoContainer, {
-                                                  xml: card.xml,
+                                                  xml: xml,
                                                   markerPosition: card.x+card.width/2,
-                                                  resImageSource: card.resImageSource
+                                                  resImageSource: card.resImageSource,
+                                                  upnpClass: upnpClass
                                               });
 
             row.parent.infoContainer.visible=true;
