@@ -30,27 +30,11 @@ Page {
 
         Info {
 
-            property NumberAnimation destroyAnimation: destroyAnimation;
-
-            property bool destroying: false;
+            property bool destroying: false
 
             onHeightChanged: parent.updateHeight();
 
-            property Info self: this;
-
-            NumberAnimation on opacity {
-                id: destroyAnimation
-                to: 0
-                duration: 200
-                running: destroying
-                onRunningChanged: {
-                    if (!running) {
-                        var infoContainer=self.parent;
-                        self.destroy();
-                        infoContainer.updateHeight();
-                    }
-                }
-            }
+            onDestroyingChanged: parent.updateHeight();
         }
     }
 
@@ -68,6 +52,7 @@ Page {
 
             if (info) {
                 info.destroying=true;
+                info.destroy();
                 info=null;
             }
 
@@ -103,7 +88,8 @@ Page {
                                                   xml: xml,
                                                   markerPosition: card.x+card.width/2,
                                                   resImageSource: card.resImageSource,
-                                                  upnpClass: upnpClass
+                                                  upnpClass: upnpClass,
+                                                  upnpServer: upnpServer
                                               });
 
             row.parent.infoContainer.visible=true;

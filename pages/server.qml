@@ -4,6 +4,7 @@ import fbx.ui.page 1.0
 import fbx.ui.control 1.0
 import "../components" 1.0
 import "../jasmin" 1.0
+import "." 1.0
 
 import "server.js" as ServerScript;
 
@@ -46,8 +47,6 @@ Page {
 
                 KeyNavigation.down: connectButton
 
-                onAccepted: {
-                }
                 Component.onCompleted: {
                     //console.log("AppWIndow=", Util.inspect(Qt.application));
                 }

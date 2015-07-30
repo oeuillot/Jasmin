@@ -10,6 +10,7 @@ Item {
     height: childrenRect.height;
     width: parent.width
 
+    property var upnpServer;
     property var xml
     property var infoClass;
     property var resImageSource;
@@ -17,12 +18,12 @@ Item {
     property alias metadatasGrid: grid;
 
     Component {
-        id: labelTitle
+        id: labelComponent
 
         Text {
             id: title
             font.bold: false
-            font.pixelSize: 12
+            font.pixelSize: 14
 
             horizontalAlignment: Text.AlignRight
 
@@ -31,12 +32,12 @@ Item {
     }
 
     Component {
-        id: valueTitle
+        id: valueComponent
 
         Text {
             id: value
             font.bold: true
-            font.pixelSize: 12
+            font.pixelSize: 14
         }
     }
 
@@ -78,8 +79,8 @@ Item {
                 spacing: 6
 
                 Component.onCompleted: {
-                    UpnpObject.addLine(grid, labelTitle, valueTitle, "Date :", xml, "dc:date", UpnpObject.dateFormatter);
-                    UpnpObject.addLine(grid, labelTitle, valueTitle, "Taille :", xml, "res@size", UpnpObject.sizeFormatter);
+                    UpnpObject.addLine(grid, labelComponent, valueComponent, "Date :", xml, "dc:date", UpnpObject.dateFormatter);
+                    UpnpObject.addLine(grid, labelComponent, valueComponent, "Taille :", xml, "res@size", UpnpObject.sizeFormatter);
                 }
             }
         }

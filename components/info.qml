@@ -4,10 +4,12 @@ import QtGraphicalEffects 1.0
 import "../jasmin" 1.0
 import "../components/infos" 1.0
 
+
 Item {
     height: rowInfo.height
     width: parent.width
 
+    property var upnpServer;
     property var xml
     property string resImageSource;
     property string upnpClass;
@@ -40,12 +42,26 @@ Item {
         x: 0
         width: parent.width
         height: rowInfo.height+12
+        visible: false
+
+        property int cnt : 0;
+        property bool done : false;
+
         onPaint: {
+            console.log("Paint ! "+(cnt), " "+done+" "+height);
+/*
+            if (cnt!==1 && (height>256)) {
+                cnt++;
+                return;
+            }
+            cnt++;
+*/
             var ctx = getContext('2d');
 
-            var bg=backgroundColor;
+              ctx.reset(); // If Height changed !
+
             ctx.beginPath();
-            ctx.fillStyle = bg;
+            ctx.fillStyle = "#E9E9E9";
             ctx.strokeStyle = borderColor;
             ctx.moveTo(0, 12);
             ctx.lineTo(markerPosition-12, 12);
@@ -59,36 +75,19 @@ Item {
             ctx.clip();
 
             ctx.fillRect(0, 0, width, height);
-
-            //ctx.drawImage(background, 0, 0, 128, 128);
         }
-        /*
-        Component.onCompleted: {
-            console.log("Loadimge="+resImageSource);
-            loadImage(resImageSource);
-        }
-        onImageLoaded: {
-            var ctx = getContext('2d');
-            ctx.drawImage(resImageSource, 0, 0, 16, 16);
-
-            var data=ctx.getImageData(0, 0, 16, 16);
-
-            console.log("data="+data, data.width, data.height, data.data);
-
-            var bitmap=data.data;
-            for(var i=0;i<bitmap.length;i++) {
-                console.log("bit="+bitmap[i]);
-            }
-
-            unloadImage(resImageSource);
-        }
-        */
     }
 
     Item {
         id: rowInfo
         width: parent.width
         height: childrenRect.height
+
+        onChildrenRectChanged: {
+            console.log("h="+childrenRect.height);
+
+            canvas.visible=true;
+        }
 
         Image {
             id: background
@@ -123,7 +122,6 @@ Item {
                 return;
             }
 
-
             var upnpClasses = {
                 "object.container.album": object_container_album,
                 "object": object
@@ -152,12 +150,15 @@ Item {
 
             var obj=infoClass.createObject(rowInfo, {
                                                xml: xml,
-                                               resImageSource: resImageSource
+                                               resImageSource: resImageSource,
+                                               upnpServer: upnpServer
                                            })
 
             obj.anchors.left=rowInfo.left;
             obj.anchors.right=rowInfo.right;
             obj.anchors.top=rowInfo.top;
-        }
+
+            obj.layoutDone
+       }
     }
 }

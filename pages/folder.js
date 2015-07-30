@@ -1,4 +1,4 @@
-.import "../jasmin/upnpServer.js" as Jasmin
+.import "../jasmin/upnpServer.js" as UpnpServer
 
 .import "../jasmin/util.js" as Util
 
@@ -7,7 +7,7 @@ function fillModel(list, upnpServer, meta, timer) {
     //console.profile();
     //console.log(Util.inspect(meta.result, false, {}));
 
-    var container=meta.result.byPath("DIDL-Lite/container", Jasmin.DIDL_XMLNS_SET);
+    var container=meta.result.byPath("DIDL-Lite/container", UpnpServer.DIDL_XMLNS_SET);
     //console.log("Container=",Util.inspect(container));
 
     var objectID=container.attr("id");
@@ -15,21 +15,30 @@ function fillModel(list, upnpServer, meta, timer) {
 
     var filters=[{
                      name: "title",
-                     namespaceURI: Jasmin.PURL_ELEMENT_XMLS
+                     namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
                  }, {
                      name: "date",
-                     namespaceURI: Jasmin.PURL_ELEMENT_XMLS
+                     namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
                  }, {
                      name: "res",
-                     namespaceURI: Jasmin.DIDL_LITE_XMLNS
+                     namespaceURI: UpnpServer.DIDL_LITE_XMLNS
                  }, {
                      name: "albumArtURI",
-                     namespaceURI: Jasmin.UPNP_METADATA_XMLNS
+                     namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
                  }
 
             ];
 
-    upnpServer.browseDirectChildren(objectID, filters, 0, 28).then(function onSuccess(xml){
+    var sorters=[
+                {
+                    ascending: true,
+                    name: "title",
+                    namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                }
+
+            ];
+
+    upnpServer.browseDirectChildren(objectID, filters, 0, 99, sorters).then(function onSuccess(xml){
 
         //console.log(Util.inspect(xml, false, {}));
         //console.profileEnd();
@@ -47,12 +56,12 @@ function fillModel(list, upnpServer, meta, timer) {
         }
 
         var slot=newSlot();
-        var slotIdx=0;
+        var slotIdx=1;
 
         var slots=[];
 
-        var children=xml.result.byPath("DIDL-Lite", Jasmin.DIDL_XMLNS_SET).children();
-        //console.log(Util.inspect(children, false, {}));
+        var children=xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children();
+       //console.log(Util.inspect(children, false, {}));
 
         children.forEach(function(item) {
 
@@ -68,7 +77,7 @@ function fillModel(list, upnpServer, meta, timer) {
             }
             slots.push(slot);
             slot=newSlot();
-            slotIdx=0;
+            slotIdx=1;
         });
 
         //console.log("End of items "+slotIdx);

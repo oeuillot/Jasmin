@@ -16,6 +16,7 @@ var SOAP_ENVELOPE_XMLNS="http://schemas.xmlsoap.org/soap/envelope/";
 var DIDL_LITE_XMLNS="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/";
 var UPNP_METADATA_XMLNS="urn:schemas-upnp-org:metadata-1-0/upnp/";
 var PURL_ELEMENT_XMLS="http://purl.org/dc/elements/1.1/";
+var JASMIN_MUSICMETADATA="urn:schemas-jasmin-upnp.net:musicmetadata/";
 
 var CONTENT_DIRECTORY_TYPE=UPNP_CONTENT_DIRECTORY_1_XMLNS;
 
@@ -35,7 +36,8 @@ var DEVICE_XMLNS_SET={
 var DIDL_XMLNS_SET = {
     "": DIDL_LITE_XMLNS,
     "upnp": UPNP_METADATA_XMLNS,
-    "dc": PURL_ELEMENT_XMLS
+    "dc": PURL_ELEMENT_XMLS,
+    "mm": JASMIN_MUSICMETADATA
 }
 
 

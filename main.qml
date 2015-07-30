@@ -4,6 +4,8 @@ import fbx.application 1.0
 import fbx.ui.page 1.0
 import fbx.ui.layout 1.0
 
+import "./pages" 1.0
+
 Application {
     id: app
 
@@ -52,4 +54,12 @@ Application {
             pageStack.breadcrumb=this;
         }
     }
+
+    /*
+    Right {
+        visible: false
+        x: parent.width-80
+        y: 0
+    }
+    */
 }

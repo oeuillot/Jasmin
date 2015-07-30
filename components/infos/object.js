@@ -22,7 +22,7 @@ function addLine(grid, labelTitle, valueTitle, title, xml, path, formatter) {
     }
 
     var reg=/^([^@]*)(@.*)?$/i.exec(path);
-    console.log("reg=",reg);
+    //console.log("reg=",reg);
     var  value=xml.byPath(reg[1], XMLNS).first();
     if (!reg[2]) {
         value=value.text();

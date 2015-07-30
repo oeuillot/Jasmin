@@ -3,79 +3,314 @@ import QtGraphicalEffects 1.0
 import "../../jasmin" 1.0
 import ".." 1.0
 
-Item {
-    id: row
-    height: childrenRect.height;
+import "object.js" as UpnpObject
+import "object_container_album.js" as ObjectContainerAlbum;
 
-
+FocusScope {
+    id: focusScope
+    x: row.x
+    y: row.y
+    height: row.height
     width: parent.width
 
+    property var upnpServer;
     property var xml
     property var infoClass;
     property var resImageSource;
 
-    function getText(xml, path, xmlns) {
-        console.log(Util.inspect(xml, false, {}));
-        if (!xml) {
-            return "";
-        }
-
-        var text=xml.byPath(path, xmlns).text();
-
-        return text || "";
-    }
-
+    property bool layoutDone: false
 
     Item {
-        id: infosColumn
+        id: row
+        height: childrenRect.height;
+        width: parent.width
 
-        anchors.left: parent.left;
-        anchors.top: parent.top;
-        anchors.right: imageColumn.left;
-        height: childrenRect.height
-        anchors.margins: 10;
+        Component {
+            id: trackComponent
 
-        Row {
-            Text {
-                text: getText(xml, "dc:title", {dc: UpnpServer.PURL_ELEMENT_XMLS});
-                font.bold: true
-                font.pixelSize: 20
-            }
-            Text {
-                text: Fontawesome.Icon.play
-                font.bold: true
-                font.pixelSize: 20
-                font.family: "fontawesome"
+
+            Item {
+                width: 400
+                height: 24
+
+                property alias point: title.text
+                property alias text: value.text
+                property alias duration: duration.text
+                property string type;
+
+                property var xml;
+
+
+                Text {
+                    id: title
+                    font.bold: false
+                    font.pixelSize: 12
+                    x: 0
+                    y: 2
+                    opacity: 0.7
+
+                    horizontalAlignment: Text.AlignRight
+
+                    width: 16
+                }
+
+                function changePosition(source, offset) {
+                    var list=source.parent.parent;
+//                    console.log("Parent2="+list+" "+list.id);
+
+                    var children=list.children;
+                    for(var i=0;i<children.length;i++) {
+                        if (children[i]!==this.parent) {
+                            continue;
+                        }
+
+                        var next=children[i+offset];
+                        if (next && next.type==="row") {
+                            console.log("Next="+next+"/"+next.id);
+                            next.children[1].forceActiveFocus();
+
+                            return true;
+                        }
+                        break;
+                    }
+                }
+
+                FocusScope {
+                    x: 30
+                    y: 0
+                    width: 280
+                    height: 24
+                    focus: true
+
+                    Text {
+                        id: value
+                        font.bold: true
+                        font.pixelSize: 14
+                        focus: true
+
+                        color: activeFocus?"red": "black"
+
+                        x: 0
+                        y: 0
+                        width: 280
+                        height: 24
+                        elide: Text.ElideRight
+                    }
+
+                    Keys.onRightPressed: {
+                        if (changePosition(this, 1)) {
+                            event.accepted = true;
+                        }
+                    }
+
+                    Keys.onDownPressed: {
+                        if (changePosition(this, 2)) {
+                            event.accepted = true;
+                        }
+                    }
+
+                    Keys.onLeftPressed: {
+                        if (changePosition(this, -1)) {
+                            event.accepted = true;
+                        }
+                    }
+
+                    Keys.onUpPressed: {
+                        if (changePosition(this, -2)) {
+                            event.accepted = true;
+                        }
+                    }
+
+                    Keys.onReturnPressed: {
+
+                    }
+
+                }
+
+                //property alias text: value.text
+                Text {
+                    id: duration
+                    x: 320
+                    y: 2
+
+                    font.bold: false
+                    font.pixelSize: 12
+                    opacity: 0.7
+
+                    width: 30
+                }
             }
         }
-    }
 
-    Item {
-        id: imageColumn
-        anchors.top: parent.top;
-        anchors.right: parent.right;
+        Component {
+            id: gridComponent
 
-        anchors.margins: 30;
+            Item {
+                x:0
+                width: 800
+            }
+        }
 
-        width: childrenRect.width;
-        height: childrenRect.height+30;
+        Component {
+            id: discComponent
 
-        Image {
-            id: image2
-            width: 256
-            height: 256
-            x: 0
-            y: 0
+            Item {
+                width: parent.width
+                height: 28
 
-            sourceSize.width: 256
-            sourceSize.height: 256
+                property alias text: discTitle.text
 
-            antialiasing: true
-            fillMode: Image.PreserveAspectFit
+                Text {
+                    id: discTitle
+                    x: 0
+                    y: 8
+                    width: parent.width
+                    font.bold: true
+                    font.pixelSize: 12
+                }
+            }
+        }
 
-            source: (resImageSource?resImageSource:'')
-            asynchronous: true
 
+        Item {
+            id: infosColumn
+
+            x: 30
+            y: 20
+            width: parent.width-((resImageSource)?(256+20):0)-60
+            height: childrenRect.height+30
+
+            Row {
+                x: 0
+                y: 0
+                height: 32
+                width: parent.width
+                spacing: 16
+
+                Text {
+                    text: UpnpObject.getText(xml, "dc:title");
+                    font.bold: true
+                    font.pixelSize: 20
+                }
+
+                Row {
+                    spacing: 8
+                    height: 32
+
+                    Text {
+                        text: Fontawesome.Icon.play
+                        font.bold: true
+                        font.pixelSize: 20
+                        font.family: "fontawesome"
+                    }
+                    Text {
+                        text: Fontawesome.Icon.random
+                        font.bold: true
+                        font.pixelSize: 20
+                        font.family: "fontawesome"
+                    }
+                    Text {
+                        text: Fontawesome.Icon.ellipsis_h
+                        font.bold: true
+                        font.pixelSize: 20
+                        font.family: "fontawesome"
+                    }
+                }
+            }
+
+            Text {
+                id: metaInfos
+                x: 0
+                y: 26
+                font.bold: false
+                font.pixelSize: 16
+                width: parent.width
+                height: 20
+            }
+
+            Rectangle {
+                x: 0
+                y: 50
+                width: parent.width
+                height: 1
+                opacity: 0.3
+                color: "black"
+            }
+
+            Component.onCompleted: {
+
+                var components = {
+                    grid: gridComponent,
+                    track: trackComponent,
+                    disc: discComponent
+                }
+
+                var d=ObjectContainerAlbum.fillTracks(infosColumn, components, 60, upnpServer, xml);
+
+                d.then(function onSuccess(metas) {
+
+                    var ms="";
+                    var artists=metas.artists;
+                    if (artists && artists.length) {
+                        var l=Math.min(8, artists.length);
+
+                        for(var i=0;i<l;i++) {
+                            if (ms) {
+                                ms+=", ";
+                            }
+
+                            ms+=artists[i];
+                        }
+
+                        if (artists.length>l) {
+                            ms+=", ...";
+                        }
+                    }
+
+                    if (metas.year) {
+                        if (ms) {
+                            ms+=" \u25CF "
+                        }
+
+                        ms+=metas.year;
+                    }
+                    metaInfos.text=ms;
+
+                    infosColumn.height=infosColumn.childrenRect.height;
+                });
+            }
+        }
+
+        Item {
+            id: imageColumn
+            visible: !!resImageSource
+
+            x: parent.width-256-30
+            y: 30
+            width: 256;
+            height: 30+256+30;
+
+            Image {
+                id: image2
+                width: 256
+                height: 256
+                x: 0
+                y: 0
+
+                sourceSize.width: 256
+                sourceSize.height: 256
+
+                antialiasing: true
+                fillMode: Image.PreserveAspectFit
+
+                source: (resImageSource?resImageSource:'')
+                asynchronous: true
+
+            }
+        }
+
+        Component.onCompleted: {
+            focusScope.forceActiveFocus();
         }
     }
 }
