@@ -13,10 +13,12 @@ FocusScope {
     height: row.height
     width: parent.width
 
+    property AudioPlayer audioPlayer;
     property var upnpServer;
     property var xml
-    property var infoClass;
-    property var resImageSource;
+    property string infoClass;
+    property string resImageSource;
+    property string objectID;
 
     property bool layoutDone: false
 
@@ -33,13 +35,15 @@ FocusScope {
                 width: 400
                 height: 24
 
-                property alias point: title.text
+                property string point;
                 property alias text: value.text
                 property alias duration: duration.text
                 property string type;
 
                 property var xml;
+                property string objectID;
 
+                property bool playingObjectID: audioPlayer.playingObjectID===objectID;
 
                 Text {
                     id: title
@@ -49,7 +53,10 @@ FocusScope {
                     y: 2
                     opacity: 0.7
 
-                    horizontalAlignment: Text.AlignRight
+                    horizontalAlignment: (playingObjectID)?Text.AlignLeft:Text.AlignRight
+
+                    font.family: (playingObjectID)?"fontawesome":value.font.family
+                    text: (playingObjectID)?(audioPlayer.playbackState===1?Fontawesome.Icon.volume_up:Fontawesome.Icon.volume_off):point
 
                     width: 16
                 }
@@ -66,7 +73,7 @@ FocusScope {
 
                         var next=children[i+offset];
                         if (next && next.type==="row") {
-                            console.log("Next="+next+"/"+next.id);
+                            console.log("Next focus="+next+"/"+next.id);
                             next.children[1].forceActiveFocus();
 
                             return true;
@@ -122,7 +129,10 @@ FocusScope {
                     }
 
                     Keys.onReturnPressed: {
+                        //var res=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).first();
 
+                        audioPlayer.playMusic(upnpServer, xml, resImageSource);
+                        event.accepted = true;
                     }
 
                 }

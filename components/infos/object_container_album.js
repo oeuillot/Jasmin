@@ -238,7 +238,8 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                     point: (trackNumber?String(trackNumber):"\u25CF"),
                     text: infos.title,
                     duration: duration,
-                    xml: infos.xml
+                    xml: infos.xml,
+                    objectID: infos.xml.attr("id")
                 };
 
                 console.log(Util.inspect(params, false, {}));

@@ -12,6 +12,7 @@ Page {
 
     property var meta;
     property var upnpServer;
+    property AudioPlayer audioPlayer;
 
     property var fillModelDeferred;
 
@@ -71,7 +72,8 @@ Page {
                         page.push("folder.qml", {
                                       upnpServer: page.upnpServer,
                                       meta: meta,
-                                      title: card.title
+                                      title: card.title,
+                                      audioPlayer: audioPlayer
                                   });
 
 
@@ -89,7 +91,8 @@ Page {
                                                   markerPosition: card.x+card.width/2,
                                                   resImageSource: card.resImageSource,
                                                   upnpClass: upnpClass,
-                                                  upnpServer: upnpServer
+                                                  upnpServer: upnpServer,
+                                                  audioPlayer: page.audioPlayer
                                               });
 
             row.parent.infoContainer.visible=true;

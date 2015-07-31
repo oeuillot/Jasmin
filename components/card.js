@@ -92,12 +92,22 @@ function computeInfo(xml, upnpClass) {
         }
     }
 
-    var date=xml.byTagName("date", UpnpServer.PURL_ELEMENT_XMLS).text();
+    var date=xml.byPath("dc:date", UpnpServer.DIDL_XMLNS_SET).first().text();
     if (date) {
         var jdate=new Date(date);
 
         return Qt.formatDateTime(jdate, "dd/MM/yyyy hh:mm");
     }
 
+    var artists=xml.byPath("upnp:artist", UpnpServer.DIDL_XMLNS_SET);
+    if (artists.count) {
+        var ar=artists.first().text();
+        if (artists.count()>1) {
+            ar+=" (+"+(artists.count()-1)+")";
+        }
+        return ar;
+    }
+
+    console.log("unknown="+Util.inspect(xml, false, {}));
     return "";
 }

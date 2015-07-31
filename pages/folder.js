@@ -25,6 +25,9 @@ function fillModel(list, upnpServer, meta, timer) {
                  }, {
                      name: "albumArtURI",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
+                 }, {
+                     name: "artist",
+                     namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
                  }
 
             ];

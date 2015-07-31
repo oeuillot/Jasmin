@@ -361,6 +361,20 @@ $XML.prototype.toObject=function() {
 }
 
 
+$XML.prototype.count=function() {
+    var node=this.nodes;
+    if (!node) {
+        return 0;
+    }
+
+    if (node instanceof Array) {
+        return node.length;
+    }
+
+    return 1;
+}
+
+
 $XML.prototype.toObjects=function() {
     var node=this.nodes;
     if (!node) {

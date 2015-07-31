@@ -5,7 +5,7 @@ Image {
 
     property string background: ""
     property string logo: ""
-    property real logoRatio: .8
+    property real logoRatio: 0.8
 
     asynchronous: true
     anchors.fill: parent

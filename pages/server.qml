@@ -12,6 +12,9 @@ Page {
     id: page
     title: "Choix du serveur"
 
+    property Menu menu;
+    property AudioPlayer audioPlayer;
+
     Column {
         id: enterIP
 
@@ -36,7 +39,7 @@ Page {
                 font.bold: true
                 color: "black"
                 width: 700
-                text: "localhost:10293/DeviceDescription.xml"
+                text: "192.168.0.58:10293/DeviceDescription.xml"
                 displayText: "URL du server"
 
                 property string text1: "192.168.3.32:10293/DeviceDescription.xml"
@@ -66,7 +69,7 @@ Page {
                 id: loading
                 width: 24
                 height: 24
-                visible: false
+                visible: !!enterIP.deferredRequest
             }
         }
         Button {
@@ -88,15 +91,16 @@ Page {
                 enterIP.deferredRequest=ServerScript.tryURL("http://"+urlEntry.text);
 
                 text.text="Tentative de connexion ...";
-                loading.visible=true;
 
-                console.log("deferred="+enterIP.deferredRequest);
+                //console.log("deferred="+enterIP.deferredRequest);
 
                 enterIP.deferredRequest.then(function(result) {
                     console.log("SUCCESS !");
                     text.text="Tentative réussie";
                     enterIP.state="hide";
-                    loading.visible=false;
+                    enterIP.deferredRequest=null;
+
+                    page.menu.visible=true;
 
                     var upnpServer=result.upnpServer;
                     var meta=result.rootMeta;
@@ -106,16 +110,18 @@ Page {
                     page.push("folder.qml", {
                                   upnpServer: upnpServer,
                                   meta: meta,
-                                  title: upnpServer.name
+                                  title: upnpServer.name,
+                                  audioPlayer: page.audioPlayer
                               });
 
                 }, function(reason) {
+                    enterIP.deferredRequest=null;
+
                     text.text="La tentative de connexion a échoué : "+reason;
 
                     enterIP.state="error";
                     urlEntry.forceActiveFocus();
                     connectButton.enabled=true;
-                    loading.visible=false;
 
                 }, function(message) {
                     text.text="Tentative en cours : "+message;

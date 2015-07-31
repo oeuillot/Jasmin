@@ -7,3 +7,5 @@ Card 1.0 card.qml
 Info 1.0 info.qml
 
 Fontawesome 1.0 fontawesome.js
+
+AudioPlayer 1.0 audioPlayer.qml

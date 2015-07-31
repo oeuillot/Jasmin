@@ -22,6 +22,7 @@ Application {
         id: pageStack
 
         property var breadcrumb;
+        property Menu menu : menu;
 
         anchors {
             top: breadcrumb.bottom
@@ -31,10 +32,16 @@ Application {
         }
         focus: true
 
-        initialPage: "server.qml"
         baseUrl: Qt.resolvedUrl("pages/")
 
         KeyNavigation.up: breadcrumb
+
+        Component.onCompleted: {
+            pageStack.push("server.qml", {
+                audioPlayer: menu.audioPlayer,
+                menu: menu
+            });
+        }
     }
 
     Breadcrumb {
@@ -55,11 +62,10 @@ Application {
         }
     }
 
-    /*
-    Right {
+    Menu {
+        id: menu
         visible: false
-        x: parent.width-80
-        y: 0
+        x: parent.width-menu.width
+        y: breadcrumb.height
     }
-    */
 }

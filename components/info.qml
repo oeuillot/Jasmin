@@ -9,6 +9,7 @@ Item {
     height: rowInfo.height
     width: parent.width
 
+    property AudioPlayer audioPlayer;
     property var upnpServer;
     property var xml
     property string resImageSource;
@@ -147,11 +148,15 @@ Item {
                 infoClass=object;
             }
 
+            var objectID=xml.attr("id");
+
 
             var obj=infoClass.createObject(rowInfo, {
                                                xml: xml,
                                                resImageSource: resImageSource,
-                                               upnpServer: upnpServer
+                                               upnpServer: upnpServer,
+                                               audioPlayer: audioPlayer,
+                                               objectID: objectID
                                            })
 
             obj.anchors.left=rowInfo.left;

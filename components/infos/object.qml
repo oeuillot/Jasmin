@@ -14,6 +14,7 @@ Item {
     property var xml
     property var infoClass;
     property var resImageSource;
+    property var objectID;
 
     property alias metadatasGrid: grid;
 
