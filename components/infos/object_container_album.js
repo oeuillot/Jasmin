@@ -45,11 +45,11 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
             ];
 
-    console.log("Request "+objectID);
+    //console.log("Request "+objectID);
 
     var deferred=upnpServer.browseDirectChildren(objectID, null, 0, 256, trackSorters).then(function onSuccess(xml) {
 
-        console.log(Util.inspect(xml, false, {}));
+        //console.log(Util.inspect(xml, false, {}));
 
         var listByDisk={};
         var list=[];
@@ -62,7 +62,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
         xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children().forEach(function(item) {
 
-            console.log("item=",Util.inspect(item, false, {}));
+            //console.log("item=",Util.inspect(item, false, {}));
 
             var upnpClass=item.byPath("upnp:class", UpnpServer.DIDL_XMLNS_SET).text();
             //console.log("item=",Util.inspect(item, false, {})+" => "+upnpClass);
@@ -242,7 +242,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                     objectID: infos.xml.attr("id")
                 };
 
-                console.log(Util.inspect(params, false, {}));
+                //console.log(Util.inspect(params, false, {}));
 
                 var row=components.track.createObject(grid, params);
 

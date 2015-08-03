@@ -835,3 +835,24 @@ function parseXml(text) {
 
     return deferred;
 }
+
+
+$XML.prototype.toArray = function() {
+    var nodes=this.nodes;
+    if (!nodes) {
+        return [];
+    }
+
+    if (nodes instanceof Array) {
+        var ret=[];
+
+        nodes.forEach(function(n) {
+            ret.push($XML(n));
+        });
+
+        return ret;
+    }
+
+    return [ this ];
+}
+

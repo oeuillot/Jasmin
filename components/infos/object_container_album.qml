@@ -63,7 +63,7 @@ FocusScope {
 
                 function changePosition(source, offset) {
                     var list=source.parent.parent;
-//                    console.log("Parent2="+list+" "+list.id);
+                    //                    console.log("Parent2="+list+" "+list.id);
 
                     var children=list.children;
                     for(var i=0;i<children.length;i++) {
@@ -80,6 +80,8 @@ FocusScope {
                         }
                         break;
                     }
+
+                    return false;
                 }
 
                 FocusScope {
@@ -104,50 +106,57 @@ FocusScope {
                         elide: Text.ElideRight
                     }
 
-                    Keys.onRightPressed: {
-                        if (changePosition(this, 1)) {
-                            event.accepted = true;
+                    Keys.onPressed: {
+
+                        if (event.key === Qt.Key_Right) {
+                            if (changePosition(this, 1)) {
+                                event.accepted = true;
+                            }
+                            return;
                         }
-                    }
 
-                    Keys.onDownPressed: {
-                        if (changePosition(this, 2)) {
-                            event.accepted = true;
+                        if (event.key === Qt.Key_Down) {
+                            if (changePosition(this, 2)) {
+                                event.accepted = true;
+                            }
+                            return;
                         }
-                    }
 
-                    Keys.onLeftPressed: {
-                        if (changePosition(this, -1)) {
-                            event.accepted = true;
+                        if (event.key === Qt.Key_Left) {
+                            if (changePosition(this, -1)) {
+                                event.accepted = true;
+                            }
+                            return;
                         }
-                    }
 
-                    Keys.onUpPressed: {
-                        if (changePosition(this, -2)) {
-                            event.accepted = true;
+                        if (event.key === Qt.Key_Up) {
+                            if (changePosition(this, -2)) {
+                                event.accepted = true;
+                            }
+                            return;
                         }
+                        if (event.key === Qt.Key_Return) {
+                            //var res=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).first();
+
+                            audioPlayer.playMusic(upnpServer, xml, resImageSource);
+                            event.accepted = true;
+                            return;
+                        }
+
                     }
 
-                    Keys.onReturnPressed: {
-                        //var res=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).first();
+                    //property alias text: value.text
+                    Text {
+                        id: duration
+                        x: 320
+                        y: 2
 
-                        audioPlayer.playMusic(upnpServer, xml, resImageSource);
-                        event.accepted = true;
+                        font.bold: false
+                        font.pixelSize: 12
+                        opacity: 0.7
+
+                        width: 30
                     }
-
-                }
-
-                //property alias text: value.text
-                Text {
-                    id: duration
-                    x: 320
-                    y: 2
-
-                    font.bold: false
-                    font.pixelSize: 12
-                    opacity: 0.7
-
-                    width: 30
                 }
             }
         }

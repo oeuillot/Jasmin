@@ -6,6 +6,7 @@ import "../components/infos" 1.0
 
 
 Item {
+    id: widget
     height: rowInfo.height
     width: parent.width
 
@@ -119,9 +120,8 @@ Item {
         }
 
         Component.onCompleted: {
-            if (!rowInfo) {
-                return;
-            }
+
+            console.log("COMPLETED ! "+xml);
 
             var upnpClasses = {
                 "object.container.album": object_container_album,
@@ -134,7 +134,7 @@ Item {
             var clz=upnpClass;
 
             for(;clz;) {
-              //console.log("Try "+clz);
+              console.log("Try "+clz);
 
                 infoClass=upnpClasses[clz];
                 if (infoClass) {
@@ -148,22 +148,24 @@ Item {
                 infoClass=object;
             }
 
+            console.log("Info class="+infoClass+Util.inspect(xml, false, {}));
+
             var objectID=xml.attr("id");
+
+            console.log("UpnpServer="+upnpServer+" player="+audioPlayer);
 
 
             var obj=infoClass.createObject(rowInfo, {
+                                               x: 0,
+                                               y: 0,
+                                               width: rowInfo.width,
                                                xml: xml,
                                                resImageSource: resImageSource,
-                                               upnpServer: upnpServer,
-                                               audioPlayer: audioPlayer,
+                                               upnpServer: widget.upnpServer,
+                                               audioPlayer: widget.audioPlayer,
                                                objectID: objectID
                                            })
 
-            obj.anchors.left=rowInfo.left;
-            obj.anchors.right=rowInfo.right;
-            obj.anchors.top=rowInfo.top;
-
-            obj.layoutDone
        }
     }
 }

@@ -2,7 +2,7 @@
 
 .import "../jasmin/util.js" as Util
 
-function fillModel(list, upnpServer, meta, timer) {
+function fillModel(upnpServer, meta) {
 
     //console.profile();
     //console.log(Util.inspect(meta.result, false, {}));
@@ -41,67 +41,17 @@ function fillModel(list, upnpServer, meta, timer) {
 
             ];
 
-    upnpServer.browseDirectChildren(objectID, filters, 0, 99, sorters).then(function onSuccess(xml){
-
-        //console.log(Util.inspect(xml, false, {}));
-        //console.profileEnd();
-
-        function newSlot() {
-            return {
-                item1: null,
-                item2: null,
-                item3: null,
-                item4: null,
-                item5: null,
-                item6: null,
-                item7: null
-            }
-        }
-
-        var slot=newSlot();
-        var slotIdx=1;
-
-        var slots=[];
+    var deferred = upnpServer.browseDirectChildren(objectID, filters, 0, 99, sorters).then(function onSuccess(xml){
 
         var children=xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children();
        //console.log(Util.inspect(children, false, {}));
 
-        children.forEach(function(item) {
-
-            //console.log("New item #"+slotIdx);
-
-            slot["item"+slotIdx]=item;
-
-            // console.log("Item #"+slotIdx+" ",item.byPath);
-
-            slotIdx++;
-            if (slotIdx<=7) {
-                return;
-            }
-            slots.push(slot);
-            slot=newSlot();
-            slotIdx=1;
-        });
-
-        //console.log("End of items "+slotIdx);
-
-        if (slotIdx) {
-            slots.push(slot);
-        }
-
-        timer.triggered.connect(function() {
-            var s=slots.shift();
-
-            list.append(s);
-
-            if (!slots.length) {
-                timer.stop();
-            }
-        });
-        timer.start();
+        return children.toArray();
 
     }, function onFailure(reason) {
         console.error("Failure", reason);
     });
+
+    return deferred;
 }
 

@@ -9,3 +9,5 @@ Info 1.0 info.qml
 Fontawesome 1.0 fontawesome.js
 
 AudioPlayer 1.0 audioPlayer.qml
+
+QGrid 1.0 qgrid.qml

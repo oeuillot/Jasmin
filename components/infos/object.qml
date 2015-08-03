@@ -8,7 +8,6 @@ import "object.js" as UpnpObject
 Item {
     id: row
     height: childrenRect.height;
-    width: parent.width
 
     property var upnpServer;
     property var xml

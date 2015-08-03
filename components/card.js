@@ -4,69 +4,98 @@
 .import "../jasmin/util.js" as Util
 .import "../jasmin/upnpServer.js" as UpnpServer
 .import "../jasmin/xml.js" as Xml
+.import "fontawesome.js" as Fontawesome
 
-function addImage(image, res) {
-    var params = {
-         source: res
-    };
-
-    var parent=image.parent;
-
-    var img=resImage.createObject(parent, params);
-//            console.log("image="+img+" "+parent.width);
-
-    img.width=Qt.binding(function() { return parent.width - 2 });
-    img.height=Qt.binding(function() { return parent.height - 2 });
-
-    image.width=Qt.binding(function() { return parent.width - 2 });
-    image.height=Qt.binding(function() { return parent.height - 2 });
-}
-
-
-function computeImage(xml, upnpClass, image, resImage, upnpServer) {
+function computeType(upnpClass) {
     if (!upnpClass) {
-        return "card/unknown.png";
+        return Fontawesome.Icon.question;
     }
 
-    if (upnpClass.indexOf("object.container.album")>=0 || upnpClass.indexOf("object.item.audioItem")>=0) {
-       //console.log("image=",Util.inspect(xml, false,{}));
-
-        var res=xml.byTagName("albumArtURI", UpnpServer.UPNP_METADATA_XMLNS).first().text();
-
-        //console.log("Res="+res);
-        if (res) {
-            res=upnpServer.relativeURL(res).toString();
-
-            addImage(image, res);
-
-            //return "";
-        }
-
-        return "card/music.png";
+    if (upnpClass.indexOf("object.container.album")===0 || upnpClass.indexOf("object.item.audioItem")===0) {
+        return Fontawesome.Icon.music;
     }
 
-    if (upnpClass.indexOf("object.item.videoItem")>=0) {
-        return "card/video.png";
+    if (upnpClass.indexOf("object.item.videoItem")===0) {
+        return Fontawesome.Icon.film;
     }
 
-    if (upnpClass.indexOf("object.item.imageItem")>=0) {
-
-        var res=xml.byTagName("res", UpnpServer.DIDL_LITE_XMLNS).text();
-
-        if (res) {
-            addImage(image, res);
-
-            return "card/transparent.png";
-        }
-
-        return "card/image.png";
+    if (upnpClass.indexOf("object.item.imageItem")===0) {
+        return Fontawesome.Icon.file_picture_o;
     }
 
     if (!upnpClass.indexOf("object.container")) {
-        return "card/folder.png";
+        return Fontawesome.Icon.folder_open_o;
     }
 
-    return "card/unknown.png";
+    return Fontawesome.Icon.question;
+}
+
+function computeImage(xml, upnpClass) {
+    if (!upnpClass) {
+        return;
+    }
+
+    if (upnpClass.indexOf("object.container.album")===0 || upnpClass.indexOf("object.item.audioItem")===0) {
+        var res=xml.byTagName("albumArtURI", UpnpServer.UPNP_METADATA_XMLNS).first().text();
+        if (!res) {
+            return;
+        }
+
+        var imageSource=upnpServer.relativeURL(res).toString();
+        return imageSource;
+    }
+
+    if (upnpClass.indexOf("object.item.videoItem")===0) {
+        return;
+    }
+
+    var ret=xml.byTagName("res", UpnpServer.DIDL_LITE_XMLNS).forEach(function(res) {
+
+        var protocolInfo=res.attr("protocolInfo");
+        if (!protocolInfo) {
+            console.log("No protocol info: "+Util.inspect(xml, false, {}));
+            return;
+        }
+
+        var ps=/^([^:]*):([^:]*):([^:]*):(.*)$/.exec(protocolInfo);
+        if (!ps) {
+            console.log("Invalid format '"+protocolInfo+"'");
+            return;
+        }
+
+        var protocol=ps[1];
+        var network=ps[2];
+        var contentFormat=ps[3];
+        var additionalInfo=ps[4];
+
+        if (protocol!=="http-get") {
+            console.error("Unknown protocol : "+protocolInfo);
+            return null;
+        }
+
+        var ts=/^image\/(.*)/.exec(contentFormat);
+        if (!ts) {
+            console.log("Invalid content format '"+contentFormat+"'");
+            return null;
+        }
+
+        var imageType=ts[1];
+
+        if ([ "png", "jpeg", "gif"].indexOf(imageType)<0) {
+            console.log("Invalid image Type '"+imageType+"'");
+            return null;
+        }
+
+        var url=res.text();
+
+        var imageSource=upnpServer.relativeURL(url).toString();
+
+        console.log("Return "+imageSource);
+
+        return imageSource;
+    });
+
+    return ret;
 }
 
 function computeLabel(xml) {
@@ -109,5 +138,5 @@ function computeInfo(xml, upnpClass) {
     }
 
     console.log("unknown="+Util.inspect(xml, false, {}));
-    return "";
+    return null;
 }

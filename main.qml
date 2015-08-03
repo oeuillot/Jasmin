@@ -9,9 +9,43 @@ import "./pages" 1.0
 Application {
     id: app
 
+    property Menu menu;
+
+    property bool started: false;
+
+    /*
+    Settings {
+        id: settings
+        App: app
+    }
+    */
+
+    function startup() {
+        if (started) {
+            return;
+        }
+        started=true;
+
+        menu=menuComponent.createObject(app);
+
+        pageStack.push("server.qml", {
+                           audioPlayer: menu.audioPlayer,
+                           menu: menu
+                       });
+    }
+
     FontLoader {
         id: fontawesome
         source: "components/fonts/fontawesome-webfont__ttf.png"
+
+        onStatusChanged: {
+            console.log("Waiting ...");
+
+            if (fontawesome.status===FontLoader.Ready) {
+                console.log("GO ...");
+                startup();
+            }
+        }
     }
 
     JBackground {
@@ -22,14 +56,11 @@ Application {
         id: pageStack
 
         property var breadcrumb;
-        property Menu menu : menu;
 
-        anchors {
-            top: breadcrumb.bottom
-            left: parent.left
-            right: parent.right
-            bottom: parent.bottom
-        }
+        x: 0
+        y: breadcrumb.height
+        width: parent.width
+        height: parent.height-breadcrumb.height
         focus: true
 
         baseUrl: Qt.resolvedUrl("pages/")
@@ -37,21 +68,14 @@ Application {
         KeyNavigation.up: breadcrumb
 
         Component.onCompleted: {
-            pageStack.push("server.qml", {
-                audioPlayer: menu.audioPlayer,
-                menu: menu
-            });
         }
     }
 
     Breadcrumb {
         id: breadcrumb
-
-        anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-        }
+        x:0
+        y:0
+        width: parent.width
 
         stack: pageStack
 
@@ -62,10 +86,21 @@ Application {
         }
     }
 
-    Menu {
-        id: menu
-        visible: false
-        x: parent.width-menu.width
-        y: breadcrumb.height
+    Component {
+        id: menuComponent
+
+        Menu {
+            id: menu
+            visible: false
+            x: parent.width-menu.width
+            y: breadcrumb.y+breadcrumb.height
+        }
     }
+
+    Component.onCompleted: {
+        if (fontawesome.status===FontLoader.Ready) {
+            console.log("GO 2 ...");
+            startup();
+        }
+     }
 }

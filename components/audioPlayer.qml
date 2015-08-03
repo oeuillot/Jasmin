@@ -4,7 +4,8 @@ import fbx.ui.page 1.0
 import fbx.ui.control 1.0
 
 import "../jasmin" 1.0
-import "." 1.0
+
+import "fontawesome.js" as Fontawesome;
 
 Item {
     id: audioPlayer
@@ -151,7 +152,7 @@ Item {
         }
 
         onPositionChanged: {
-            //console.log("Position="+position+"/"+duration);
+            console.log("Position="+position+"/"+duration);
             if (!duration) {
                 progress=0;
                 return;
@@ -179,15 +180,20 @@ Item {
         color: "#E9E9E9"
     }
 
-    Image {
-        id: image1
-        x: (parent.width-width)/2
-        y: (parent.width-height)/2
-        width: 64
-        height: 64
-        antialiasing: true
-        source: "card/music.png"
+    Text {
+        id: text
+
+        x: 1
+        y: 1
+        width: parent.width-2
+        height: parent.width-2
+
+        font.pixelSize: 72
+        font.family: "fontawesome"
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
         opacity: 0.4
+        text: Fontawesome.Icon.music
     }
 
     Image {
@@ -262,14 +268,14 @@ Item {
         Text {
             x: 1
             y: 1
-            font.pixelSize: (audio.position>=60*60*1000)?9:12
+            font.pixelSize: (audio.position>=60*60*1000)?10:12
             text: formatTime(audio.position);
         }
         Text {
             x: 0
             y: 1
             width: parent.width-1
-            font.pixelSize: ((audio.duration-audio.position)>=60*60*1000)?9:12
+            font.pixelSize: ((audio.duration-audio.position)>=60*60*1000)?10:12
             text: "-"+formatTime(audio.duration-audio.position);
             visible: audio.duration>0
             horizontalAlignment: Text.AlignRight

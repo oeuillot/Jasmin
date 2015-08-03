@@ -3,136 +3,179 @@ import QtQuick 2.0
 import "card.js" as CardScript
 import "../jasmin" 1.0
 
+import "fontawesome.js" as Fontawesome;
+
 FocusScope {
     id: card
 
-    x: rectangle.x; y: rectangle.y
-    width: rectangle.width; height: rectangle.height
+    x: rectangle.x;
+    y: rectangle.y
+    width: rectangle.width;
+    height: rectangle.height
 
-    property var xml;
+    property var model;
 
-    property alias title: label.text;
+    property string upnpClass;
 
-    property var resImageSource;
+    property string resImageSource;
 
     property var upnpServer;
 
-    Component.onCompleted: {
-        if (!xml || !xml.nodes) {
+    property Item imageItem;
+
+    property alias title: label.text;
+
+    onModelChanged: {
+        //console.log("Xml="+Util.inspect(model, false, {}));
+        if (!model) {
             return;
         }
 
-        var $xml=Xml.$XML(xml.nodes);
+        if (imageItem) {
+            imageItem.destroy();
+            imageItem=null;
+        }
 
-        var upnpClass=$xml.byTagName("class", UpnpServer.UPNP_METADATA_XMLNS).text() || "object.item";
+        upnpClass=model.byTagName("class", UpnpServer.UPNP_METADATA_XMLNS).text() || "object.item";
 
-        // console.log("upnpclass="+upnpClass);
+       // console.log("upnpclass="+upnpClass);
 
-        rectangle.visible=true;
-        image.source=CardScript.computeImage($xml, upnpClass, image, resImage, upnpServer);
-        card.title= CardScript.computeLabel($xml, upnpClass);
-        info.text= CardScript.computeInfo($xml, upnpClass);
+        resImageSource=CardScript.computeImage(model, upnpClass) || "";
+     }
+
+    function delayedUpdateModel() {
+
+        if (!resImageSource) {
+            return false;
+        }
+
+        imageItem=resImage.createObject(rectImage);
     }
 
     Item {
         id: rectangle
-        width: 160
+        width: 154
         height: 190
-
-        visible: false
 
         focus: true
 
         Rectangle {
             visible: rectangle.activeFocus
-            anchors.fill: parent;
+            width: parent.width
+            height: parent.height
 
             color: "transparent"
             opacity: 0.1
             radius: 5
         }
 
-        Column {
-            anchors.fill: parent
-            anchors.leftMargin: rectangle.activeFocus?2:10
-            anchors.rightMargin: rectangle.activeFocus?2:10
-            anchors.bottomMargin: rectangle.activeFocus?2:10
-            anchors.topMargin: rectangle.activeFocus?2:10
+        Rectangle {
+            id: rectImage
+            x: rectangle.activeFocus?2:10
+            y: rectangle.activeFocus?2:10
+            width: parent.width-(rectangle.activeFocus?2:10)*2
+            height: parent.width-(rectangle.activeFocus?2:10)*2
+            border.color: (card.activeFocus)?"#FFB3B3":"#D3D3D3"
+            border.width: 1
+            color: "#E9E9E9"
 
-            spacing: 4
+            Text {
+                id: itemType
+                x: 1
+                y: 1
+                width: parent.width-2
+                height: parent.height-2
 
-            Rectangle {
+                opacity: 0.4
+                text: CardScript.computeType(upnpClass);
+                font.pixelSize: 92+(rectangle.activeFocus?4:0)
+                font.family: "fontawesome"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
 
-                width: parent.width-parent.anchors.leftMargin-parent.anchors.rightMargin
-                height: parent.width-parent.anchors.leftMargin-parent.anchors.rightMargin
-                border.color: "#D3D3D3"
-                border.width: 1
-                color: "#E9E9E9"
+            Component {
+                id: resImage
 
                 Item {
+                    id: imageItem
                     x: 1
                     y: 1
                     width: parent.width-2
                     height: parent.height-2
-                    clip: true
 
                     Image {
-                        id: image
-                        anchors.centerIn: parent
+                        x: 0
+                        y: 0
+                        width: parent.width
+                        height: parent.height
+
+                        smooth: true
+                        antialiasing: true
                         asynchronous: true
                         fillMode: Image.PreserveAspectFit
 
-                        opacity: 0.4
-                        width: 64
-                        height: 64
+                        sourceSize.width: 256
+                        sourceSize.height: 256
 
-                        sourceSize.width: 64
-                        sourceSize.height: 64
+                        source: "card/transparent.png"
                     }
 
-                    Component {
-                        id: resImage
+                    Image {
+                        id: relImage
+                        x: 0
+                        y: 0
+                        width: parent.width
+                        height: parent.height
 
-                        Image {
-                            objectName: 'res'
+                        smooth: true
+                        antialiasing: true
+                        asynchronous: true
+                        fillMode: Image.PreserveAspectFit
 
-                            smooth: true
-                            antialiasing: true
-                            anchors.centerIn: parent
-                            asynchronous: true
-                            fillMode: Image.PreserveAspectFit
+                        sourceSize.width: 256
+                        sourceSize.height: 256
 
-                            sourceSize.width: 256
-                            sourceSize.height: 256
-
-                            onSourceChanged: {
-                                card.resImageSource=source;
-                            }
-                        }
+                        source: resImageSource
                     }
                 }
             }
-
-            Text {
-                id: label
-                width: parent.width;
-                color: "#404040"
-                elide: Text.ElideMiddle
-                font.bold: true
-                font.pixelSize: (text && text.length>14)?14:16
-
-            }
-
-            Text {
-                id: info
-                width: parent.width;
-                color: "#9A9AA2"
-                elide: Text.ElideMiddle
-                font.bold: true
-                font.pixelSize: (text && text.length>14)?12:14
-                visible: !rectangle.activeFocus
-            }
-
         }
+
+        Rectangle {
+            x: 2
+            y: label.y
+            width: parent.width-4
+            height: label.height+info.height
+            opacity: 0.4
+            color: "red"
+            visible: card.activeFocus
+        }
+
+        Text {
+            id: label
+            y: rectImage.y+rectImage.height
+            x: rectangle.activeFocus?2:10
+            width: parent.width-x;
+            color: "#404040"
+            elide: Text.ElideMiddle
+            font.bold: true
+            font.pixelSize: (text && text.length>14)?14:16
+            text: CardScript.computeLabel(model, upnpClass)
+        }
+
+        Text {
+            id: info
+            y: label.y+label.height
+            x: rectangle.activeFocus?2:10
+            width: parent.width-x;
+            color: "#9A9AA2"
+            elide: Text.ElideMiddle
+            font.bold: true
+            font.pixelSize: (text && text.length>14)?12:14
+            visible: !rectangle.activeFocus
+            text: CardScript.computeInfo(model, upnpClass)
+        }
+
     }
 }
