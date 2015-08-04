@@ -32,6 +32,7 @@ FocusScope {
         }
 
         if (imageItem) {
+            imageItem.visible=false;
             imageItem.destroy();
             imageItem=null;
         }
@@ -98,7 +99,6 @@ FocusScope {
                 id: resImage
 
                 Item {
-                    id: imageItem
                     x: 1
                     y: 1
                     width: parent.width-2
@@ -122,7 +122,6 @@ FocusScope {
                     }
 
                     Image {
-                        id: relImage
                         x: 0
                         y: 0
                         width: parent.width

@@ -1,7 +1,7 @@
 {
     "name": "Jasmin",
     "identifier": "net.oeuillot.jasmin",
-    "description": "Upnp client pour Freebox par Olivier Oeuillot",
+    "description": "Upnp client pour Freebox Révolution par Olivier Oeuillot",
     "entryPoints": {
         "main": {
             "file": "main.qml",

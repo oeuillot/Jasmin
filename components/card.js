@@ -81,7 +81,7 @@ function computeImage(xml, upnpClass) {
 
         var imageType=ts[1];
 
-        if ([ "png", "jpeg", "gif"].indexOf(imageType)<0) {
+        if ([ "png", "jpeg", "gif", "bmp", "svg+xml" ].indexOf(imageType)<0) {
             console.log("Invalid image Type '"+imageType+"'");
             return null;
         }
@@ -90,7 +90,7 @@ function computeImage(xml, upnpClass) {
 
         var imageSource=upnpServer.relativeURL(url).toString();
 
-        console.log("Return "+imageSource);
+        //console.log("Return "+imageSource);
 
         return imageSource;
     });
@@ -124,6 +124,12 @@ function computeInfo(xml, upnpClass) {
     var date=xml.byPath("dc:date", UpnpServer.DIDL_XMLNS_SET).first().text();
     if (date) {
         var jdate=new Date(date);
+
+
+        if (jdate.getUTCMonth()===0 && jdate.getUTCDate()===1 && jdate.getUTCHours()===0 && jdate.getUTCMinutes()===0 && jdate.getUTCSeconds()===0) {
+            return String(jdate.getUTCFullYear());
+        }
+
 
         return Qt.formatDateTime(jdate, "dd/MM/yyyy hh:mm");
     }

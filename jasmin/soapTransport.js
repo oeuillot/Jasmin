@@ -12,8 +12,9 @@ var XMLSOAP_XMLNS={
     "": "http://schemas.xmlsoap.org/soap/envelope/"
 }
 
-function SoapTransport(url) {
+function SoapTransport(url, xmlParserWorker) {
     this.url = url;
+    this.xmlParserWorker=xmlParserWorker;
 }
 
 SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
@@ -48,6 +49,7 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
 
     var deferred = transaction.send();
 
+    var self=this;
     deferred = deferred.then(function onSuccess(response) {
 
         if (response.isError() || !response.status) {
@@ -63,7 +65,12 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
 
         var deferred;
         try {
-            deferred = Xml.parseXml(response.body);
+            if (self.xmlParserWorker) {
+                deferred=self.xmlParserWorker.parseXML(response.body);
+
+            } else {
+                deferred = Xml.parseXML(response.body);
+            }
 
         } catch (x) {
             var message = "Can not parse document " + x;

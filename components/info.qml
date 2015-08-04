@@ -15,12 +15,18 @@ Item {
     property var xml
     property string resImageSource;
     property string upnpClass;
+    property int cellIndex;
 
     property int markerPosition: 80;
 
     property string borderColor: "#D3D3D3"
     property string backgroundColor: "#E9E9E9"
 
+    property bool destructing;
+
+    Component.onDestruction: {
+        destructing=true;
+    }
 
     Component {
         id: object
@@ -50,7 +56,7 @@ Item {
         property bool done : false;
 
         onPaint: {
-            console.log("Paint ! "+(cnt), " "+done+" "+height);
+//            console.log("Paint ! "+(cnt), " "+done+" "+height);
 /*
             if (cnt!==1 && (height>256)) {
                 cnt++;
@@ -134,7 +140,7 @@ Item {
             var clz=upnpClass;
 
             for(;clz;) {
-              console.log("Try "+clz);
+              //console.log("Try "+clz);
 
                 infoClass=upnpClasses[clz];
                 if (infoClass) {
@@ -148,12 +154,9 @@ Item {
                 infoClass=object;
             }
 
-            console.log("Info class="+infoClass+Util.inspect(xml, false, {}));
+            //console.log("Info class="+infoClass+Util.inspect(xml, false, {}));
 
             var objectID=xml.attr("id");
-
-            console.log("UpnpServer="+upnpServer+" player="+audioPlayer);
-
 
             var obj=infoClass.createObject(rowInfo, {
                                                x: 0,
@@ -164,8 +167,7 @@ Item {
                                                upnpServer: widget.upnpServer,
                                                audioPlayer: widget.audioPlayer,
                                                objectID: objectID
-                                           })
-
+                                           });
        }
     }
 }

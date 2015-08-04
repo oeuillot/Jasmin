@@ -152,7 +152,7 @@ Item {
         }
 
         onPositionChanged: {
-            console.log("Position="+position+"/"+duration);
+//            console.log("Position="+position+"/"+duration);
             if (!duration) {
                 progress=0;
                 return;

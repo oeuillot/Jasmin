@@ -23,7 +23,10 @@ function addLine(grid, labelTitle, valueTitle, title, xml, path, formatter) {
 
     var reg=/^([^@]*)(@.*)?$/i.exec(path);
     //console.log("reg=",reg);
-    var  value=xml.byPath(reg[1], XMLNS).first();
+    var value=xml;
+    if (reg[1]) {
+        value=xml.byPath(reg[1], XMLNS).first();
+    }
     if (!reg[2]) {
         value=value.text();
     } else {
@@ -52,12 +55,25 @@ function addLine(grid, labelTitle, valueTitle, title, xml, path, formatter) {
 
 }
 
+function dateYearFormatter(stringDate) {
+    var date=new Date(stringDate);
+
+    if (date.getUTCMonth()===0 && date.getUTCDate()===1 && date.getUTCHours()===0 && date.getUTCMinutes()===0 && date.getUTCSeconds()===0) {
+        return String(date.getUTCFullYear());
+    }
+
+    return null;
+}
+
 function dateFormatter(stringDate) {
     var date=new Date(stringDate);
 
+    if (date.getUTCMonth()===0 && date.getUTCDate()===1 && date.getUTCHours()===0 && date.getUTCMinutes()===0 && date.getUTCSeconds()===0) {
+        return null;
+    }
+
     return  Qt.formatDateTime(date, "dddd dd MMMM yyyy hh:mm:ss")
 }
-
 function sizeFormatter(stringSize) {
     var size=parseFloat(stringSize);
 

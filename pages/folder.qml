@@ -29,37 +29,19 @@ Page {
             property int cellIndex;
 
             Keys.onPressed: {
-                if (event.key === Qt.Key_Return) {
+                switch(event.key) {
+                case Qt.Key_Escape:
+                case Qt.Key_Back:
+                    if (info) {
+                        info.destroy();
+                        info=null;
+                    }
+                    return;
+
+                case Qt.Key_Return:
+                case Qt.Key_Enter:
                     listView.open(this, false);
                     event.accepted=true;
-                    return;
-                }
-
-                if (event.key === Qt.Key_Left) {
-                    if (listView.focusLeft(cellIndex)) {
-                        event.accepted=true;
-                    }
-                    return;
-                }
-
-                if (event.key === Qt.Key_Right) {
-                    if (listView.focusRight(cellIndex)) {
-                        event.accepted=true;
-                    }
-                    return;
-                }
-
-                if (event.key === Qt.Key_Up) {
-                    if (listView.focusTop(cellIndex)) {
-                        event.accepted=true;
-                    }
-                    return;
-                }
-
-                if (event.key === Qt.Key_Down) {
-                    if (listView.focusBottom(cellIndex)) {
-                        event.accepted=true;
-                    }
                     return;
                 }
             }
@@ -72,6 +54,7 @@ Page {
                         listView.open(this, true);
 
                     } else {
+//                        console.log("Active focus changed for card "+this.cellIndex);
                         listView.show(this);
                     }
 
@@ -164,12 +147,13 @@ Page {
         Component.onCompleted: {
             fillModelDeferred=FolderScript.fillModel(page.upnpServer, page.meta);
 
-            fillModelDeferred.then(function(list) {
-                console.log("List="+list);
+            fillModelDeferred.then(function onSuccess(list) {
+                //console.log("List="+list);
                 listView.model=list;
                 listView.updateLayout();
 
                 listView.forceActiveFocus();
+
             });
         }
 

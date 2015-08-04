@@ -26,8 +26,6 @@ Item {
             font.pixelSize: 14
 
             horizontalAlignment: Text.AlignRight
-
-            width: 80
         }
     }
 
@@ -58,9 +56,11 @@ Item {
             y: 0
 
             Text {
+                width: parent.width;
+                elide: Text.ElideRight
                 text: UpnpObject.getText(xml, "dc:title");
                 font.bold: true
-                font.pixelSize: 20
+                font.pixelSize: (text.length<60)?20:((text.length<100)?16:14)
             }
 
             Rectangle {
@@ -80,7 +80,9 @@ Item {
 
                 Component.onCompleted: {
                     UpnpObject.addLine(grid, labelComponent, valueComponent, "Date :", xml, "dc:date", UpnpObject.dateFormatter);
+                    UpnpObject.addLine(grid, labelComponent, valueComponent, "Année :", xml, "dc:date", UpnpObject.dateYearFormatter);
                     UpnpObject.addLine(grid, labelComponent, valueComponent, "Taille :", xml, "res@size", UpnpObject.sizeFormatter);
+                    UpnpObject.addLine(grid, labelComponent, valueComponent, "Nombre de fichiers :", xml, "@childCount");
                 }
             }
         }
@@ -109,6 +111,7 @@ Item {
 
             antialiasing: true
             fillMode: Image.PreserveAspectFit
+            cache: false
 
             source: (resImageSource?resImageSource:'')
             asynchronous: true

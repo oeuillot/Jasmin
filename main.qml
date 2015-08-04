@@ -5,6 +5,7 @@ import fbx.ui.page 1.0
 import fbx.ui.layout 1.0
 
 import "./pages" 1.0
+import "./jasmin" 1.0
 
 Application {
     id: app
@@ -30,7 +31,8 @@ Application {
 
         pageStack.push("server.qml", {
                            audioPlayer: menu.audioPlayer,
-                           menu: menu
+                           menu: menu,
+                           xmlParserWorker: xmlParserWorker
                        });
     }
 
@@ -86,6 +88,18 @@ Application {
         }
     }
 
+    XmlParserWorker {
+        id: xmlParserWorker
+    }
+
+    Waiting {
+        id: waiting
+        x: 0
+        y: parent.height-waiting.height*2
+
+        xmlParserWorker: xmlParserWorker
+    }
+
     Component {
         id: menuComponent
 
@@ -93,7 +107,7 @@ Application {
             id: menu
             visible: false
             x: parent.width-menu.width
-            y: breadcrumb.y+breadcrumb.height
+            y: breadcrumb.y+breadcrumb.height+20
         }
     }
 
@@ -102,5 +116,5 @@ Application {
             console.log("GO 2 ...");
             startup();
         }
-     }
+    }
 }

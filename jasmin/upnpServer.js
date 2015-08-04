@@ -5,6 +5,7 @@
 
 .import "util.js" as Util
 .import "xml.js" as Xml
+.import "xmlParser.js" as XmlParser
 .import "soapTransport.js" as Soap
 
 
@@ -41,9 +42,10 @@ var DIDL_XMLNS_SET = {
 }
 
 
-function UpnpServer(url) {
+function UpnpServer(url, xmlParserWorker) {
     this.url=url;
     this.errored=undefined;
+    this.xmlParserWorker=xmlParserWorker;
 
     this.deviceDescription=null;
     this.urlBase=null;
@@ -77,7 +79,7 @@ UpnpServer.prototype.tryConnection=function(){
             return Async.Deferred.rejected(self.errored);
         }
 
-        var deferred = Xml.parseXml(response.body);
+        var deferred = Xml.parseXML(response.body);
 
         deferred=deferred.then(function(xmlResponse) {
             try {
@@ -147,7 +149,7 @@ UpnpServer.prototype._fillDeviceDescription=function(xmlDocument) {
 
     console.log("controlURL=", controlURL);
 
-    var soapTransport=new Soap.SoapTransport(controlURL.toString());
+    var soapTransport=new Soap.SoapTransport(controlURL.toString(), this.xmlParserWorker);
     this.soapTransport=soapTransport;
 
     var self=this;
@@ -218,7 +220,7 @@ UpnpServer.prototype.getSortCapabilities=function() {
 
         var sp={};
         sorts.forEach(function(sort) {
-            Xml.splitName(sort, sp);
+            XmlParser.splitName(sort, sp);
 
             var x=xmlns[sp.xmlns || ""];
             var key=sp.name+"##"+x;
@@ -275,20 +277,20 @@ UpnpServer.prototype.getSystemUpdateID=function() {
 }
 
 
-UpnpServer.prototype.browseDirectChildren=function(objectId, filter, startingIndex, requestedCount, sortCriteria ) {
+UpnpServer.prototype.browseDirectChildren=function(objectId, options ) {
 
-    return this.browse(objectId, "BrowseDirectChildren", filter, startingIndex, requestedCount, sortCriteria);
+    return this.browse(objectId, "BrowseDirectChildren", options);
 }
 
-UpnpServer.prototype.browseMetadata=function(objectId) {
-    return this.browse(objectId, "BrowseMetadata", null, 0, 0, null);
+UpnpServer.prototype.browseMetadata=function(objectId, options) {
+    return this.browse(objectId, "BrowseMetadata", options);
 }
 
-UpnpServer.prototype.relativeURL = function(url) {
-    return Web.Http.URL.prototype.relative.call(this.urlBase, url);
-}
 
-UpnpServer.prototype.browse=function(objectId, browseFlag, filters, startingIndex, requestedCount, sortCriteria) {
+UpnpServer.prototype.browse=function(objectId, browseFlag, options) {
+    // filters, startingIndex, requestedCount, sortCriteria
+
+    options=options || {};
 
     var xmlns={
     };
@@ -314,8 +316,8 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, filters, startingInde
 
 
     var filterParams=[];
-    if (filters) {
-        filters.forEach(function(filter) {
+    if (options.filters) {
+        options.filters.forEach(function(filter) {
             var name=filter.name;
             var prefix=getPrefix(filter.namespaceURI);
 
@@ -324,14 +326,14 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, filters, startingInde
     }
 
     var sortParams=[];
-    if (sortCriteria) {
-        sortCriteria.forEach(function(criteria) {
+    if (options.sortCriteria) {
+        options.sortCriteria.forEach(function(criteria) {
             var name=criteria.name;
             var prefix=getPrefix(criteria.namespaceURI);
 
             sortParams.push((criteria.ascending?'+':'-')+(prefix?(prefix+":"):"")+name);
         });
-      }
+    }
 
     var attrs={};
     for(var x in xmlns) {
@@ -339,14 +341,19 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, filters, startingInde
         attrs["xmlns"+(prefix?(':'+prefix):'')]=x;
     }
 
+    var startingIndex=(typeof(options.startingIndex)==="number")?options.startingIndex:0;
+    var requestCount=(typeof(options.requestCount)==="number")?options.requestCount:0;
+
     var params={
         ObjectID: objectId,
         BrowseFlag: browseFlag,
         Filter: (filterParams.length?filterParams.join():"*"),
-                          StartingIndex: (typeof(startingIndex)==="number")?startingIndex:0,
-                                                                             RequestedCount: (typeof(requestCount)==="number")?requestCount:0,
-                                                                                                                              SortCriteria: (sortParams.length?sortParams.join():"*"),
+        StartingIndex: startingIndex,
+        RequestedCount: requestCount ,
+        SortCriteria: (sortParams.length?sortParams.join():"*"),
     };
+
+    var self=this;
 
     var deferred=this.soapTransport.sendAction("urn:schemas-upnp-org:service:ContentDirectory:1#Browse", {
                                                    _name: "u:Browse",
@@ -369,15 +376,25 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, filters, startingInde
 
             //console.log("DIDL="+didl);
 
-            var deferred = Xml.parseXml(didl);
+            var xmlDeferred;
 
-            deferred=deferred.then(function(xml) {
+            if (self.xmlParserWorker) {
+                xmlDeferred=self.xmlParserWorker.parseXML(didl);
+
+            } else {
+                xmlDeferred=Xml.parseXML(didl);
+            }
+
+            xmlDeferred=xmlDeferred.then(function onSuccess(xml) {
                 ret.result = xml;
 
                 return ret;
+            }, null, function onProgress(data) {
+                //console.log("PDD="+data);
+                 deferred.progress(data);
             });
 
-            return deferred;
+            return xmlDeferred;
         }
 
         // console.log("Parsed response="+Util.inspect(ret, false, {}));
@@ -386,4 +403,8 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, filters, startingInde
     });
 
     return deferred;
+}
+
+UpnpServer.prototype.relativeURL = function(url) {
+    return Web.Http.URL.prototype.relative.call(this.urlBase, url);
 }

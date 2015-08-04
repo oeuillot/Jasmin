@@ -4,14 +4,14 @@
 
 function fillModel(upnpServer, meta) {
 
-    //console.profile();
-    //console.log(Util.inspect(meta.result, false, {}));
+    // console.profile();
+    // console.log(Util.inspect(meta.result, false, {}));
 
     var container=meta.result.byPath("DIDL-Lite/container", UpnpServer.DIDL_XMLNS_SET);
-    //console.log("Container=",Util.inspect(container));
+    // console.log("Container=",Util.inspect(container));
 
     var objectID=container.attr("id");
-    //console.log("ID="+objectID);
+    // console.log("ID="+objectID);
 
     var filters=[{
                      name: "title",
@@ -41,15 +41,21 @@ function fillModel(upnpServer, meta) {
 
             ];
 
-    var deferred = upnpServer.browseDirectChildren(objectID, filters, 0, 99, sorters).then(function onSuccess(xml){
+    var deferred = upnpServer.browseDirectChildren(objectID, {
+                                                       filters: filters,
+                                                       //    	requestCount: 99,
+                                                       sortCriteria: sorters
+                                                   });
+
+    deferred=deferred.then(function onSuccess(xml){
+
+        //            console.log("Return="+Util.inspect(xml));
 
         var children=xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children();
-       //console.log(Util.inspect(children, false, {}));
+        // console.log(Util.inspect(children, false, {}));
 
         return children.toArray();
 
-    }, function onFailure(reason) {
-        console.error("Failure", reason);
     });
 
     return deferred;

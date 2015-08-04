@@ -107,45 +107,43 @@ FocusScope {
                     }
 
                     Keys.onPressed: {
-
-                        if (event.key === Qt.Key_Right) {
+                        switch(event.key) {
+                        case Qt.Key_Right:
                             if (changePosition(this, 1)) {
                                 event.accepted = true;
                             }
                             return;
-                        }
 
-                        if (event.key === Qt.Key_Down) {
+
+                        case Qt.Key_Down:
                             if (changePosition(this, 2)) {
                                 event.accepted = true;
                             }
                             return;
-                        }
 
-                        if (event.key === Qt.Key_Left) {
+                        case Qt.Key_Left:
                             if (changePosition(this, -1)) {
                                 event.accepted = true;
                             }
                             return;
-                        }
 
-                        if (event.key === Qt.Key_Up) {
+                        case Qt.Key_Up:
                             if (changePosition(this, -2)) {
                                 event.accepted = true;
                             }
                             return;
-                        }
-                        if (event.key === Qt.Key_Return) {
+
+                        case Qt.Key_Return:
+                        case Qt.Key_Enter:
                             //var res=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).first();
 
                             audioPlayer.playMusic(upnpServer, xml, resImageSource);
                             event.accepted = true;
                             return;
                         }
-
                     }
 
-                    //property alias text: value.text
+
                     Text {
                         id: duration
                         x: 320
@@ -210,6 +208,7 @@ FocusScope {
                     text: UpnpObject.getText(xml, "dc:title");
                     font.bold: true
                     font.pixelSize: 20
+                    elide: Text.ElideRight
                 }
 
                 Row {
@@ -321,6 +320,7 @@ FocusScope {
 
                 antialiasing: true
                 fillMode: Image.PreserveAspectFit
+                cache: false
 
                 source: (resImageSource?resImageSource:'')
                 asynchronous: true

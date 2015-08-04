@@ -45,11 +45,15 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
             ];
 
-    //console.log("Request "+objectID);
+    // console.log("Request "+objectID);
 
-    var deferred=upnpServer.browseDirectChildren(objectID, null, 0, 256, trackSorters).then(function onSuccess(xml) {
+    var deferred=upnpServer.browseDirectChildren(objectID, {
+    	sorters: trackSorters,
+    	requestCount: 256
+    	
+    }).then(function onSuccess(xml) {
 
-        //console.log(Util.inspect(xml, false, {}));
+        // console.log(Util.inspect(xml, false, {}));
 
         var listByDisk={};
         var list=[];
@@ -62,10 +66,11 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
         xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children().forEach(function(item) {
 
-            //console.log("item=",Util.inspect(item, false, {}));
+            // console.log("item=",Util.inspect(item, false, {}));
 
             var upnpClass=item.byPath("upnp:class", UpnpServer.DIDL_XMLNS_SET).text();
-            //console.log("item=",Util.inspect(item, false, {})+" => "+upnpClass);
+            // console.log("item=",Util.inspect(item, false, {})+" =>
+						// "+upnpClass);
             if (!upnpClass){
                 return;
             }
@@ -109,7 +114,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
             if (duration) {
                 var r=/([0-9]{1,2}:)([0-9]{1,2}:)([0-9]{1,2})(\.[0-9]{1,3})?/.exec(duration);
 
-                //                    console.log("r="+Util.inspect(r, false, {}));
+                // console.log("r="+Util.inspect(r, false, {}));
                 if (r) {
                     var d=0;
                     if (r[1]) {
@@ -171,7 +176,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
             ds.push(infos);
         });
 
-        //console.log("list=",Util.inspect(list, false, {}));
+        // console.log("list=",Util.inspect(list, false, {}));
 
         if (!list.length) {
             return;
@@ -242,7 +247,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                     objectID: infos.xml.attr("id")
                 };
 
-                //console.log(Util.inspect(params, false, {}));
+                // console.log(Util.inspect(params, false, {}));
 
                 var row=components.track.createObject(grid, params);
 

@@ -6,14 +6,14 @@ import "../components" 1.0
 import "../jasmin" 1.0
 import "." 1.0
 
-import "server.js" as ServerScript;
-
 Page {
     id: page
     title: "Choix du serveur"
 
     property Menu menu;
     property AudioPlayer audioPlayer;
+
+    property XmlParserWorker xmlParserWorker;
 
     Column {
         id: enterIP
@@ -39,7 +39,7 @@ Page {
                 font.bold: true
                 color: "black"
                 width: 700
-                text: "192.168.0.58:10293/DeviceDescription.xml"
+                text: "localhost:10293/DeviceDescription.xml"
                 displayText: "URL du server"
 
                 property string text1: "192.168.3.32:10293/DeviceDescription.xml"
@@ -88,7 +88,10 @@ Page {
                     enterIP.deferredRequest.cancel();
                 }
 
-                enterIP.deferredRequest=ServerScript.tryURL("http://"+urlEntry.text);
+
+                var upnpServer=new UpnpServer.UpnpServer("http://"+urlEntry.text, xmlParserWorker);
+
+                enterIP.deferredRequest = upnpServer.tryConnection();
 
                 text.text="Tentative de connexion ...";
 
@@ -111,7 +114,8 @@ Page {
                                   upnpServer: upnpServer,
                                   meta: meta,
                                   title: upnpServer.name,
-                                  audioPlayer: page.audioPlayer
+                                  audioPlayer: page.audioPlayer,
+                                  xmlParserWorker: page.xmlParserWorker
                               });
 
                 }, function(reason) {

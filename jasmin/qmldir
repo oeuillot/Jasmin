@@ -1,3 +1,4 @@
 UpnpServer 1.0 upnpServer.js
 Util 1.0 util.js
 Xml 1.0 xml.js
+XmlParserWorker 1.0 xmlParserWorker.qml
