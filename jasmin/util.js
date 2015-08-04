@@ -1,3 +1,5 @@
+.pragma library
+
 //nodejs  Util.js
 
 function inspect(obj, showHidden, depth, colors) {

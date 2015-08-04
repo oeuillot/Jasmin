@@ -1,3 +1,5 @@
+.pragma library
+
 .import "util.js" as Util
 .import fbx.async 1.0 as Async
 .import "xmlParser.js" as XmlParser

@@ -95,7 +95,7 @@ Application {
     Waiting {
         id: waiting
         x: 0
-        y: parent.height-waiting.height*2
+        y: 64
 
         xmlParserWorker: xmlParserWorker
     }

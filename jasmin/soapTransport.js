@@ -1,3 +1,5 @@
+.pragma library
+
 .import fbx.async 1.0 as Async
 .import fbx.web 1.0 as Web
 .import QtQuick.XmlListModel 2.0 as XmlListModel

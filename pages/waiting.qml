@@ -27,7 +27,7 @@ Item {
     Text {
         color: "#417F00"
         font.bold: true
-        text: "Analyse en cours "+Math.floor(xmlParserWorker.progress*100)+" %"
+        text: "En cours de chargement - "+Math.floor(xmlParserWorker.progress*100)+" %"
         width: parent.width;
         height: parent.height
 

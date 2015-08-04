@@ -400,6 +400,7 @@ FocusScope {
         Keys.onPressed: {
             function markRepeat() {
                 grid.repeatStop=Date.now()+500;
+                console.log("MARK STOP");
             }
 
             switch(event.key) {
@@ -440,8 +441,9 @@ FocusScope {
             repeat: true
 
             onTriggered: {
-                //console.log("BING "+grid.cellUpdate.length);
+                console.log("BING "+grid.cellUpdate.length+" "+(grid.repeatStop-Date.now()));
                 if (grid.repeatStop && grid.repeatStop>Date.now()) {
+                    console.log("STOP REPEAT");
                     return;
                 }
 

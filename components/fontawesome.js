@@ -1,3 +1,5 @@
+.pragma library
+
 var Name = "fontawesome";
 
 var Icon = {

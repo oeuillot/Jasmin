@@ -213,8 +213,7 @@ function _unescape(t) {
         return t;
     }
 
-    for(var i=0;i<1000000;i++) {
-    }
+    //for(var i=0;i<1000000;i++) { }
 
     var ret;
     var idx=0;

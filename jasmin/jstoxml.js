@@ -1,3 +1,5 @@
+.pragma library
+
 // http://github.com/davidcalhoun/jstoxml
 
 function toXML(obj, config){

@@ -11,7 +11,9 @@ WorkerScript {
     property var deferreds: ({})
     property int deferredId: 0;
 
-    property int delayBetweenMessages: 50;
+    property int delayBetweenMessages: 250;
+
+    property int minimumDelay: 500;
 
     property int workersCount: 0
     property real progress: 0;
@@ -97,7 +99,7 @@ WorkerScript {
 
         for(var k in deferreds) {
             var info=deferreds[k];
-            if (info.start+500>now) {
+            if (info.start+minimumDelay>now) {
                 continue;
             }
 

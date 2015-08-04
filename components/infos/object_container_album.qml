@@ -243,7 +243,9 @@ FocusScope {
                 font.bold: false
                 font.pixelSize: 16
                 width: parent.width
+                elide: Text.ElideMiddle
                 height: 20
+
             }
 
             Rectangle {
