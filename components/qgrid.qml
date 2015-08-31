@@ -23,6 +23,12 @@ FocusScope {
 
     property int cellShownCount: 32;
 
+    property int viewColumns: 7;
+
+    property int viewRows: 4
+
+    property int viewCells: 0;
+
     onActiveFocusChanged: {
         console.log("Grid: Active focus "+activeFocus);
 
@@ -36,7 +42,7 @@ FocusScope {
                 rowY-=grid.info.height;
             }
 
-            var firstCellIndex=Math.floor(rowY/(cellHeight+verticalSpacing))*grid.viewColumns;
+            var firstCellIndex=Math.floor(rowY/(cellHeight+verticalSpacing))*widget.viewColumns;
             focus(firstCellIndex);
         }
     }
@@ -101,7 +107,7 @@ FocusScope {
     function showInfo(item, infoComponent, params) {
         //        console.log("Show info of "+item.cellIndex);
 
-        var rowIndex=item.cellIndex/grid.viewColumns;
+        var rowIndex=item.cellIndex/widget.viewColumns;
 
         params=params || {};
         params.width=grid.width;
@@ -146,40 +152,40 @@ FocusScope {
     }
 
     function focusLeft(cellIndex) {
-        var x=(cellIndex % grid.viewColumns);
+        var x=(cellIndex % widget.viewColumns);
 
         if (!x) {
-            return focus(cellIndex+grid.viewColumns-1);
+            return focus(cellIndex+widget.viewColumns-1);
         }
 
         return focus(cellIndex-1);
     }
 
     function focusRight(cellIndex) {
-        var x=(cellIndex % grid.viewColumns);
+        var x=(cellIndex % widget.viewColumns);
 
-        if (x+1===grid.viewColumns) {
-            return focus(cellIndex-grid.viewColumns+1);
+        if (x+1===widget.viewColumns) {
+            return focus(cellIndex-widget.viewColumns+1);
         }
 
         return focus(cellIndex+1);
     }
 
     function focusTop(cellIndex) {
-        return focus(cellIndex-grid.viewColumns);
+        return focus(cellIndex-widget.viewColumns);
     }
 
     function focusBottom(cellIndex) {
         var modelSize=Math.max(widget.model.length, widget.modelSize);
 
-        if (cellIndex+grid.viewColumns>=modelSize) {
-            if (Math.floor(cellIndex/grid.viewColumns)===Math.floor((modelSize-1)/grid.viewColumns)) {
+        if (cellIndex+widget.viewColumns>=modelSize) {
+            if (Math.floor(cellIndex/widget.viewColumns)===Math.floor((modelSize-1)/widget.viewColumns)) {
                 return false;
             }
 
             cellIndex=modelSize-1;
         } else {
-            cellIndex+=grid.viewColumns;
+            cellIndex+=widget.viewColumns;
         }
 
         return focus(cellIndex);
@@ -220,12 +226,6 @@ FocusScope {
         contentWidth: width
         contentHeight: height
 
-        property int viewColumns: 7;
-
-        property int viewRows: 4
-
-        property int viewCells: 0;
-
         property var cellDelegates: ([])
 
         property int pageIndex;
@@ -247,15 +247,15 @@ FocusScope {
         onHeightChanged: {
             //console.log("Width="+width+" height="+height);
 
-            viewColumns=Math.floor((width+horizontalSpacing)/(cellWidth+horizontalSpacing));
+            widget.viewColumns=Math.floor((width+horizontalSpacing)/(cellWidth+horizontalSpacing));
 
-            viewRows=Math.ceil((height+verticalSpacing)/(cellHeight+verticalSpacing));
+            widget.viewRows=Math.ceil((height+verticalSpacing)/(cellHeight+verticalSpacing));
 
-            viewCells=viewColumns*(viewRows+1); // Pour le scroll
+            widget.viewCells=widget.viewColumns*(widget.viewRows+1); // Pour le scroll
 
-            //console.log("width="+width+" height="+height+" viewColumns="+viewColumns+" viewRows="+viewRows+" viewCells="+viewCells);
+            //console.log("width="+width+" height="+height+" viewColumns="+viewColumns+" viewRows="+viewRows+" viewCells="+widget.viewCells);
 
-            cellShownCount=viewCells;
+            cellShownCount=widget.viewCells;
 
             updateLayout();
         }
@@ -290,11 +290,11 @@ FocusScope {
             var created=0;
             var associated=0;
 
-            for(var j=0;j<viewRows;j++, rowIndex++) {
-                var idx=rowIndex*grid.viewColumns;
+            for(var j=0;j<widget.viewRows;j++, rowIndex++) {
+                var idx=rowIndex*widget.viewColumns;
                 var delegateIndex=cellIndexToCellDelegate(idx);
 
-                for(var i=0;i<grid.viewColumns;i++,idx++,delegateIndex++) {
+                for(var i=0;i<widget.viewColumns;i++,idx++,delegateIndex++) {
                     var cellModel=model[idx];
                     var cellDelegate=grid.cellDelegates[delegateIndex];
 
@@ -390,11 +390,11 @@ FocusScope {
         }
 
         function cellIndexToCellDelegate(cellIndex) {
-            var rowIndex=Math.floor(cellIndex/grid.viewColumns);
+            var rowIndex=Math.floor(cellIndex/widget.viewColumns);
 
-            var delegateIndex = ((rowIndex % (grid.viewRows+1))*grid.viewColumns)+(cellIndex % grid.viewColumns);
+            var delegateIndex = ((rowIndex % (widget.viewRows+1))*widget.viewColumns)+(cellIndex % widget.viewColumns);
 
-            //console.log("toDelegateIndex("+cellIndex+")="+delegateIndex+"  rowIndex="+rowIndex+" grid.viewRows="+grid.viewRows);
+            //console.log("toDelegateIndex("+cellIndex+")="+delegateIndex+"  rowIndex="+rowIndex+" viewRows.viewRows="+viewRows.viewRows);
 
             return delegateIndex;
         }
@@ -410,7 +410,7 @@ FocusScope {
 
             var modelSize=Math.max(widget.model.length, widget.modelSize);
 
-            var ch=Math.floor((modelSize+viewColumns-1)/viewColumns)
+            var ch=Math.floor((modelSize+widget.viewColumns-1)/widget.viewColumns)
 
             var h=ch*(cellHeight+verticalSpacing)-verticalSpacing;
             if (info) {

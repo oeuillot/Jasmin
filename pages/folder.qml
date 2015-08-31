@@ -187,11 +187,6 @@ Page {
                 console.log("LOAD PAGE "+Math.floor(position/pageSize));
                 pageSizeLoaded[Math.floor(position/pageSize)]=true;
 
-                // Keep only the 2 first loadings !
-                for(;loadingPages.length>2;) {
-                    loadingPages.pop();
-                }
-
                 var def=FolderScript.loadModel(page.upnpServer, infos.objectID, position, pageSize);
                 def.then(function onSuccess(result) {
                     //                    console.log("Response List="+result.list.length);
@@ -214,22 +209,22 @@ Page {
             listView.onFocusIndexChanged.connect(function() {
                 var cur=listView.focusIndex;
 
-                var pi=Math.floor(cur/pageSize);
-                if (!pageSizeLoaded[pi]) {
+                loadingPages=[];
+
+                for(var i=0;i<=listView.viewRows;i++) {
+                    var pi=Math.floor((cur+i*listView.viewColumns)/pageSize);
+
+                    if (pageSizeLoaded[pi]) {
+                        continue;
+                    }
+
                     if (loading) {
                         loadingPages.unshift(pi*pageSize);
-                    } else{
-                        loadPage(pi*pageSize);
+                        continue;
                     }
-                }
 
-                var pi2=Math.floor((cur+cellShownCount)/pageSize);
-                if (!pageSizeLoaded[pi2]) {
-                    if (loading) {
-                        loadingPages.unshift(pi2*pageSize);
-                    } else{
-                        loadPage(pi2*pageSize);
-                    }
+                    loadPage(pi*pageSize);
+                    break;
                 }
 
             });

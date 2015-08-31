@@ -138,7 +138,7 @@ Item {
 
             switch(event.key) {
             case Qt.Key_Up:
-                console.log("UPPPPP");
+//                console.log("UPPPPP");
 
                  card.forceActiveFocus();
                  event.accepted=true;
