@@ -187,6 +187,11 @@ Page {
                 console.log("LOAD PAGE "+Math.floor(position/pageSize));
                 pageSizeLoaded[Math.floor(position/pageSize)]=true;
 
+                // Keep only the 2 first loadings !
+                for(;loadingPages.length>2;) {
+                    loadingPages.pop();
+                }
+
                 var def=FolderScript.loadModel(page.upnpServer, infos.objectID, position, pageSize);
                 def.then(function onSuccess(result) {
                     //                    console.log("Response List="+result.list.length);
