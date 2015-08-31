@@ -36,7 +36,7 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
     var xml = JsToXML.toXML(jxml);
 
     if (LOG_TRANSPORT) {
-        console.log("SOAP request="+xml);
+        console.log("SOAP url='"+this.url+"' request="+xml);
     }
 
     var transaction = Web.Http.Transaction.factory({

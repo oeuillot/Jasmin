@@ -79,7 +79,18 @@ Item {
                 spacing: 6
 
                 Component.onCompleted: {
-                    UpnpObject.addLine(grid, labelComponent, valueComponent, "Date :", xml, "dc:date", UpnpObject.dateFormatter);
+                    //console.log("Xml="+Util.inspect(xml, false, {}));
+
+                    var hasDate;
+
+                    hasDate=!!UpnpObject.addLine(grid, labelComponent, valueComponent, "Date de création :", xml, "fm:birthTime", UpnpObject.dateFormatter);
+                    hasDate=!!UpnpObject.addLine(grid, labelComponent, valueComponent, "Date de modification :", xml, "fm:modifiedTime", UpnpObject.dateFormatter) || !hasDate;
+                    //UpnpObject.addLine(grid, labelComponent, valueComponent, "Date d'accés :", xml, "fm:accessTime", UpnpObject.dateFormatter);
+                    // UpnpObject.addLine(grid, labelComponent, valueComponent, "Date de changement:", xml, "fm:changeTime", UpnpObject.dateFormatter);
+
+                    if (!hasDate){
+                        UpnpObject.addLine(grid, labelComponent, valueComponent, "Date :", xml, "dc:date", UpnpObject.dateFormatter);
+                    }
                     UpnpObject.addLine(grid, labelComponent, valueComponent, "Année :", xml, "dc:date", UpnpObject.dateYearFormatter);
                     UpnpObject.addLine(grid, labelComponent, valueComponent, "Taille :", xml, "res@size", UpnpObject.sizeFormatter);
                     UpnpObject.addLine(grid, labelComponent, valueComponent, "Nombre de fichiers :", xml, "@childCount");

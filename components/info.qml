@@ -10,6 +10,8 @@ Item {
     height: rowInfo.height
     width: parent.width
 
+    property Card card;
+
     property AudioPlayer audioPlayer;
     property var upnpServer;
     property var xml
@@ -21,12 +23,6 @@ Item {
 
     property string borderColor: "#D3D3D3"
     property string backgroundColor: "#E9E9E9"
-
-    property bool destructing;
-
-    Component.onDestruction: {
-        destructing=true;
-    }
 
     Component {
         id: object
@@ -43,6 +39,17 @@ Item {
 
         }
     }
+ 
+ 
+    Component {
+        id: object_item_audioItem_musicTrack
+
+        ObjectItemAudioItemMusicTrack {
+
+        }
+    }
+    
+    
 
     Canvas {
         id: canvas
@@ -56,17 +63,18 @@ Item {
         property bool done : false;
 
         onPaint: {
-//            console.log("Paint ! "+(cnt), " "+done+" "+height);
-/*
+            //            console.log("Paint ! "+(cnt), " "+done+" "+height);
+            /*
             if (cnt!==1 && (height>256)) {
                 cnt++;
                 return;
             }
             cnt++;
 */
+            return;
             var ctx = getContext('2d');
 
-              ctx.reset(); // If Height changed !
+            ctx.reset(); // If Height changed !
 
             ctx.beginPath();
             ctx.fillStyle = "#E9E9E9";
@@ -94,7 +102,7 @@ Item {
         onChildrenRectChanged: {
             console.log("h="+childrenRect.height);
 
-            canvas.visible=true;
+            //canvas.visible=true;
         }
 
         Image {
@@ -125,12 +133,25 @@ Item {
             radius: 128
         }
 
+
+        Keys.onPressed: {
+
+            switch(event.key) {
+            case Qt.Key_Up:
+                console.log("UPPPPP");
+
+                 card.forceActiveFocus();
+                 event.accepted=true;
+            }
+        }
+
         Component.onCompleted: {
 
-            console.log("COMPLETED ! "+xml);
+            //console.log("COMPLETED ! "+xml);
 
             var upnpClasses = {
                 "object.container.album": object_container_album,
+                "object.item.audioItem.musicTrack": object_item_audioItem_musicTrack,
                 "object": object
             }
 
@@ -140,7 +161,7 @@ Item {
             var clz=upnpClass;
 
             for(;clz;) {
-              //console.log("Try "+clz);
+                //console.log("Try "+clz);
 
                 infoClass=upnpClasses[clz];
                 if (infoClass) {
@@ -158,16 +179,23 @@ Item {
 
             var objectID=xml.attr("id");
 
-            var obj=infoClass.createObject(rowInfo, {
-                                               x: 0,
-                                               y: 0,
-                                               width: rowInfo.width,
-                                               xml: xml,
-                                               resImageSource: resImageSource,
-                                               upnpServer: widget.upnpServer,
-                                               audioPlayer: widget.audioPlayer,
-                                               objectID: objectID
-                                           });
-       }
+            upnpServer.browseMetadata(objectID).then(function onSuccess(meta) {
+
+                var xml=meta.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).first().children();
+
+                //console.log("xml1="+Util.inspect(xml));
+
+                var obj=infoClass.createObject(rowInfo, {
+                                                   x: 0,
+                                                   y: 0,
+                                                   width: rowInfo.width,
+                                                   xml: xml,
+                                                   resImageSource: resImageSource,
+                                                   upnpServer: widget.upnpServer,
+                                                   audioPlayer: widget.audioPlayer,
+                                                   objectID: objectID
+                                               });
+            });
+        }
     }
 }

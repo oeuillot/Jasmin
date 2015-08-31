@@ -13,7 +13,7 @@ Page {
     property Menu menu;
     property AudioPlayer audioPlayer;
 
-    property XmlParserWorker xmlParserWorker;
+    property var xmlParserWorker;
 
     Column {
         id: enterIP
@@ -39,12 +39,12 @@ Page {
                 font.bold: true
                 color: "black"
                 width: 700
-                text: "localhost:10293/DeviceDescription.xml"
+                text: "localhost:10293/description.xml"
                 displayText: "URL du server"
 
-                property string text1: "192.168.3.32:10293/DeviceDescription.xml"
-                property string text2: "192.168.3.193:10293/DeviceDescription.xml"
-                property string text3: "localhost:10293/DeviceDescription.xml"
+                property string text1: "192.168.3.32:10293/description.xml"
+                property string text2: "192.168.3.193:10293/description.xml"
+                property string text3: "localhost:10293/description.xml"
 
                 anchors.verticalCenter: parent.verticalCenter
 

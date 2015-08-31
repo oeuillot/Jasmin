@@ -1,2 +1,3 @@
 ObjectContainerAlbum 1.0 object_container_album.qml
 Object 1.0 object.qml
+ObjectItemAudioItemMusicTrack 1.0 object_item_audioItem_musicTrack.qml

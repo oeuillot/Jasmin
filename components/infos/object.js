@@ -1,6 +1,7 @@
 .import "../../jasmin/upnpServer.js" as UpnpServer
 
 var XMLNS={
+    fm: UpnpServer.JASMIN_FILEMEDATA,
     dc: UpnpServer.PURL_ELEMENT_XMLS,
     "": UpnpServer.DIDL_LITE_XMLNS
 }
@@ -53,6 +54,7 @@ function addLine(grid, labelTitle, valueTitle, title, xml, path, formatter) {
                                 text: value
                             });
 
+    return true;
 }
 
 function dateYearFormatter(stringDate) {

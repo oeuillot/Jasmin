@@ -2,11 +2,10 @@ import QtQuick 2.0
 import "xml.js" as Xml
 import fbx.async 1.0
 
+import "xmlParser.js" as XmlParser
 
 WorkerScript {
     id: worker
-
-    source: "xmlParser.js"
 
     property var deferreds: ({})
     property int deferredId: 0;
@@ -19,6 +18,8 @@ WorkerScript {
     property real progress: 0;
 
     function parseXML(text) {
+        worker.source=Qt.resolvedUrl("/jasmin/xmlParser.js");
+
         var deferred=new Deferred.Deferred();
 
         var did=deferredId++;

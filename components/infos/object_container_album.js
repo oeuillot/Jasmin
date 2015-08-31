@@ -145,7 +145,6 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 }
 
                 txt.forEach(function(t) {
-
                     if (metas.artists.indexOf(t)<0) {
                         metas.artists.push(t);
                     }
@@ -159,7 +158,6 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 }
 
                 txt.forEach(function(t) {
-
                     if (metas.genres.indexOf(t)<0) {
                         metas.genres.push(t);
                     }

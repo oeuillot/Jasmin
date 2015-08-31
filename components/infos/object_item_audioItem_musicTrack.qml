@@ -28,135 +28,6 @@ FocusScope {
         width: parent.width
 
         Component {
-            id: trackComponent
-
-
-            FocusScope {
-                width: 400
-                height: 24
-
-                property string point;
-                property alias text: value.text
-                property alias duration: duration.text
-                property string type;
-
-                property var xml;
-                property string objectID;
-
-                property bool playingObjectID: audioPlayer.playingObjectID===objectID;
-
-                Item {
-                    width: 400
-                    height: 24
-
-                    Text {
-                        id: title
-                        font.bold: false
-                        font.pixelSize: 12
-                        x: 0
-                        y: 2
-                        opacity: 0.7
-
-                        horizontalAlignment: (playingObjectID)?Text.AlignLeft:Text.AlignRight
-
-                        font.family: (playingObjectID)?"fontawesome":value.font.family
-                        text: (playingObjectID)?(audioPlayer.playbackState===1?Fontawesome.Icon.volume_up:Fontawesome.Icon.volume_off):point
-
-                        width: 16
-                    }
-
-                    function changePosition(source, offset) {
-                        var list=source.parent.parent;
-                        //                    console.log("Parent2="+list+" "+list.id);
-
-                        var children=list.children;
-                        for(var i=0;i<children.length;i++) {
-                            if (children[i]!==this.parent) {
-                                continue;
-                            }
-
-                            var next=children[i+offset];
-                            if (next && next.type==="row") {
-                                console.log("Next focus="+next+"/"+next.id);
-                                next.children[1].forceActiveFocus();
-
-                                return true;
-                            }
-                            break;
-                        }
-
-                        return false;
-                    }
-
-                    Text {
-                        id: value
-                        font.bold: true
-                        font.pixelSize: 14
-                        focus: true
-
-                        color: activeFocus?"red": "black"
-
-                        x: 20
-                        y: 0
-                        width: 370
-                        height: 24
-                        elide: Text.ElideRight
-                    }
-
-                    Keys.onPressed: {
-                        switch(event.key) {
-                        case Qt.Key_Right:
-                            if (changePosition(this, 1)) {
-                                event.accepted = true;
-                            }
-                            return;
-
-
-                        case Qt.Key_Down:
-                            if (changePosition(this, 2)) {
-                                event.accepted = true;
-                            }
-                            return;
-
-                        case Qt.Key_Left:
-                            if (changePosition(this, -1)) {
-                                event.accepted = true;
-                            }
-                            return;
-
-                        case Qt.Key_Up:
-                            if (changePosition(this, -2)) {
-                                event.accepted = true;
-                            }
-                            return;
-
-                        case Qt.Key_Return:
-                        case Qt.Key_Enter:
-                            //var res=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).first();
-
-                            audioPlayer.playMusic(upnpServer, xml, resImageSource);
-                            event.accepted = true;
-                            return;
-                        }
-                    }
-
-
-                    Text {
-                        id: duration
-                        x: 320
-                        y: 2
-
-                        font.bold: false
-                        font.pixelSize: 12
-                        opacity: 0.7
-
-                        width: 30
-                    }
-                }
-            }
-        }
-
-        Component {
             id: gridComponent
 
             FocusScope {
@@ -226,6 +97,7 @@ FocusScope {
 
                         KeyNavigation.right: randomButton
                         KeyNavigation.left: menuButton
+                        KeyNavigation.down: separator;
                     }
                     Text {
                         id: randomButton
@@ -239,6 +111,7 @@ FocusScope {
 
                         KeyNavigation.left: playButton
                         KeyNavigation.right: menuButton
+                        KeyNavigation.down: separator;
                     }
                     Text {
                         id: menuButton
@@ -252,20 +125,8 @@ FocusScope {
 
                         KeyNavigation.left: randomButton
                         KeyNavigation.right: playButton
+                        KeyNavigation.down: separator;
                     }
-
-
-                    Keys.onPressed: {
-
-                        switch(event.key) {
-                        case Qt.Key_Down:
-                            var next=separator.nextItemInFocusChain();
-                            console.log("DOWN "+next);
-                            next.forceActiveFocus();
-                            event.accepted=true;
-                        }
-                    }
-
                 }
             }
 
@@ -292,10 +153,9 @@ FocusScope {
             }
 
             Component.onCompleted: {
-
+return;
                 var components = {
                     grid: gridComponent,
-                    track: trackComponent,
                     disc: discComponent
                 }
 

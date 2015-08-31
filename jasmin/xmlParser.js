@@ -15,7 +15,7 @@ function parseXML(text, callbacks) {
 
     var attrSplitRegExp=/[	 ]+/g;
     var selfClosingRegExp=/\/$/;
-    var attrValueRegExp=/([a-z-_]+)(:[a-z-_]+)?(="[^"]*"|='[^']*')?/i;
+    var attrValueRegExp=/[	 ]*([a-z-_]+)(:[a-z-_]+)?(="[^"]*"|='[^']*')?[	 ]*/i;
 
     var iter = text.split(/(<[^>]+>)/);
 
@@ -62,60 +62,79 @@ function parseXML(text, callbacks) {
             default:
                 var self_closing = selfClosingRegExp.test(item);
                 if (self_closing) {
-                    item = item.slice(0, -1).trim();
+                    item = item.slice(0, -1);
                 }
 
                 var n = {
                     nodeType: 1,
                 };
 
-                attrSplitRegExp.lastIndex=0;
-                var attrs = item.split(attrSplitRegExp);
+//                console.log("item='"+item+"'");
+
                 var atts = [];
+                var ai=item.indexOf(' ');
+                if (ai>0) {
+                    var iatts=item.substring(ai);
+                    item=item.substring(0, ai);
+                    ai=0;
 
-                for (var j = 1; j < attrs.length; ++j) {
-                    var attr=attrs[j];
-                    if (!attr){
-                        continue;
-                    }
+                    for(;;) {
+                        var a1=iatts.indexOf('"', ai);
+                        if (a1<0) {
+                            break;
+                        }
+                        var a2=iatts.indexOf('"', a1+1);
+                        if (a2<0) {
+                            break;
+                        }
 
-                    var kv = attrValueRegExp.exec(attr);
+                        var attr=iatts.substring(ai, a2+1);
+                        ai=a2+1;
 
-                    if (kv[1]==="xmlns") {
+                        var kv = attrValueRegExp.exec(attr);
+                        if (!kv) {
+                            console.error("Invalid attr '"+attr+"' item="+item);
+                            continue;
+                        }
+
+//                        console.log("Parse attr'"+attr+"' ",kv);
+
+                        if (kv[1]==="xmlns") {
+                            if (!kv[3]) {
+                                continue;
+                            }
+                            if (!kv[2]) {
+                                defaultNamespaceURI=kv[3].slice(2, -1);
+                                continue;
+                            }
+
+                            //console.log("Fill dic "+kv[2].slice(1)+" = "+kv[3].slice(2, -1));
+
+                            dictionnary[kv[2].slice(1)]=kv[3].slice(2, -1);
+                            continue;
+                        }
+
+                        var att={
+                        };
+                        atts.push(att);
+
+                        if (kv[2]) {
+                            att.name=kv[1]+kv[2];
+                            //                        att.namespaceURI=dictionnary[kv[1]];
+                        } else {
+                            att.name=kv[1];
+                            //                        att.namespaceURI=defaultNamespaceURI;
+                        }
+
                         if (!kv[3]) {
                             continue;
                         }
-                        if (!kv[2]) {
-                            defaultNamespaceURI=kv[3].slice(2, -1);
-                            continue;
-                        }
-
-                        //console.log("Fill dic "+kv[2].slice(1)+" = "+kv[3].slice(2, -1));
-
-                        dictionnary[kv[2].slice(1)]=kv[3].slice(2, -1);
-                        continue;
+                        att.value = kv[3].slice(2, -1);
                     }
 
-                    var att={
-                    };
-                    atts.push(att);
-
-                    if (kv[2]) {
-                        att.name=kv[1]+kv[2];
-                        //                        att.namespaceURI=dictionnary[kv[1]];
-                    } else {
-                        att.name=kv[1];
-                        //                        att.namespaceURI=defaultNamespaceURI;
+                    if (atts.length) {
+                        n.attributes=atts;
                     }
-
-                    if (!kv[3]) {
-                        continue;
-                    }
-                    att.value = kv[3].slice(2, -1);
-                }
-
-                if (atts.length) {
-                    n.attributes=atts;
                 }
 
                 sp=splitName(item, sp);
@@ -130,6 +149,8 @@ function parseXML(text, callbacks) {
                     n.tagName=sp.name;
                     n.namespaceURI=defaultNamespaceURI;
                 }
+
+                n.namespaceURIs=dictionnary;
 
                 if (node) {
                     if (!node.childNodes){

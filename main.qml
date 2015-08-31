@@ -6,6 +6,7 @@ import fbx.ui.layout 1.0
 
 import "./pages" 1.0
 import "./jasmin" 1.0
+import "./sax" 1.0
 
 Application {
     id: app
@@ -31,8 +32,8 @@ Application {
 
         pageStack.push("server.qml", {
                            audioPlayer: menu.audioPlayer,
-                           menu: menu,
-                           xmlParserWorker: xmlParserWorker
+                           menu: menu
+                           //xmlParserWorker: xmlParserWorker
                        });
     }
 
@@ -88,7 +89,7 @@ Application {
         }
     }
 
-    XmlParserWorker {
+    SaxParser {
         id: xmlParserWorker
     }
 

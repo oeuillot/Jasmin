@@ -17,7 +17,9 @@ var SOAP_ENVELOPE_XMLNS="http://schemas.xmlsoap.org/soap/envelope/";
 var DIDL_LITE_XMLNS="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/";
 var UPNP_METADATA_XMLNS="urn:schemas-upnp-org:metadata-1-0/upnp/";
 var PURL_ELEMENT_XMLS="http://purl.org/dc/elements/1.1/";
+
 var JASMIN_MUSICMETADATA="urn:schemas-jasmin-upnp.net:musicmetadata/";
+var JASMIN_FILEMEDATA="urn:schemas-jasmin-upnp.net:filemetadata/";
 
 var CONTENT_DIRECTORY_TYPE=UPNP_CONTENT_DIRECTORY_1_XMLNS;
 
@@ -79,7 +81,13 @@ UpnpServer.prototype.tryConnection=function(){
             return Async.Deferred.rejected(self.errored);
         }
 
-        var deferred = Xml.parseXML(response.body);
+        var deferred;
+        if (self.xmlParserWorker) {
+            deferred=self.xmlParserWorker.parseXML(response.body);
+
+        } else {
+            deferred = Xml.parseXML(response.body);
+        }
 
         deferred=deferred.then(function(xmlResponse) {
             try {
@@ -216,13 +224,20 @@ UpnpServer.prototype.getSortCapabilities=function() {
 
         var ret={};
         var sorts=sc.text().split(',');
-        var xmlns=response.xmlns;
+        var xmlns=sc.xmlNode().namespaceURIs;
 
         var sp={};
         sorts.forEach(function(sort) {
             XmlParser.splitName(sort, sp);
 
+//            console.log("X="+sp.xmlns+" => "+xmlns[sp.xmlns || '']);
+
             var x=xmlns[sp.xmlns || ""];
+            if (!x){
+                console.error("Can not find uri associated to prefix '"+sp.xmlns+"'");
+                return;
+            }
+
             var key=sp.name+"##"+x;
 
             ret[key]={xmlns:x, name: sp.name };
@@ -374,7 +389,7 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, options) {
         if (result.length) {
             var didl=result.text();
 
-            //console.log("DIDL="+didl);
+           console.log("DIDL="+didl);
 
             var xmlDeferred;
 
@@ -391,7 +406,7 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, options) {
                 return ret;
             }, null, function onProgress(data) {
                 //console.log("PDD="+data);
-                 deferred.progress(data);
+                deferred.progress(data);
             });
 
             return xmlDeferred;

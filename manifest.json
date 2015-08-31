@@ -7,5 +7,9 @@
             "file": "main.qml",
             "default": true
         }
+    },
+    "capabilities": {
+        "net_wan": "required",
+        "net_gw": "required"
     }
 }
