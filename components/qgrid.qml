@@ -21,6 +21,8 @@ FocusScope {
 
     property int focusIndex: 0;
 
+    property int pageCellIndex: 0;
+
     property int cellShownCount: 32;
 
     property int viewColumns: 7;
@@ -49,16 +51,16 @@ FocusScope {
 
     Component.onCompleted: {
         widget.onModelChanged.connect(function() {
-            updateLayout();
+            updateLayout("onModelChanged");
         });
 
         widget.onModelSizeChanged.connect(function() {
-           updateLayout();
+            updateLayout("onModelSizeChanged");
         });
     }
 
-    function updateLayout() {
-        grid.updateLayout();
+    function updateLayout(reason) {
+        grid.updateLayout(reason || "widget");
     }
 
     function show(component, info) {
@@ -69,39 +71,41 @@ FocusScope {
             ch+=info.height;
         }
 
-        //      console.log("Index="+component.cellIndex+" y="+y+" cellHeight="+cellHeight+" component.y="+component.y+" total.height="+ch+" grid.contentY="+grid.contentY+" grid.height="+grid.height+" info.h="+(info && info.height));
+       // console.log("SHOW Index="+component.cellIndex+" y="+y+" cellHeight="+cellHeight+" component.y="+component.y+" total.height="+ch+" grid.contentY="+grid.contentY+" grid.height="+grid.height+" info.h="+(info && info.height));
 
         if (ch>grid.height) {
             grid.contentY=info.y;
-            //            console.log("0===>"+grid.contentY);
+           // console.log("0===>"+grid.contentY);
             return;
         }
 
-        if (y<cellHeight) {
-            if (component.y-grid.contentY+ch+cellHeight+verticalSpacing<grid.height) {
-                var sy=component.y+ch+cellHeight+verticalSpacing-grid.height;
-                grid.contentY=Math.max(0, sy);
+        var preloadShowUp=0; //cellHeight;
+        if (y<preloadShowUp) {
+            if (component.y-grid.contentY+ch+preloadShowUp+verticalSpacing<grid.height) {
+                var sy=component.y+ch+preloadShowUp+verticalSpacing-grid.height;
+                grid.contentY=Math.max(component.y-preloadShowUp, 0); //Math.max(0, sy);
 
-                //                console.log("1===>"+sy+"="+component.y+"+"+ch+"+"+cellHeight+"+"+verticalSpacing+"-"+grid.height);
+             //   console.log("1===>"+sy+"="+component.y+"+"+ch+"+"+preloadShowUp+"+"+verticalSpacing+"-"+grid.height);
                 return;
             }
 
-            //            console.log("2===>"+cy);
+            // console.log("2===>"+cy);
             grid.contentY=Math.min(cy, grid.contentHeight-grid.height);
             return;
         }
 
-        if (y+ch+cellHeight>grid.height) {
-            var sy=component.y+ch+cellHeight-grid.height;
+        var preloadShowDown=0; //cellHeight;
+        if (y+ch+preloadShowDown>grid.height) {
+            var sy=component.y+ch+preloadShowDown-grid.height;
 
-            //            console.log("SY="+sy+" grid.contentHeight="+grid.contentHeight+" component.height="+component.height);
+            // console.log("SY="+sy+" grid.contentHeight="+grid.contentHeight+" component.height="+component.height);
 
             grid.contentY=Math.min(sy, grid.contentHeight-grid.height);
-            //            console.log("3===>"+grid.contentY);
+            //console.log("3===>"+grid.contentY);
             return;
         }
 
-        //        console.log("0===>");
+        // console.log("0===>");
     }
 
     function showInfo(item, infoComponent, params) {
@@ -125,29 +129,28 @@ FocusScope {
         grid.infoRowIndex=rowIndex;
 
         info.onHeightChanged.connect(function() {
-            var h=info.height;
             //            console.log("HEIGHT CHANGED New height="+h);
 
-            grid.updateLayout();
+            show(item, info);
+            grid.updateLayout("onHeightChanged");
         });
 
         info.Component.onDestruction.connect(destructingEvent(info));
 
-        grid.updateLayout();
-        show(item, info);
+        //        grid.updateLayout();
         return info;
     }
 
     function destructingEvent(info) {
         return function() {
-//            console.log("Catch a destruction ! "+info.cellIndex+" "+grid.info);
+            //            console.log("Catch a destruction ! "+info.cellIndex+" "+grid.info);
             if (grid.info!==info) {
                 return;
             }
 
             grid.info=null;
             grid.infoRowIndex=-1;
-            grid.updateLayout();
+            grid.updateLayout("infoDestructing");
         }
     }
 
@@ -172,6 +175,7 @@ FocusScope {
     }
 
     function focusTop(cellIndex) {
+        //console.log("FOCUS TOP "+cellIndex);
         return focus(cellIndex-widget.viewColumns);
     }
 
@@ -196,7 +200,7 @@ FocusScope {
         var model=widget.model;
         var modelSize=Math.max(widget.model.length, widget.modelSize);
 
-        //console.log("Focus "+cellIndex+" model="+model.length);
+        // console.log("Focus "+cellIndex+" modelSize="+modelSize);
         if (cellIndex<0 || cellIndex>=modelSize) {
             return false;
         }
@@ -204,14 +208,14 @@ FocusScope {
         var delegateIndex=grid.cellIndexToCellDelegate(cellIndex);
         var cellDelegate=grid.cellDelegates[delegateIndex];
 
-  //      console.log("=>["+cellIndex+","+delegateIndex+"]="+cellDelegate);
+        //console.log("=>["+cellIndex+","+delegateIndex+"]="+cellDelegate);
 
         if (cellDelegate && cellDelegate.cellIndex===cellIndex) {
             cellDelegate.forceActiveFocus();
             return true;
         }
 
-        console.log("Invalid cellIndex="+cellDelegate.cellIndex+" modelSize="+modelSize+" model.length="+model.length+" delegateIndex="+delegateIndex);
+        //console.log("Invalid cellIndex="+cellDelegate.cellIndex+" modelSize="+modelSize+" model.length="+model.length+" delegateIndex="+delegateIndex);
     }
 
     Flickable {
@@ -236,6 +240,8 @@ FocusScope {
 
         property var cellUpdate: ([]);
 
+        property int viewShadows: 0;
+
         property double
 
         repeatStop: 0;
@@ -253,22 +259,26 @@ FocusScope {
 
             widget.viewCells=widget.viewColumns*(widget.viewRows+1); // Pour le scroll
 
+            grid.viewShadows = widget.viewRows +1 + 1; //(((widget.viewRows*(cellHeight+verticalSpacing))>height)?0:1);
+
             //console.log("width="+width+" height="+height+" viewColumns="+viewColumns+" viewRows="+viewRows+" viewCells="+widget.viewCells);
 
             cellShownCount=widget.viewCells;
 
-            updateLayout();
+            updateLayout("onHeightChanged");
         }
 
         onContentYChanged: {
-            updateContentYChanged();
+            updateContentYChanged("contentYChanged");
         }
 
 
-        function updateContentYChanged() {
+        function updateContentYChanged(reason) {
             if (!model) {
                 return;
             }
+
+            var now=Date.now();
 
             var rowY=contentY;
             if (info && info.y<rowY) {
@@ -277,6 +287,10 @@ FocusScope {
 
             var rowIndex=Math.floor(rowY/(cellHeight+verticalSpacing));
             pageIndex=rowIndex;
+            widget.pageCellIndex=pageIndex*widget.viewColumns;
+            if (rowIndex>0){
+                rowIndex--;
+            }
 
             var y=rowIndex*(widget.cellHeight+widget.verticalSpacing);
             if (info && infoRowIndex<rowIndex) {
@@ -289,75 +303,92 @@ FocusScope {
 
             var created=0;
             var associated=0;
+            var endRows=grid.viewShadows;
+            var startRows=0;
 
-            for(var j=0;j<widget.viewRows;j++, rowIndex++) {
+            var cellDelegates=grid.cellDelegates;
+
+            for(var j=startRows;j<endRows;j++, rowIndex++) {
                 var idx=rowIndex*widget.viewColumns;
                 var delegateIndex=cellIndexToCellDelegate(idx);
 
                 for(var i=0;i<widget.viewColumns;i++,idx++,delegateIndex++) {
                     var cellModel=model[idx];
-                    var cellDelegate=grid.cellDelegates[delegateIndex];
+                    var cellDelegate=cellDelegates[delegateIndex];
 
-                    if (cellDelegate) {
-                        if (cellDelegate.cellIndex===idx) {
-                            if (cellDelegate.y!==y) {
-                                cellDelegate.y=y;
+                    try {
+                        if (cellDelegate) {
+                            //var now2=Date.now();
+
+                            if (cellDelegate.cellIndex===idx) {
+                                if (cellDelegate.y!==y) {
+                                    cellDelegate.y=y;
+    //                                console.log("Update Y");
+                                }
+                                if (cellDelegate.model!==cellModel) {
+                                    cellDelegate.model=cellModel;
+     //                               console.log("Update cellModel "+idx+" "+cellModel);
+
+                                    if (cellDelegate.delayedUpdateModel) {
+                                        registerAsync(idx, cellDelegate);
+                                    }
+                                }
+                                if (!cellDelegate.visible) {
+                                    cellDelegate.visible=true;
+    //                                console.log("Update visible");
+                                }
+                                //now2=Date.now()-now2;
+                                // console.log("Time "+now2);
+                                continue;
                             }
-                            if (!cellDelegate.visible) {
-                                cellDelegate.visible=true;
+     //                       console.log("Not same index "+idx+"/"+cellDelegate.cellIndex);
+
+                            if (idx>=modelSize) {
+                                cellDelegate.visible=false;
+                                continue;
                             }
-                            if (cellDelegate.model!==cellModel) {
-                                cellDelegate.model=cellModel;
+
+                            cellDelegate.y=y;
+                            cellDelegate.cellIndex=idx;
+                            cellDelegate.visible=true;
+
+                            if (rowIndex<pageIndex || rowIndex>=pageIndex+widget.viewRows) {
+    //                            console.log("Ignore rowIndex="+rowIndex);
+                                continue;
                             }
+
+                            cellDelegate.model=cellModel;
+
                             if (cellDelegate.delayedUpdateModel) {
                                 registerAsync(idx, cellDelegate);
                             }
+
+                            associated++;
                             continue;
                         }
 
                         if (idx>=modelSize) {
-                            cellDelegate.visible=false;
                             continue;
                         }
 
-                        cellDelegate.y=y;
-                        cellDelegate.model=cellModel;
-                        cellDelegate.cellIndex=idx;
+                        cellDelegate=widget.delegate.createObject(grid.contentItem, {
+                                                                      x: i*(widget.cellWidth+widget.horizontalSpacing),
+                                                                      y: y,
+                                                                      width: cellWidth,
+                                                                      height: cellHeight,
+                                                                      model: cellModel,
+                                                                      cellIndex: idx
+                                                                  });
 
-                        if (cellDelegate.updateDelegate) {
-                            cellDelegate.updateDelegate();
-                        }
+                        cellDelegate.onActiveFocusChanged.connect(delegateActiveFocus(cellDelegate));
 
-                        cellDelegate.visible=true;
+                        cellDelegates[delegateIndex] = cellDelegate;
+                        created++;
 
                         if (cellDelegate.delayedUpdateModel) {
                             registerAsync(idx, cellDelegate);
                         }
-
-                        associated++;
-                        continue;
-                    }
-
-                    if (idx>=modelSize) {
-                        continue;
-                    }
-
-                    cellDelegate=widget.delegate.createObject(grid.contentItem, {
-                                                                  x: i*(widget.cellWidth+widget.horizontalSpacing),
-                                                                  y: y,
-                                                                  width: cellWidth,
-                                                                  height: cellHeight,
-                                                                  model: cellModel,
-                                                                  cellIndex: idx
-                                                              });
-
-                    cellDelegate.onActiveFocusChanged.connect(delegateActiveFocus(cellDelegate));
-
-                    cellDelegates[delegateIndex] = cellDelegate;
-                    created++;
-
-                    if (cellDelegate.delayedUpdateModel) {
-                        registerAsync(idx, cellDelegate);
+                    } finally {
                     }
                 }
 
@@ -368,9 +399,10 @@ FocusScope {
                 }
             }
 
-            if (associated || created) {
-                //                console.log("Layout update: associated="+associated+" created="+created);
-            }
+            now=Date.now()-now;
+//            if (associated || created) {
+                console.log("updateContentYChanged: reason="+reason+" associated="+associated+" created="+created+" delay="+now+"ms");
+//            }
         }
 
         function delegateActiveFocus(cellDelegate) {
@@ -392,14 +424,14 @@ FocusScope {
         function cellIndexToCellDelegate(cellIndex) {
             var rowIndex=Math.floor(cellIndex/widget.viewColumns);
 
-            var delegateIndex = ((rowIndex % (widget.viewRows+1))*widget.viewColumns)+(cellIndex % widget.viewColumns);
+            var delegateIndex = ((rowIndex % (grid.viewShadows))*widget.viewColumns)+(cellIndex % widget.viewColumns);
 
             //console.log("toDelegateIndex("+cellIndex+")="+delegateIndex+"  rowIndex="+rowIndex+" viewRows.viewRows="+viewRows.viewRows);
 
             return delegateIndex;
         }
 
-        function updateLayout() {
+        function updateLayout(reason) {
             if (!width || !widget.model) {
                 return;
             }
@@ -422,89 +454,90 @@ FocusScope {
             if (h!==contentHeight) {
                 contentHeight=h;
 
-                console.log("Change content height to "+h);
+                //console.log("Change content height to "+h);
             }
 
-            updateContentYChanged();
+            updateContentYChanged(reason+".updateLayout");
 
             now=Date.now()-now;
-//            console.log("Construct delay="+now+"ms");
+            //            console.log("Construct delay="+now+"ms");
         }
 
+    }
 
-        Keys.onPressed: {
-            function markRepeat() {
-                grid.repeatStop=Date.now()+250;
-            }
 
-            switch(event.key) {
-            case Qt.Key_Left:
-                markRepeat();
-                if (focusLeft(focusIndex)) {
-                    event.accepted=true;
-                }
-                return;
-
-            case Qt.Key_Right:
-                markRepeat();
-                if (focusRight(focusIndex)) {
-                    event.accepted=true;
-                }
-                return;
-
-            case Qt.Key_Up:
-                markRepeat();
-                if (focusTop(focusIndex)) {
-                    event.accepted=true;
-                }
-                return;
-            case Qt.Key_Down:
-                markRepeat();
-                if (focusBottom(focusIndex)) {
-                    event.accepted=true;
-                }
-                return;
-            }
+    Keys.onPressed: {
+        function markRepeat() {
+            grid.repeatStop=Date.now()+250;
         }
 
+        switch(event.key) {
+        case Qt.Key_Left:
+            markRepeat();
+            if (focusLeft(focusIndex)) {
+                event.accepted=true;
+            }
+            return;
 
-        Timer {
-            id: timer
-            interval: 50;
-            running: false
-            repeat: true
+        case Qt.Key_Right:
+            markRepeat();
+            if (focusRight(focusIndex)) {
+                event.accepted=true;
+            }
+            return;
 
-            onTriggered: {
-                var now=Date.now();
+        case Qt.Key_Up:
+            markRepeat();
+            if (focusTop(focusIndex)) {
+                event.accepted=true;
+            }
+            return;
+        case Qt.Key_Down:
+            markRepeat();
+            if (focusBottom(focusIndex)) {
+                event.accepted=true;
+            }
+            return;
+        }
+    }
 
-                if (grid.repeatStop && grid.repeatStop>now) {
+
+    Timer {
+        id: timer
+        interval: 50;
+        running: false
+        repeat: true
+
+        onTriggered: {
+            var now=Date.now();
+
+            if (grid.repeatStop && grid.repeatStop>now) {
+                return;
+            }
+
+            for(;;) {
+                if (!grid.cellUpdate.length) {
+                    timer.stop();
                     return;
                 }
 
-                for(;;) {
-                    if (!grid.cellUpdate.length) {
-                        timer.stop();
-                        return;
-                    }
-
-                    var update=grid.cellUpdate.shift();
-                    if (!grid.cellUpdate.length) {
-                        timer.stop();
-                    }
-
-                    if (update.delegate.cellIndex!==update.index) {
-                        // Item was lost by scrolling
-                        // console.log("**** IGNORE Process "+update.delegate);
-                        continue;
-                    }
-
-                    if (update.delegate.delayedUpdateModel()===false) {
-                        // Nothing to do, call next immediatly
-                        continue;
-                    }
-
-                    break;
+                var update=grid.cellUpdate.shift();
+                if (!grid.cellUpdate.length) {
+                    timer.stop();
                 }
+
+                if (update.delegate.cellIndex!==update.index) {
+                    // Item was lost by scrolling
+                    // console.log("**** IGNORE Process "+update.delegate);
+                    continue;
+                }
+
+                if (update.delegate.delayedUpdateModel()===false) {
+                    // Nothing to do, call next immediatly
+                    continue;
+                }
+
+                break;
             }
         }
     }

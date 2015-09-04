@@ -389,7 +389,7 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, options) {
         if (result.length) {
             var didl=result.text();
 
-        //  console.log("DIDL="+didl);
+          console.log("DIDL="+didl);
 
             var xmlDeferred;
 

@@ -15,8 +15,6 @@ FocusScope {
 
     property var model;
 
-    property string upnpClass;
-
     property string resImageSource;
 
     property var upnpServer;
@@ -25,8 +23,6 @@ FocusScope {
 
     property alias title: label.text;
 
-    property double rating: CardScript.getRating(model)
-
     property bool selected: false;
 
     onModelChanged: {
@@ -34,26 +30,45 @@ FocusScope {
 
         if (imageItem) {
             imageItem.visible=false;
-            imageItem.destroy();
-            imageItem=null;
+            if (!model) {
+                imageItem.destroy();
+                imageItem=null;
+            }
         }
 
         if (!model) {
-            upnpClass="";
             resImageSource="";
+            label.text="";
+            info.visible=false;
+            rating.visible=false;
+            itemType.text=CardScript.computeType(null);
             return;
         }
 
 
-        upnpClass=model.byTagName("class", UpnpServer.UPNP_METADATA_XMLNS).text() || "object.item";
+        var upnpClass=model.byPath("upnp:class", UpnpServer.DIDL_XMLNS_SET).text() || "object.item";
 
         // console.log("upnpclass="+upnpClass);
 
-        resImageSource=CardScript.computeImage(model, upnpClass) || "";
+            resImageSource=CardScript.computeImage(model, upnpClass) || "";
+            label.text=CardScript.computeLabel(model, upnpClass) || "";
+            itemType.text= CardScript.computeType(upnpClass);
+
+
+        var ratingV=CardScript.getRating(model)
+        if (ratingV<0) {
+            rating.visible=false;
+            info.text=CardScript.computeInfo(model, upnpClass) || "";
+            info.visible=true;
+        } else {
+            info.visible=false;
+            rating.text=CardScript.computeRatingText(ratingV)
+            rating.visible=true;
+        }
+
     }
 
     function delayedUpdateModel() {
-
         if (imageItem) {
             imageItem.visible=false;
             imageItem.destroy();
@@ -102,7 +117,6 @@ FocusScope {
                 height: parent.height-2
 
                 opacity: 0.4
-                text: CardScript.computeType(upnpClass);
                 font.pixelSize: 92+(card.selected?4:0)
                 font.family: "fontawesome"
                 horizontalAlignment: Text.AlignHCenter
@@ -174,12 +188,11 @@ FocusScope {
             elide: Text.ElideMiddle
             font.bold: true
             font.pixelSize: (text && text.length>14)?14:16
-            text: CardScript.computeLabel(model, upnpClass)
         }
 
         Text {
             id: info
-            visible: card.rating<0 && !card.selected
+            visible: false //card.rating<0 && !card.selected
             y: label.y+label.height
             x: card.selected?2:10
             width: parent.width-x;
@@ -187,20 +200,17 @@ FocusScope {
             elide: Text.ElideMiddle
             font.bold: true
             font.pixelSize: (text && text.length>14)?12:14
-            text: CardScript.computeInfo(model, upnpClass)
         }
 
         Text {
             id: rating
-            visible: card.rating>=0 && !card.selected
+            visible: false //card.rating>=0 && !card.selected
             y: label.y+label.height
             x: card.selected?2:10
             color: "#FFCB00"
             font.bold: true
             font.pixelSize: 14
             font.family: "fontawesome"
-            text: CardScript.computeRatingText(card.rating)
         }
-
     }
 }

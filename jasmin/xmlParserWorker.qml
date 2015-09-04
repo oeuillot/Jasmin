@@ -7,6 +7,8 @@ import "xmlParser.js" as XmlParser
 WorkerScript {
     id: worker
 
+    source: "/jasmin/xmlParser.js"
+
     property var deferreds: ({})
     property int deferredId: 0;
 
@@ -18,7 +20,7 @@ WorkerScript {
     property real progress: 0;
 
     function parseXML(text) {
-        worker.source=Qt.resolvedUrl("/jasmin/xmlParser.js");
+//        worker.source="/jasmin/xmlParser.js";
 
         var deferred=new Deferred.Deferred();
 

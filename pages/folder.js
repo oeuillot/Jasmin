@@ -36,10 +36,10 @@ function loadModel(upnpServer, objectID, position, pageSize) {
                  }, {
                      name: "albumArtURI",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
-                 }, {
+                 }, /* {
                      name: "artist",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
-                 }, {
+                 },*/ {
                      name: "rating",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
 

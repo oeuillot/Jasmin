@@ -100,7 +100,7 @@ Item {
         height: childrenRect.height
 
         onChildrenRectChanged: {
-            console.log("h="+childrenRect.height);
+            // console.log("h="+childrenRect.height);
 
             //canvas.visible=true;
         }

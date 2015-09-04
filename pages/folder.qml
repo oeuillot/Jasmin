@@ -169,61 +169,99 @@ Page {
             }).bind(card));
         }
 
+        property int pageSize: 32;
+        property var pageSizeLoaded: ([]);
+        property var loadingPages: ([]);
+        property bool loading: false;
+        property var objectID;
+
+        function loadPage(pageIndex) {
+
+            if (loading) {
+                console.error("Already loading !!!!");
+                return;
+            }
+
+            loading=true;
+            console.log("LOAD PAGE "+pageIndex);
+
+            var def=FolderScript.loadModel(page.upnpServer, objectID, pageIndex*pageSize, pageSize);
+            def.then(function onSuccess(result) {
+                console.log("Response List["+pageIndex+"]="+result.list.length+" position="+result.position+"/"+pageIndex*pageSize);
+                loading=false;
+
+                var list=result.list;
+                var model=listView.model;
+                var p=result.position;
+                for(var i=0;i<list.length;i++) {
+                    model[p+i]=list[i];
+                }
+
+                listView.updateLayout();
+
+                console.log("Loading pages="+loadingPages);
+
+                if (loadingPages.length) {
+                    loadPage(loadingPages.shift());
+                }
+            }, function onFailed(reason) {
+                console.error("Can not load model "+reason);
+            });
+        }
+
         Component.onCompleted: {
             var infos=FolderScript.fillModel(page.upnpServer, page.meta);
+
+            objectID=infos.objectID;
 
             listView.model=[];
             listView.modelSize=infos.childCount;
 
             //            console.log("ModelSize="+infos.childCount);
 
-            var pageSize=64;
-            var pageSizeLoaded=[];
-            var loadingPages=[];
-            var loading=false;
 
-            function loadPage(position) {
-                loading=true;
-                console.log("LOAD PAGE "+Math.floor(position/pageSize));
-                pageSizeLoaded[Math.floor(position/pageSize)]=true;
-
-                var def=FolderScript.loadModel(page.upnpServer, infos.objectID, position, pageSize);
-                def.then(function onSuccess(result) {
-                    //                    console.log("Response List="+result.list.length);
-                    loading=false;
-
-                    var params=[result.position, result.list.length];
-                    params = params.concat(result.list);
-
-                    listView.model.splice.apply(listView.model, params);
-                    listView.updateLayout();
-
-                    if (loadingPages.length) {
-                        loadPage(loadingPages.shift());
-                    }
-                });
-            }
-
+            pageSizeLoaded[0]=true;
             loadPage(0);
 
-            listView.onFocusIndexChanged.connect(function() {
-                var cur=listView.focusIndex;
+            listView.onPageCellIndexChanged.connect(function() {
+                var cur=listView.pageCellIndex;
 
-                loadingPages=[];
+                if (loadingPages.length) {
+                    for(var i=0;i<loadingPages.lenght;i++) {
+                        var idx=loadingPages.shift();
 
-                for(var i=0;i<=listView.viewRows;i++) {
-                    var pi=Math.floor((cur+i*listView.viewColumns)/pageSize);
+                        pageSizeLoaded[idx]=false;
+                    }
+                }
+
+
+                for(var i=0;i<listView.viewRows;i++) {
+                    var ix=cur+i*listView.viewColumns;
+                    var pi=Math.floor(ix/pageSize);
+
+//                    console.log("Test #"+pi+" "+ix+" => "+pageSizeLoaded[pi]);
 
                     if (pageSizeLoaded[pi]) {
-                        continue;
+                        ix=cur+(i+1)*listView.viewColumns-1;
+                        pi=Math.floor(ix/pageSize);
+
+//                        console.log("Test 2#"+pi+" "+ix+" => "+pageSizeLoaded[pi]);
+
+                        if (pageSizeLoaded[pi]) {
+                            continue;
+                        }
                     }
+
+                    pageSizeLoaded[pi]=true;
 
                     if (loading) {
-                        loadingPages.unshift(pi*pageSize);
+                        loadingPages.unshift(pi);
+                        console.log("MARK page #"+pi+" and wait ... lp="+loadingPages);
                         continue;
                     }
 
-                    loadPage(pi*pageSize);
+                    console.log("MARK page #"+pi);
+                    loadPage(pi);
                     break;
                 }
 

@@ -10,6 +10,8 @@
     },
     "capabilities": {
         "net_wan": "required",
-        "net_gw": "required"
+        "net_lan": "required",
+        "net_gw": "required",
+        "gw_settings": "required"
     }
 }

@@ -32,8 +32,8 @@ Application {
 
         pageStack.push("server.qml", {
                            audioPlayer: menu.audioPlayer,
-                           menu: menu
-                           //xmlParserWorker: xmlParserWorker
+                           menu: menu,
+//                           xmlParserWorker: xmlParserWorker
                        });
     }
 
@@ -89,7 +89,7 @@ Application {
         }
     }
 
-    SaxParser {
+    XmlParserWorker {
         id: xmlParserWorker
     }
 

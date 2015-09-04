@@ -36,7 +36,7 @@ function computeImage(xml, upnpClass) {
     }
 
     if (upnpClass.indexOf("object.container.album")===0 || upnpClass.indexOf("object.item.audioItem")===0) {
-        var res=xml.byTagName("albumArtURI", UpnpServer.UPNP_METADATA_XMLNS).first().text();
+        var res=xml.byPath("upnp:albumArtURI", UpnpServer.DIDL_XMLNS_SET).first().text();
         if (!res) {
             return;
         }
@@ -49,7 +49,7 @@ function computeImage(xml, upnpClass) {
         // return;
     }
 
-    var ret=xml.byTagName("res", UpnpServer.DIDL_LITE_XMLNS).forEach(function(res) {
+    var ret=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).forEach(function(res) {
 
         //console.log("Test res "+Util.inspect(xml, false, {}));
 
@@ -84,7 +84,7 @@ function computeImage(xml, upnpClass) {
         var imageType=ts[1];
 
         if ([ "png", "jpeg", "gif", "bmp", "svg+xml" ].indexOf(imageType)<0) {
-            console.log("Invalid image Type '"+imageType+"'");
+            console.log("Unkown image Type '"+imageType+"'");
             return;
         }
 
@@ -102,10 +102,10 @@ function computeImage(xml, upnpClass) {
 
 function computeLabel(xml) {
     if (!xml) {
-        return "";
+        return null;
     }
 
-    return xml.byTagName("title", UpnpServer.PURL_ELEMENT_XMLS).text();
+    return xml.byPath("dc:title", UpnpServer.DIDL_XMLNS_SET).first().text();
 }
 
 function getRating(xml) {
@@ -156,7 +156,7 @@ function computeInfo(xml, upnpClass, component) {
     //console.log(Util.inspect(xml, false, {}));
 
     if (!xml) {
-        return "";
+        return null;
     }
 
     if (upnpClass.indexOf("object.item.videoItem")) {
