@@ -6,7 +6,7 @@
 function fillModel(upnpServer, meta) {
 
     // console.profile();
-    // console.log(Util.inspect(meta.result, false, {}));
+    console.log(Util.inspect(meta.result, false, {}));
 
     var container=meta.result.byPath("DIDL-Lite/container", UpnpServer.DIDL_XMLNS_SET);
     // console.log("Container=",Util.inspect(container));
@@ -55,7 +55,7 @@ function loadModel(upnpServer, objectID, position, pageSize) {
             ];
 
 
-    console.log("Request position "+position+" pageSize="+pageSize);
+//    console.log("Request position "+position+" pageSize="+pageSize);
 
     var d=upnpServer.browseDirectChildren(objectID, {
                                               filters: filters,

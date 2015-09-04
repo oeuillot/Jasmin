@@ -19,7 +19,7 @@ WorkerScript {
     property int workersCount: 0
     property real progress: 0;
 
-    function parseXML(text) {
+    function parseXML(text, xmlns) {
 //        worker.source="/jasmin/xmlParser.js";
 
         var deferred=new Deferred.Deferred();
@@ -37,7 +37,8 @@ WorkerScript {
         };
 
         sendMessage({ identifier: did,
-                      data: text
+                      data: text,
+                      xmlns: xmlns
                      });
 
         updateProgress();

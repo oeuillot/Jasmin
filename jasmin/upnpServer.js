@@ -8,6 +8,7 @@
 .import "xmlParser.js" as XmlParser
 .import "soapTransport.js" as Soap
 
+var LOG_DIDL=false;
 
 var UPNP_SERVICE_XMLNS="urn:schemas-upnp-org:service-1-0";
 var UPNP_DEVICE_XMLNS="urn:schemas-upnp-org:device-1-0";
@@ -230,7 +231,7 @@ UpnpServer.prototype.getSortCapabilities=function() {
         sorts.forEach(function(sort) {
             XmlParser.splitName(sort, sp);
 
-//            console.log("X="+sp.xmlns+" => "+xmlns[sp.xmlns || '']);
+            //            console.log("X="+sp.xmlns+" => "+xmlns[sp.xmlns || '']);
 
             var x=xmlns[sp.xmlns || ""];
             if (!x){
@@ -386,10 +387,14 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, options) {
         };
 
         var result=soapBody.byPath("u:BrowseResponse/Result", CONTENT_DIRECTORY_XMLNS_SET);
-        if (result.length) {
+        if (!result.length) {
+            console.error("No result ? ", Util.inspect(soapBody, false, {}));
+        } else {
             var didl=result.text();
 
-          console.log("DIDL="+didl);
+            if (LOG_DIDL) {
+                console.log("DIDL="+didl);
+            }
 
             var xmlDeferred;
 

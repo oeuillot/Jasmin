@@ -39,13 +39,14 @@ Page {
                 font.bold: true
                 color: "black"
                 width: 700
-                text: "192.168.3.193:10293/description.xml"
+                text: text6
                 displayText: "URL du server"
 
                 property string text1: "192.168.3.32:10293/description.xml"
                 property string text2: "192.168.3.193:10293/description.xml"
                 property string text3: "localhost:10293/description.xml"
                 property string text5: "212.27.38.253:52424/device.xml"
+                property string text6: "192.168.3.193:8200/rootDesc.xml"
 
                 anchors.verticalCenter: parent.verticalCenter
 

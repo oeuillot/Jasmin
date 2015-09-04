@@ -604,11 +604,11 @@ function _sameTagName(n, xmlns, tagName, log) {
     return false;
 }
 
-function parseXML(text, callbacks) {
+function parseXML(text, xmlns, callbacks) {
 
    // console.log("Parse "+text);
 
-    var document=XmlParser.parseXML(text, callbacks);
+    var document=XmlParser.parseXML(text, xmlns, callbacks);
 
     var deferred= Async.Deferred.resolved($XML(document));
 

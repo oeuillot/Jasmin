@@ -130,7 +130,7 @@ Page {
 
             // console.log("upnpClass="+upnpClass);
 
-            if (upnpClass==="object.container") {
+            if (upnpClass.indexOf("object.container")===0) {
                 if (!auto) {
 
                     upnpServer.browseMetadata(objectID).then(function onSuccess(meta) {

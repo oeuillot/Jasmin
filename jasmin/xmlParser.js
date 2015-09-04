@@ -1,5 +1,5 @@
 
-function parseXML(text, callbacks) {
+function parseXML(text, xmlns, callbacks) {
     var stack = [];
     var poped;
     var node;
@@ -9,6 +9,15 @@ function parseXML(text, callbacks) {
 
     var dictionnary={};
     var defaultNamespaceURI="";
+
+    if (xmlns) {
+        for(var i in xmlns) {
+            dictionnary[i]=xmlns[i];
+            if (i==="") {
+                defaultNamespaceURI=xmlns[i];
+            }
+        }
+    }
 
     var start=Date.now();
     var d3=0;
@@ -69,7 +78,7 @@ function parseXML(text, callbacks) {
                     nodeType: 1,
                 };
 
-//                console.log("item='"+item+"'");
+                //                console.log("item='"+item+"'");
 
                 var atts = [];
                 var ai=item.indexOf(' ');
@@ -97,7 +106,7 @@ function parseXML(text, callbacks) {
                             continue;
                         }
 
-//                        console.log("Parse attr'"+attr+"' ",kv);
+                        //                        console.log("Parse attr'"+attr+"' ",kv);
 
                         if (kv[1]==="xmlns") {
                             if (!kv[3]) {
@@ -290,7 +299,7 @@ function splitName(name, ret) {
 if (typeof(WorkerScript)!=="undefined") {
     WorkerScript.onMessage = function(message) {
         try {
-            parseXML(message.data, {
+            parseXML(message.data, message.xmlns, {
                          closeTag: function(tag, progress) {
                              WorkerScript.sendMessage({
                                                           identifier: message.identifier,

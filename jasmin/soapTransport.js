@@ -8,10 +8,14 @@
 .import "jstoxml.js" as JsToXML
 .import "util.js" as Util
 
-var LOG_TRANSPORT = false;
+var LOG_TRANSPORT = true;
 
 var XMLSOAP_XMLNS={
     "": "http://schemas.xmlsoap.org/soap/envelope/"
+}
+
+var RESPONSE_SOAP_XMLNS={
+    "": "urn:schemas-upnp-org:service-1-0"
 }
 
 function SoapTransport(url, xmlParserWorker) {
@@ -68,10 +72,10 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
         var deferred;
         try {
             if (self.xmlParserWorker) {
-                deferred=self.xmlParserWorker.parseXML(response.body);
+                deferred=self.xmlParserWorker.parseXML(response.body, RESPONSE_SOAP_XMLNS);
 
             } else {
-                deferred = Xml.parseXML(response.body);
+                deferred = Xml.parseXML(response.body, RESPONSE_SOAP_XMLNS);
             }
 
         } catch (x) {
