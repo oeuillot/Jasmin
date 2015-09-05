@@ -130,9 +130,8 @@ Page {
 
             // console.log("upnpClass="+upnpClass);
 
-            if (upnpClass.indexOf("object.container")===0) {
+            if (upnpClass.indexOf("object.container")===0 && upnpClass.indexOf("object.container.album")<0) {
                 if (!auto) {
-
                     upnpServer.browseMetadata(objectID).then(function onSuccess(meta) {
 
                         page.push("folder.qml", {
@@ -183,11 +182,11 @@ Page {
             }
 
             loading=true;
-            console.log("LOAD PAGE "+pageIndex);
+//            console.log("LOAD PAGE "+pageIndex);
 
             var def=FolderScript.loadModel(page.upnpServer, objectID, pageIndex*pageSize, pageSize);
             def.then(function onSuccess(result) {
-                console.log("Response List["+pageIndex+"]="+result.list.length+" position="+result.position+"/"+pageIndex*pageSize);
+//                console.log("Response List["+pageIndex+"]="+result.list.length+" position="+result.position+"/"+pageIndex*pageSize);
                 loading=false;
 
                 var list=result.list;
@@ -256,11 +255,11 @@ Page {
 
                     if (loading) {
                         loadingPages.unshift(pi);
-                        console.log("MARK page #"+pi+" and wait ... lp="+loadingPages);
+//                        console.log("MARK page #"+pi+" and wait ... lp="+loadingPages);
                         continue;
                     }
 
-                    console.log("MARK page #"+pi);
+//                    console.log("MARK page #"+pi);
                     loadPage(pi);
                     break;
                 }
@@ -275,6 +274,42 @@ Page {
     onStackChanged: {
         if (stack) {
             stack.breadcrumb.opacity=0.7;
+        }
+    }
+
+    Keys.onPressed: {
+        if (true) {
+            for(var i in Qt) {
+                if (i.indexOf("Key_")) {
+                    continue;
+                }
+
+                if (Qt[i]===event.key) {
+                    console.log("#"+i);
+                    break;
+                }
+            }
+        }
+
+        switch(event.key) {
+        case Qt.Key_MediaTogglePlayPause:
+            audioPlayer.playStop();
+            event.accepted = true;
+            break;
+        case Qt.Key_AudioForward:
+            audioPlayer.forward();
+            event.accepted = true;
+            break;
+        case Qt.Key_AudioRewind:
+            audioPlayer.backForward();
+            event.accepted = true;
+            break;
+        case Qt.Key_PageUp:
+            // Prog+
+            break;
+        case Qt.Key_PageDow:
+            // Prog-
+            break;
         }
     }
 }

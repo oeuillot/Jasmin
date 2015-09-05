@@ -117,6 +117,7 @@ Item {
             height: parent.height
             visible: false
 
+
             onStatusChanged: {
                 if (status!==Image.Ready || !resImageSource) {
                     return;
@@ -148,6 +149,8 @@ Item {
         Component.onCompleted: {
 
             //console.log("COMPLETED ! "+xml);
+
+            console.log("AudioPlayer="+audioPlayer);
 
             var upnpClasses = {
                 "object.container.album": object_container_album,

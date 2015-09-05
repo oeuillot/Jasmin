@@ -39,10 +39,10 @@ Page {
                 font.bold: true
                 color: "black"
                 width: 700
-                text: text6
+                text: text1
                 displayText: "URL du server"
 
-                property string text1: "192.168.3.32:10293/description.xml"
+                property string text1: "192.168.3.36:10293/description.xml"
                 property string text2: "192.168.3.193:10293/description.xml"
                 property string text3: "localhost:10293/description.xml"
                 property string text5: "212.27.38.253:52424/device.xml"

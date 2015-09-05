@@ -42,7 +42,10 @@ function computeImage(xml, upnpClass) {
         }
 
         var imageSource=upnpServer.relativeURL(res).toString();
-        return imageSource;
+        return {
+            source: imageSource,
+            transparent: false
+        };
     }
 
     if (upnpClass.indexOf("object.item.videoItem")===0) {
@@ -88,13 +91,16 @@ function computeImage(xml, upnpClass) {
             return;
         }
 
+        var transparent=(['png', 'gif', 'svg+xml'].indexOf(imageType)>=0);
+
         var url=res.text();
 
         var imageSource=upnpServer.relativeURL(url).toString();
 
-        //console.log("Return "+imageSource);
-
-        return imageSource;
+        return {
+            source: imageSource,
+            transparent: transparent
+        };
     });
 
     return ret;

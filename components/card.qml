@@ -25,6 +25,8 @@ FocusScope {
 
     property bool selected: false;
 
+    property bool transparentImage: false;
+
     onModelChanged: {
         //console.log("Xml="+Util.inspect(model, false, {}));
 
@@ -38,10 +40,12 @@ FocusScope {
 
         if (!model) {
             resImageSource="";
+            transparentImage=false;
             label.text="";
             info.visible=false;
             rating.visible=false;
             itemType.text=CardScript.computeType(null);
+            itemType.visible=true;
             return;
         }
 
@@ -50,9 +54,21 @@ FocusScope {
 
         // console.log("upnpclass="+upnpClass);
 
-            resImageSource=CardScript.computeImage(model, upnpClass) || "";
-            label.text=CardScript.computeLabel(model, upnpClass) || "";
+        var img=CardScript.computeImage(model, upnpClass);
+        if (img) {
+            resImageSource=img.source;
+            transparentImage=img.transparent;
+            itemType.visible=false;
+
+        } else {
+            resImageSource="";
+            transparentImage=false;
             itemType.text= CardScript.computeType(upnpClass);
+            itemType.visible=true;
+        }
+
+        label.text=CardScript.computeLabel(model, upnpClass) || "";
+        itemType.text= CardScript.computeType(upnpClass);
 
 
         var ratingV=CardScript.getRating(model)
@@ -138,6 +154,7 @@ FocusScope {
                         width: parent.width
                         height: parent.height
 
+                        visible: transparentImage
                         smooth: true
                         antialiasing: true
                         asynchronous: true

@@ -1,5 +1,6 @@
 import QtQuick 2.2
 import QtGraphicalEffects 1.0
+import QtMultimedia 5.0
 import "../../jasmin" 1.0
 import ".." 1.0
 
@@ -20,12 +21,42 @@ FocusScope {
     property string resImageSource;
     property string objectID;
 
+    property var metas: null;
+
     property bool layoutDone: false
+
+
+    function playTracks(trackIndex, callback) {
+
+        var disks=focusScope.metas.tracks;
+        if (!disks) {
+            return 0;
+        }
+
+        var ls=[];
+
+        disks.forEach(function(tracks) {
+            tracks.forEach(function(track) {
+                ls.push(track.xml);
+            });
+        });
+
+        if (callback) {
+            ls=callback(ls);
+        }
+
+        audioPlayer.setPlayList(upnpServer, ls, resImageSource, trackIndex);
+        audioPlayer.play();
+
+        return ls.length;
+    }
+
 
     Item {
         id: row
         height: childrenRect.height;
         width: parent.width
+
 
         Component {
             id: trackComponent
@@ -43,7 +74,7 @@ FocusScope {
                 property var xml;
                 property string objectID;
 
-                property bool playingObjectID: audioPlayer.playingObjectID===objectID;
+                property bool playingObjectID: (focusScope.audioPlayer!=null && focusScope.audioPlayer.playingObjectID===objectID);
 
                 Item {
                     width: 400
@@ -60,7 +91,7 @@ FocusScope {
                         horizontalAlignment: (playingObjectID)?Text.AlignLeft:Text.AlignRight
 
                         font.family: (playingObjectID)?"fontawesome":value.font.family
-                        text: (playingObjectID)?(audioPlayer.playbackState===1?Fontawesome.Icon.volume_up:Fontawesome.Icon.volume_off):point
+                        text: (playingObjectID)?(focusScope.audioPlayer.playbackState===1?Fontawesome.Icon.volume_up:Fontawesome.Icon.volume_off):point
 
                         width: 16
                     }
@@ -226,6 +257,17 @@ FocusScope {
 
                         KeyNavigation.right: randomButton
                         KeyNavigation.left: menuButton
+
+                        Keys.onPressed: {
+                            switch(event.key) {
+
+                            case Qt.Key_Return:
+                            case Qt.Key_Enter:
+                                event.accepted = true;
+
+                                playTracks(0);
+                            }
+                        }
                     }
                     Text {
                         id: randomButton
@@ -239,6 +281,27 @@ FocusScope {
 
                         KeyNavigation.left: playButton
                         KeyNavigation.right: menuButton
+
+                        Keys.onPressed: {
+                            switch(event.key) {
+
+                            case Qt.Key_Return:
+                            case Qt.Key_Enter:
+                                event.accepted = true;
+
+                                playTracks(0, function(tracks) {
+                                    var ts=tracks.slice(0);
+                                    for(var i=0;i<ts.length;i++) {
+                                        var j=Math.floor(Math.random()*ts.length);
+                                        var t=ts[i];
+                                        ts[i]=ts[j];
+                                        ts[j]=t;
+                                    }
+                                    return ts;
+                                });
+                                return;
+                            }
+                        }
                     }
                     Text {
                         id: menuButton
@@ -302,6 +365,7 @@ FocusScope {
                 var d=ObjectContainerAlbum.fillTracks(infosColumn, components, 60, upnpServer, xml);
 
                 d.then(function onSuccess(metas) {
+                    focusScope.metas=metas;
 
                     var ms="";
                     var artists=metas.artists;
@@ -366,6 +430,8 @@ FocusScope {
 
         Component.onCompleted: {
             focusScope.forceActiveFocus();
+
+            console.log("**** audioPlayer="+audioPlayer);
         }
     }
 }

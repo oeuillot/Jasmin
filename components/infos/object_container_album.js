@@ -61,7 +61,8 @@ function fillTracks(parent, components, y, upnpServer, xml) {
         var metas = {
             artists: [],
             genres: [],
-            year: 0
+            year: 0,
+            tracks: null
         };
 
         xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children().forEach(function(item) {
@@ -181,12 +182,14 @@ function fillTracks(parent, components, y, upnpServer, xml) {
         }
 
         list.sort(function(i1, i2) {
-            var d1=i1.disk || 9999999;
-            var d2=i2.disk || 9999999;
+            var d1=i1[0].disk || 9999999;
+            var d2=i2[0].disk || 9999999;
 
             return d1.disk-d2.disk;
         });
 
+
+        metas.tracks=list;
 
         var rowIndex=0;
 
