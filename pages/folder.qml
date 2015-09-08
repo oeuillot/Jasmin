@@ -8,7 +8,7 @@ import "../jasmin" 1.0
 
 Page {
     id: page
-    title: "Films HD"
+    title: ""
 
     property var meta;
     property var upnpServer;
@@ -20,6 +20,8 @@ Page {
 
     property Info info;
 
+    property bool loadArtists: true;
+
     Component {
         id: card
 
@@ -30,13 +32,6 @@ Page {
 
             Keys.onPressed: {
                 switch(event.key) {
-                case Qt.Key_Escape:
-                case Qt.Key_Back:
-                    if (info) {
-                        info.destroy();
-                        info=null;
-                    }
-                    return;
 
                 case Qt.Key_Return:
                 case Qt.Key_Enter:
@@ -62,6 +57,8 @@ Page {
                     this.selected=true;
 
                     if (info) {
+                        info.card.infoDisplayed=false;
+
                         info.destroy();
                         info=null;
                     }
@@ -132,13 +129,15 @@ Page {
 
             if (upnpClass.indexOf("object.container")===0 && upnpClass.indexOf("object.container.album")<0) {
                 if (!auto) {
+
                     upnpServer.browseMetadata(objectID).then(function onSuccess(meta) {
 
                         page.push("folder.qml", {
                                       upnpServer: page.upnpServer,
                                       meta: meta,
                                       title: card.title,
-                                      audioPlayer: page.audioPlayer
+                                      audioPlayer: page.audioPlayer,
+                                      loadArtists: true
                                   });
 
 
@@ -161,6 +160,8 @@ Page {
                               card: card
                           });
 
+            card.infoDisplayed=true;
+
             //row.parent.infoContainer.visible=true;
 
             info.Component.onDestruction.connect((function() {
@@ -182,11 +183,11 @@ Page {
             }
 
             loading=true;
-//            console.log("LOAD PAGE "+pageIndex);
+            //            console.log("LOAD PAGE "+pageIndex);
 
-            var def=FolderScript.loadModel(page.upnpServer, objectID, pageIndex*pageSize, pageSize);
+            var def=FolderScript.loadModel(page.upnpServer, objectID, pageIndex*pageSize, pageSize, loadArtists);
             def.then(function onSuccess(result) {
-//                console.log("Response List["+pageIndex+"]="+result.list.length+" position="+result.position+"/"+pageIndex*pageSize);
+                //                console.log("Response List["+pageIndex+"]="+result.list.length+" position="+result.position+"/"+pageIndex*pageSize);
                 loading=false;
 
                 var list=result.list;
@@ -198,7 +199,7 @@ Page {
 
                 listView.updateLayout();
 
-                console.log("Loading pages="+loadingPages);
+                //console.log("Loading pages="+loadingPages);
 
                 if (loadingPages.length) {
                     loadPage(loadingPages.shift());
@@ -238,13 +239,13 @@ Page {
                     var ix=cur+i*listView.viewColumns;
                     var pi=Math.floor(ix/pageSize);
 
-//                    console.log("Test #"+pi+" "+ix+" => "+pageSizeLoaded[pi]);
+                    //                    console.log("Test #"+pi+" "+ix+" => "+pageSizeLoaded[pi]);
 
                     if (pageSizeLoaded[pi]) {
                         ix=cur+(i+1)*listView.viewColumns-1;
                         pi=Math.floor(ix/pageSize);
 
-//                        console.log("Test 2#"+pi+" "+ix+" => "+pageSizeLoaded[pi]);
+                        //                        console.log("Test 2#"+pi+" "+ix+" => "+pageSizeLoaded[pi]);
 
                         if (pageSizeLoaded[pi]) {
                             continue;
@@ -255,11 +256,11 @@ Page {
 
                     if (loading) {
                         loadingPages.unshift(pi);
-//                        console.log("MARK page #"+pi+" and wait ... lp="+loadingPages);
+                        //                        console.log("MARK page #"+pi+" and wait ... lp="+loadingPages);
                         continue;
                     }
 
-//                    console.log("MARK page #"+pi);
+                    //                    console.log("MARK page #"+pi);
                     loadPage(pi);
                     break;
                 }
@@ -293,7 +294,7 @@ Page {
 
         switch(event.key) {
         case Qt.Key_MediaTogglePlayPause:
-            audioPlayer.playStop();
+            audioPlayer.togglePlayPause();
             event.accepted = true;
             break;
         case Qt.Key_AudioForward:
@@ -309,6 +310,24 @@ Page {
             break;
         case Qt.Key_PageDow:
             // Prog-
+            break;
+        case Qt.Key_Escape:
+        case Qt.Key_Back:
+            if (info!=null) {
+                var card=info.card;
+
+                info.card.infoDisplayed=false;
+                info.destroy();
+                info=null;
+
+                if (card) {
+                    card.forceActiveFocus();
+                }
+
+                event.accepted = true;
+                return;
+            }
+
             break;
         }
     }

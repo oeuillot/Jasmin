@@ -27,6 +27,10 @@ FocusScope {
 
     property bool transparentImage: false;
 
+    property bool infoDisplayed: false;
+
+    property real selectedScale: (selected?2:10);
+
     onModelChanged: {
         //console.log("Xml="+Util.inspect(model, false, {}));
 
@@ -42,7 +46,7 @@ FocusScope {
             resImageSource="";
             transparentImage=false;
             label.text="";
-            info.visible=false;
+            info.infoVisible=false;
             rating.visible=false;
             itemType.text=CardScript.computeType(null);
             itemType.visible=true;
@@ -58,14 +62,14 @@ FocusScope {
         if (img) {
             resImageSource=img.source;
             transparentImage=img.transparent;
-            itemType.visible=false;
 
         } else {
             resImageSource="";
             transparentImage=false;
-            itemType.text= CardScript.computeType(upnpClass);
-            itemType.visible=true;
         }
+
+        itemType.text= CardScript.computeType(upnpClass);
+        itemType.visible=true;
 
         label.text=CardScript.computeLabel(model, upnpClass) || "";
         itemType.text= CardScript.computeType(upnpClass);
@@ -75,13 +79,12 @@ FocusScope {
         if (ratingV<0) {
             rating.visible=false;
             info.text=CardScript.computeInfo(model, upnpClass) || "";
-            info.visible=true;
+            info.infoVisible=true;
         } else {
-            info.visible=false;
+            info.infoVisible=false;
             rating.text=CardScript.computeRatingText(ratingV)
             rating.visible=true;
         }
-
     }
 
     function delayedUpdateModel() {
@@ -98,6 +101,7 @@ FocusScope {
         imageItem=resImage.createObject(rectImage);
     }
 
+
     Item {
         id: rectangle
         width: 154
@@ -106,22 +110,12 @@ FocusScope {
         focus: true
 
         Rectangle {
-            visible: card.selected
-            width: parent.width
-            height: parent.height
-
-            color: "transparent"
-            opacity: 0.1
-            radius: 5
-        }
-
-        Rectangle {
             id: rectImage
-            x: card.selected?2:10
-            y: card.selected?2:10
-            width: parent.width-(card.selected?2:10)*2
-            height: parent.width-(card.selected?2:10)*2
-            border.color: (rectangle.activeFocus)?"#FFB3B3":"#D3D3D3"
+            x: selectedScale
+            y: selectedScale
+            width: parent.width-selectedScale*2
+            height: parent.width-selectedScale*2
+            border.color: "#D3D3D3"
             border.width: 1
             color: "#E9E9E9"
 
@@ -133,7 +127,7 @@ FocusScope {
                 height: parent.height-2
 
                 opacity: 0.4
-                font.pixelSize: 92+(card.selected?4:0)
+                font.pixelSize: 92;
                 font.family: "fontawesome"
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
@@ -181,19 +175,16 @@ FocusScope {
                         sourceSize.height: 256
 
                         source: resImageSource
+
+                        onStatusChanged: {
+//                            console.log("status="+status);
+                            if (status===Image.Ready) {
+                                itemType.visible=false;
+                            }
+                        }
                     }
                 }
             }
-        }
-
-        Rectangle {
-            x: 2
-            y: label.y
-            width: parent.width-4
-            height: label.height+info.height
-            opacity: 0.4
-            color: "red"
-            visible: rectangle.activeFocus
         }
 
         Text {
@@ -209,11 +200,12 @@ FocusScope {
 
         Text {
             id: info
-            visible: false //card.rating<0 && !card.selected
+            property bool infoVisible: false
+            visible: infoVisible && !infoDisplayed
             y: label.y+label.height
             x: card.selected?2:10
             width: parent.width-x;
-            color: "#9A9AA2"
+            color: "#8A8A92"
             elide: Text.ElideMiddle
             font.bold: true
             font.pixelSize: (text && text.length>14)?12:14

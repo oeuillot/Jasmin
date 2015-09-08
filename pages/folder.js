@@ -21,7 +21,7 @@ function fillModel(upnpServer, meta) {
     return { objectID: objectID, childCount: childCount };
 }
 
-function loadModel(upnpServer, objectID, position, pageSize) {
+function loadModel(upnpServer, objectID, position, pageSize, loadArtists) {
     var deferred = new Async.Deferred.Deferred();
 
     var filters=[{
@@ -36,14 +36,18 @@ function loadModel(upnpServer, objectID, position, pageSize) {
                  }, {
                      name: "albumArtURI",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
-                 }, /* {
-                     name: "artist",
-                     namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
-                 },*/ {
+                 }, {
                      name: "rating",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
 
                  }];
+
+    if (loadArtists) {
+        filters.push({
+                         name: "artist",
+                         namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
+                     });
+    }
 
     var sorters=[
                 {
@@ -55,7 +59,7 @@ function loadModel(upnpServer, objectID, position, pageSize) {
             ];
 
 
-//    console.log("Request position "+position+" pageSize="+pageSize);
+    //    console.log("Request position "+position+" pageSize="+pageSize);
 
     var d=upnpServer.browseDirectChildren(objectID, {
                                               filters: filters,
@@ -66,17 +70,17 @@ function loadModel(upnpServer, objectID, position, pageSize) {
 
     d.then(function onSuccess(xml){
 
-       //console.log("Return=",Util.inspect(xml.result));
+        //console.log("Return=",Util.inspect(xml.result));
 
         var children=xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children();
         //console.log("Children=",Util.inspect(children));
 
         //console.log("*** RESOLVE "+children.length);
         deferred.resolve({
-            list: children.toArray(),
-            position: position,
-            pageSize: pageSize
-        });
+                             list: children.toArray(),
+                             position: position,
+                             pageSize: pageSize
+                         });
 
     }, function onFailure(reason) {
 

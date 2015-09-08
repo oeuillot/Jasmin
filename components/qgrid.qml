@@ -71,6 +71,14 @@ FocusScope {
             ch+=info.height;
         }
 
+        var totY=(viewRows*(cellHeight+verticalSpacing)-verticalSpacing)+(info?info.height:0);
+        // console.log("DIFF "+totY+"/"+grid.contentHeight);
+        if (grid.contentHeight!==totY) {
+            grid.contentHeight=totY;
+        }
+
+        // console.log("SHOW height="+ch+" info.height="+(info?info.height:0));
+
        // console.log("SHOW Index="+component.cellIndex+" y="+y+" cellHeight="+cellHeight+" component.y="+component.y+" total.height="+ch+" grid.contentY="+grid.contentY+" grid.height="+grid.height+" info.h="+(info && info.height));
 
         if (ch>grid.height) {
@@ -134,6 +142,9 @@ FocusScope {
             show(item, info);
             grid.updateLayout("onHeightChanged");
         });
+
+        //listView.updateLayout("showInfo");
+
 
         info.Component.onDestruction.connect(destructingEvent(info));
 
@@ -242,13 +253,58 @@ FocusScope {
 
         property int viewShadows: 0;
 
-        property double
+        property double repeatStop: 0;
 
-        repeatStop: 0;
 
-        Component.onCompleted: {
+        Rectangle {
+            id: focusRectangle
+            color: "red"
+            opacity: 0.4
+            width: cellWidth
+            height: cellHeight
+            radius: 4
 
+            Component.onCompleted: {
+                widget.onFocusIndexChanged.connect(function() {
+                    if (focusIndex<0){
+                        focusRectangle.visible=false;
+                        return;
+                    }
+
+                    focusRectangle.visible=true;
+
+                    focusAnimation.stop();
+                    animationX.from=focusRectangle.x;
+                    animationX.to=(focusIndex % viewColumns)*(cellWidth+horizontalSpacing);
+                    animationY.from=focusRectangle.y;
+                    animationY.to=(Math.floor(focusIndex / viewColumns))*(cellHeight+verticalSpacing);
+                    focusAnimation.start();
+                });
+            }
         }
+
+        ParallelAnimation {
+
+            id: focusAnimation
+
+            NumberAnimation {
+                id: animationX
+                target: focusRectangle
+                properties: "x"
+                duration: 100
+                from: 0
+                to: 0
+            }
+
+            NumberAnimation {
+                id: animationY
+                target: focusRectangle
+                properties: "y"
+                duration: 100
+                from: 0
+                to: 0
+            }
+       }
 
         onHeightChanged: {
             //console.log("Width="+width+" height="+height);
@@ -409,6 +465,10 @@ FocusScope {
             return function() {
                 if (cellDelegate.activeFocus) {
                     focusIndex=cellDelegate.cellIndex;
+                    return;
+                }
+                if (focusIndex===cellDelegate.cellIndex) {
+                    focusIndex=-1;
                 }
             };
         }
@@ -462,7 +522,6 @@ FocusScope {
             now=Date.now()-now;
             //            console.log("Construct delay="+now+"ms");
         }
-
     }
 
 

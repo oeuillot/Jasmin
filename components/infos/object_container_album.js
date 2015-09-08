@@ -48,9 +48,9 @@ function fillTracks(parent, components, y, upnpServer, xml) {
     // console.log("Request "+objectID);
 
     var deferred=upnpServer.browseDirectChildren(objectID, {
-    	sorters: trackSorters,
-    	requestCount: 256
-    	
+        sorters: trackSorters,
+        requestCount: 256
+
     }).then(function onSuccess(xml) {
 
         // console.log(Util.inspect(xml, false, {}));
@@ -71,7 +71,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
             var upnpClass=item.byPath("upnp:class", UpnpServer.DIDL_XMLNS_SET).text();
             // console.log("item=",Util.inspect(item, false, {})+" =>
-						// "+upnpClass);
+                        // "+upnpClass);
             if (!upnpClass){
                 return;
             }
@@ -175,7 +175,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
             ds.push(infos);
         });
 
-        // console.log("list=",Util.inspect(list, false, {}));
+       //console.log("list=",Util.inspect(list));
 
         if (!list.length) {
             return;
@@ -193,6 +193,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
         var rowIndex=0;
 
+        var diskIndex=0;
         list.forEach(function(ds) {
             ds.sort(function(i1, i2) {
                 var t1=i1.trackNumber || 9999999;
@@ -208,18 +209,13 @@ function fillTracks(parent, components, y, upnpServer, xml) {
             if (list.length>1) {
                 var cdisc=components.disc.createObject(parent, {
                                                            text: (ds[0].disk)?("Disque "+ds[0].disk):"Autre disque",
-
                                                        });
                 cdisc.y=y;
                 y+=cdisc.height;
             }
 
-            var grid=components.grid.createObject(parent, {
-                                                      visible: true
-                                                  });
-            grid.y=y;
 
-            function addInfos(infos) {
+            function addInfos(infos, index) {
                 if (!infos) {
                     return;
                 }
@@ -240,7 +236,8 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 }
 
                 var params={
-                    type: "row",
+                    diskIndex: diskIndex,
+                    trackIndex: index,
                     point: (trackNumber?String(trackNumber):"\u25CF"),
                     text: infos.title,
                     duration: duration,
@@ -250,28 +247,25 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
                 // console.log(Util.inspect(params, false, {}));
 
-                var row=components.track.createObject(grid, params);
+                var row=components.track.createObject(parent, params);
 
                 return row;
             }
 
-            var yh=0;
             var k=Math.floor(ds.length/2+0.5);
             for(var i=0;i<k;i++) {
-                var c1=addInfos(ds[i]);
+                var c1=addInfos(ds[i], i);
                 c1.x=0;
-                c1.y=yh;
-                var c2=addInfos(ds[i+k]);
+                c1.y=y;
+                var c2=addInfos(ds[i+k], i+k);
                 if (c2){
                     c2.x=400;
-                    c2.y=yh;
+                    c2.y=y;
                 }
-
-                yh+=24;
+                y+=24;
             };
 
-            grid.height=yh;
-            y+=yh;
+            diskIndex++;
         });
 
         return metas;

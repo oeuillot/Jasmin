@@ -3,6 +3,8 @@ import QtMultimedia 5.0
 import fbx.ui.page 1.0
 import fbx.ui.control 1.0
 
+import fbx.async 1.0
+
 import "../jasmin" 1.0
 
 import "fontawesome.js" as Fontawesome;
@@ -23,12 +25,79 @@ Item {
 
     property bool manualStop: false;
 
-    function setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, append) {
+    function setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle, append) {
+        //console.log("setPlay: xml="+xmlArray+" playListIndex="+playListIndex+" shuffle="+shuffle+" append="+append);
 
-        var playing=(playbackState===Audio.PlayingState);
         if (!append) {
-            stop();
+            return stop().then(function() {
+                playListIndex=0;
+                _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle);
+            });
+        }
 
+        _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle, append);
+        return Deferred.resolved();
+    }
+
+    function _fillInfo(upnpServer, xml, albumImageURL, playList, playListIndex ) {
+        var found=false;
+
+        xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).forEach(function(res) {
+            if (found) {
+                return;
+            }
+
+            var protocolInfo=res.attr("protocolInfo");
+            if (!protocolInfo) {
+                return;
+            }
+
+            var ts=protocolInfo.split(':');
+            if (ts[0]!=='http-get') {
+                return;
+            }
+
+            var url=res.text();
+            if (!url) {
+                return;
+            }
+
+            var imageURL=xml.byPath("upnp:albumArtURI", UpnpServer.DIDL_XMLNS_SET).first().text();
+            if (imageURL) {
+                imageURL=upnpServer.relativeURL(imageURL).toString();
+            }
+
+            if (!imageURL) {
+                imageURL = albumImageURL;
+            }
+
+            var title=xml.byPath("dc:title", UpnpServer.DIDL_XMLNS_SET).first().text();
+            var artist=xml.byPath("upnp:artist", UpnpServer.DIDL_XMLNS_SET).first().text();
+
+            var objectID=xml.attr("id");
+
+            url=upnpServer.relativeURL(url).toString();
+
+            found=true;
+
+            playList[playListIndex]={
+                              objectID: objectID,
+                              xml: xml,
+                              url: url,
+                              imageURL: imageURL,
+                              title: title,
+                              artist: artist
+                          };
+
+            return false; // Break the loop if forEach support it :-)
+       });
+
+        return found;
+    }
+
+    function _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffleP, append) {
+
+        if (!append) {
             playList=[];
         }
 
@@ -36,161 +105,124 @@ Item {
             playListIndex=0;
         }
 
-        console.log("xmlArray="+xmlArray);
+        if (shuffleP!==undefined) {
+            shuffle=shuffleP;
+        }
+
+        // console.log("xmlArray="+xmlArray);
 
         if (!(xmlArray instanceof Array)) {
             xmlArray=[xmlArray];
         }
 
+        var idx=playList.length;
         xmlArray.forEach(function(xml) {
-            var found=false;
+            if (_fillInfo(upnpServer, xml, albumImageURL, playList, idx)!==true) {
+                return;
+            }
 
-            xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).forEach(function(res) {
-                if (found) {
-                    return;
-                }
-
-                var protocolInfo=res.attr("protocolInfo");
-                if (!protocolInfo) {
-                    return;
-                }
-
-                var ts=protocolInfo.split(':');
-                if (ts[0]!=='http-get') {
-                    return;
-                }
-
-                var url=res.text();
-                if (!url) {
-                    return;
-                }
-
-                var imageURL=xml.byPath("upnp:albumArtURI", UpnpServer.DIDL_XMLNS_SET).first().text();
-                if (imageURL) {
-                    imageURL=upnpServer.relativeURL(imageURL).toString();
-                }
-
-                if (!imageURL) {
-                    imageURL = albumImageURL;
-                }
-
-                var title=xml.byPath("dc:title", UpnpServer.DIDL_XMLNS_SET).first().text();
-                var artist=xml.byPath("upnp:artist", UpnpServer.DIDL_XMLNS_SET).first().text();
-
-                var objectID=xml.attr("id");
-
-                url=upnpServer.relativeURL(url).toString();
-
-                found=true;
-
-                playList.push({
-                                  objectID: objectID,
-                                  xml: xml,
-                                  url: url,
-                                  imageURL: imageURL,
-                                  title: title,
-                                  artist: artist
-                              });
-            });
+            idx++;
         });
-
-        console.log("playbackState="+playbackState+" audio.playbackState="+audio.playbackState);
-
-        if (playing && !append) {
-            playIndex(playListIndex);
-        }
     }
 
     function clear() {
-        stop();
-        playList=[];
+        return stop().then(function() {
+            playList=[];
+        });
     }
 
     function playMusic(upnpServer, xml, albumImageURL) {
-        //console.log("PlayMusic "+xml);
-        clear();
-
-        addMusic(upnpServer, xml, albumImageURL);
-
-        play();
+        return setPlayList(upnpServer, [xml], albumImageURL, 0, false, false).then(function() {
+            return play();
+        });
     }
 
     function stop() {
-        if (audioPlayer.playbackState===Audio.StoppedState) {
-            return;
-        }
         audioPlayer.playbackState=Audio.StoppedState;
-
-        console.log("Set audio player to STOP "+audioPlayer.playbackState);
-
-        if (audio.playbackState!==Audio.StoppedState) {
-            audio.stop();
-        }
+        return audio.$stop().then(function() {
+            //console.log("Set audio player to STOP "+audioPlayer.playbackState);
+        });
     }
 
     function play() {
+        //console.log("Play: Current playback="+playbackState+" audioPlayback="+audio.playbackState);
+
         if (playbackState===Audio.PlayingState) {
-            return;
+            return Deferred.resolved(playbackState);
         }
         playbackState=Audio.PlayingState;
 
         if (audio.playbackState===Audio.StoppedState) {
-            playIndex(playListIndex);
-            return;
-        }
-
-        audio.play();
-    }
-
-    function playStop() {
-        console.log("PlayStop playbackState="+playbackState+"/"+Audio.PlayingState);
-        if (playbackState===Audio.PlayingState) {
-            audio.pause();
-            return;
+            return playIndex(playListIndex);
         }
 
         if (audio.playbackState===Audio.PausedState) {
-            audio.play();
-            return;
+            return togglePlayPause();
         }
 
-        play();
+        return Deferred.resolved(playbackState);
+    }
+
+    function togglePlayPause() {
+        //console.log("PlayPause playbackState="+playbackState+"/"+Audio.PlayingState);
+        if (playbackState===Audio.PlayingState) {
+            return audio.$pause().then(function() {
+                playbackState=Audio.StoppedState;
+            });
+        }
+
+        if (audio.playbackState===Audio.PausedState) {
+            return audio.$start().then(function() {
+                playbackState=Audio.PlayingState;
+            });
+        }
+
+        return play();
     }
 
     function forward() {
-        console.log("AUDIO: Forward");
-        stop();
+        //console.log("AUDIO: Forward");
 
-        if (playListIndex>=playList.length) {
-            return;
-        }
-        playListIndex++;
+        return stop().then(function() {
+            //console.log("AUDIO: stopped "+playListIndex+" len="+playList.length);
 
-        playIndex(playListIndex);
+            if (playListIndex>=playList.length) {
+                return false;
+            }
+            playListIndex++;
+
+            return playIndex(playListIndex);
+        });
     }
 
     function playIndex(index) {
+        //console.log("PLAY index #"+index);
+
         playListIndex=index;
         if (playListIndex>=playList.length) {
-            return;
+            return Deferred.resolved(false);
         }
 
-        var music=playList[playListIndex];
+        return audio.$stop().then(function() {
 
-        console.log("Play index "+playListIndex+" source="+music.url);
+            var music=playList[playListIndex];
 
-        audio.source=music.url;
-        audio.currentImageURL=music.imageURL;
-        audio.autoPlay=true;
+            //console.log("playIndex.stopped #"+playListIndex+" source="+music.url);
 
-        title.text=music.title || "Inconnu";
-        artist.text=music.artist || "Inconnu";
+            audio.source=music.url;
+            audio.currentMusic=music;
 
-        playingObjectID=music.objectID;
+            title.text=music.title || "Inconnu";
+            artist.text=music.artist || "Inconnu";
 
-        console.log("Call play of audio !");
+            playingObjectID=music.objectID;
 
-        audio.play();
+            //console.log("Call play of audio !");
+
+            return audio.$play().then(function() {
+                playbackState=Audio.PlayingState;
+            });
+        });
     }
 
     function formatTime(d) {
@@ -207,38 +239,30 @@ Item {
         return r;
     }
 
-    Audio {
+    DeferredAudio {
         id: audio
         autoLoad: true
 
-        property var currentXML;
-        property var currentImageURL;
+        property var currentMusic;
 
         property int progress: 0;
 
         onPlaybackStateChanged: {
             console.log("Playback audio.state="+audio.playbackState+" audioPlayer.state="+audioPlayer.playbackState);
 
+            if (audio.playbackState===Audio.StoppedState) {
+                progress=0;
+            }
+
             if (audio.playbackState===Audio.StoppedState && audioPlayer.playbackState===Audio.PlayingState) {
-                console.log("Identify a forward");
+                // console.log("Identify a forward");
                 forward();
                 return;
             }
-            if (audio.playbackState===Audio.PlayingState && audioPlayer.playbackState!==Audio.PlayingState) {
-                audioPlayer.playbackState=Audio.PlayingState;
-
-                console.log("Set audio player to PLAYING ! ("+Audio.PlayingState+")");
-            }
-
-            if (audio.playbackState===Audio.PausedState && audioPlayer.playbackState!==Audio.StoppedState) {
-                audioPlayer.playbackState=Audio.StoppedState;
-
-                console.log("Set audio player to STOPPED ! (audio pause) ("+Audio.StoppedState+")");
-            }
         }
 
-        onCurrentImageURLChanged: {
-            image.source=currentImageURL || "";
+        onCurrentMusicChanged: {
+            image.source=(currentMusic && currentMusic.imageURL) || "";
         }
 
         onPositionChanged: {

@@ -8,7 +8,7 @@
 .import "jstoxml.js" as JsToXML
 .import "util.js" as Util
 
-var LOG_TRANSPORT = true;
+var LOG_TRANSPORT = false;
 
 var XMLSOAP_XMLNS={
     "": "http://schemas.xmlsoap.org/soap/envelope/"

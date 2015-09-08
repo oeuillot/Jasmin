@@ -41,6 +41,7 @@ function computeImage(xml, upnpClass) {
             return;
         }
 
+        // No transparency for albumArtURI
         var imageSource=upnpServer.relativeURL(res).toString();
         return {
             source: imageSource,
@@ -165,7 +166,7 @@ function computeInfo(xml, upnpClass, component) {
         return null;
     }
 
-    if (upnpClass.indexOf("object.item.videoItem")) {
+    if (upnpClass.indexOf("object.item.videoItem")!==0) {
         // Not for movie
 
         var artists=xml.byPath("upnp:artist", UpnpServer.DIDL_XMLNS_SET);

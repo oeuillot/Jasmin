@@ -26,50 +26,131 @@ FocusScope {
     property bool layoutDone: false
 
 
-    function playTracks(trackIndex, callback) {
+    function playTracks(diskIndex, trackIndex, shuffle, append) {
 
         var disks=focusScope.metas.tracks;
         if (!disks) {
             return 0;
         }
 
+        var t=trackIndex;
+
         var ls=[];
 
-        disks.forEach(function(tracks) {
-            tracks.forEach(function(track) {
-                ls.push(track.xml);
-            });
-        });
+        console.log("Add track="+t+" disk="+diskIndex);
 
-        if (callback) {
-            ls=callback(ls);
+        for(var di=0;di<disks.length;di++) {
+
+            if (diskIndex>=0 && diskIndex>di) {
+                continue;
+            }
+
+            var tracks=disks[di];
+
+            for(var ti=0;ti<tracks.length;ti++) {
+                if (t>0) {
+                    t--;
+                    continue;
+                }
+
+                var track=tracks[ti];
+                ls.push(track.xml);
+            }
         }
 
-        audioPlayer.setPlayList(upnpServer, ls, resImageSource, trackIndex);
+        audioPlayer.setPlayList(upnpServer, ls, resImageSource, 0, shuffle, append);
         audioPlayer.play();
 
         return ls.length;
     }
 
 
+    function changePosition(diskIndex, trackIndex) {
+        //console.log("ChangePosition Parent2="+list+" "+list.parent+" offset="+offset+" source="+source);
+
+        var disks=focusScope.metas.tracks;
+        if (!disks) {
+            return false;
+        }
+
+        //console.log("ChangePosition "+diskIndex+"/"+trackIndex);
+
+        for(;;) {
+            if (trackIndex<0) {
+                if (diskIndex<1) {
+                    return false;
+                }
+
+                diskIndex--;
+                trackIndex=disks[diskIndex].length+trackIndex;
+
+                if (trackIndex<0 && diskIndex<1) {
+                    trackIndex=0;
+                    break;
+                }
+
+                continue;
+            }
+            if (trackIndex>=disks[diskIndex].length) {
+                trackIndex-=disks[diskIndex].length;
+
+                if (diskIndex+1<disks.length) {
+                    diskIndex++;
+                    continue;
+                }
+
+                trackIndex=disks[diskIndex].length-1;
+                break;
+            }
+
+            break;
+        }
+        //console.log("Search "+diskIndex+"/"+trackIndex);
+
+        var children=separator.parent.children;
+        for(var i=0;i<children.length;i++) {
+            var child=children[i];
+//            console.log("Child "+child+" "+child.type+" "+child.diskIndex+" "+child.trackIndex);
+            if (child.type!=="track") {
+                continue;
+            }
+            if (child.diskIndex!==diskIndex || child.trackIndex!==trackIndex) {
+                continue;
+            }
+
+            child.forceActiveFocus();
+
+            return true;
+        }
+
+        // console.log("Not FOUND !");
+
+        return false;
+    }
+
+
     Item {
         id: row
-        height: childrenRect.height;
+        height: imageColumn.height+30;
         width: parent.width
-
 
         Component {
             id: trackComponent
 
-
             FocusScope {
+                id: trackItem
                 width: 400
                 height: 24
+
+                focus: true
 
                 property string point;
                 property alias text: value.text
                 property alias duration: duration.text
-                property string type;
+                property string type: "track"
+
+                property int diskIndex: 0
+                property int trackIndex: 0
 
                 property var xml;
                 property string objectID;
@@ -88,44 +169,22 @@ FocusScope {
                         y: 2
                         opacity: 0.7
 
+                        color: trackItem.activeFocus?"red": "black"
+
                         horizontalAlignment: (playingObjectID)?Text.AlignLeft:Text.AlignRight
 
                         font.family: (playingObjectID)?"fontawesome":value.font.family
-                        text: (playingObjectID)?(focusScope.audioPlayer.playbackState===1?Fontawesome.Icon.volume_up:Fontawesome.Icon.volume_off):point
+                        text: (playingObjectID)?((focusScope.audioPlayer.playbackState===Audio.PlayingState)?Fontawesome.Icon.volume_up:Fontawesome.Icon.volume_off):point
 
                         width: 16
-                    }
-
-                    function changePosition(source, offset) {
-                        var list=source.parent.parent;
-                        //                    console.log("Parent2="+list+" "+list.id);
-
-                        var children=list.children;
-                        for(var i=0;i<children.length;i++) {
-                            if (children[i]!==this.parent) {
-                                continue;
-                            }
-
-                            var next=children[i+offset];
-                            if (next && next.type==="row") {
-                                console.log("Next focus="+next+"/"+next.id);
-                                next.children[1].forceActiveFocus();
-
-                                return true;
-                            }
-                            break;
-                        }
-
-                        return false;
                     }
 
                     Text {
                         id: value
                         font.bold: true
                         font.pixelSize: 14
-                        focus: true
 
-                        color: activeFocus?"red": "black"
+                        color: trackItem.activeFocus?"red": "black"
 
                         x: 20
                         y: 0
@@ -134,48 +193,13 @@ FocusScope {
                         elide: Text.ElideRight
                     }
 
-                    Keys.onPressed: {
-                        switch(event.key) {
-                        case Qt.Key_Right:
-                            if (changePosition(this, 1)) {
-                                event.accepted = true;
-                            }
-                            return;
-
-
-                        case Qt.Key_Down:
-                            if (changePosition(this, 2)) {
-                                event.accepted = true;
-                            }
-                            return;
-
-                        case Qt.Key_Left:
-                            if (changePosition(this, -1)) {
-                                event.accepted = true;
-                            }
-                            return;
-
-                        case Qt.Key_Up:
-                            if (changePosition(this, -2)) {
-                                event.accepted = true;
-                            }
-                            return;
-
-                        case Qt.Key_Return:
-                        case Qt.Key_Enter:
-                            //var res=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).first();
-
-                            audioPlayer.playMusic(upnpServer, xml, resImageSource);
-                            event.accepted = true;
-                            return;
-                        }
-                    }
-
 
                     Text {
                         id: duration
                         x: 320
                         y: 2
+
+                        color: trackItem.activeFocus?"red": "black"
 
                         font.bold: false
                         font.pixelSize: 12
@@ -184,19 +208,73 @@ FocusScope {
                         width: 30
                     }
                 }
-            }
-        }
 
-        Component {
-            id: gridComponent
+                Keys.onPressed: {
+                    //console.log("ITEM key "+event.key);
+                    var disks=focusScope.metas.tracks;
+                    var len=disks[diskIndex].length;
+                    var mid=Math.ceil(len/2);
 
-            FocusScope {
-                Item {
-                    x:0
-                    width: 800
+                    //console.log("Current="+diskIndex+"/"+trackIndex+" mid="+mid+" len="+len);
+
+                    switch(event.key) {
+                    case Qt.Key_Right:
+                        if (trackIndex===len-1) {
+                            changePosition(diskIndex, trackIndex+1);
+
+                        } else if (trackIndex<mid) {
+                            changePosition(diskIndex, trackIndex+mid);
+
+                        } else {
+                            changePosition(diskIndex, trackIndex-mid+1);
+                        }
+
+                        event.accepted = true;
+                        return;
+
+
+                    case Qt.Key_Down:
+                        if (changePosition(diskIndex, trackIndex+1)) {
+                            event.accepted = true;
+                        } else {
+
+                        }
+
+                        return;
+
+                    case Qt.Key_Left:
+                        if (!trackIndex) {
+                            changePosition(diskIndex, -1);
+
+                        } else if (trackIndex>=mid) {
+                            changePosition(diskIndex, trackIndex-mid);
+
+                        } else {
+                            changePosition(diskIndex, trackIndex+mid-1);
+                        }
+
+                        event.accepted = true;
+                        return;
+
+                    case Qt.Key_Up:
+                        if (!changePosition(diskIndex, trackIndex-1)) {
+                            playButton.forceActiveFocus();
+                        }
+                        event.accepted = true;
+                        return;
+
+                    case Qt.Key_Return:
+                    case Qt.Key_Enter:
+                        //var res=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).first();
+
+                        playTracks(diskIndex, trackIndex);
+                        event.accepted = true;
+                        return;
+                    }
                 }
             }
         }
+
 
         Component {
             id: discComponent
@@ -225,7 +303,7 @@ FocusScope {
             x: 30
             y: 20
             width: parent.width-((resImageSource)?(256+20):0)-60
-            height: childrenRect.height+30
+            height: infosColumn.childrenRect.height+20
 
             Row {
                 x: 0
@@ -265,7 +343,7 @@ FocusScope {
                             case Qt.Key_Enter:
                                 event.accepted = true;
 
-                                playTracks(0);
+                                playTracks(-1, 0);
                             }
                         }
                     }
@@ -289,16 +367,7 @@ FocusScope {
                             case Qt.Key_Enter:
                                 event.accepted = true;
 
-                                playTracks(0, function(tracks) {
-                                    var ts=tracks.slice(0);
-                                    for(var i=0;i<ts.length;i++) {
-                                        var j=Math.floor(Math.random()*ts.length);
-                                        var t=ts[i];
-                                        ts[i]=ts[j];
-                                        ts[j]=t;
-                                    }
-                                    return ts;
-                                });
+                                playTracks(-1, 0, true);
                                 return;
                             }
                         }
@@ -322,10 +391,10 @@ FocusScope {
 
                         switch(event.key) {
                         case Qt.Key_Down:
-                            var next=separator.nextItemInFocusChain();
-                            console.log("DOWN "+next);
-                            next.forceActiveFocus();
-                            event.accepted=true;
+
+                            if (changePosition(0, 0)) {
+                                event.accepted=true;
+                            }
                         }
                     }
 
@@ -357,7 +426,6 @@ FocusScope {
             Component.onCompleted: {
 
                 var components = {
-                    grid: gridComponent,
                     track: trackComponent,
                     disc: discComponent
                 }
@@ -368,20 +436,26 @@ FocusScope {
                     focusScope.metas=metas;
 
                     var ms="";
-                    var artists=metas.artists;
-                    if (artists && artists.length) {
-                        var l=Math.min(8, artists.length);
+                    var artist=UpnpObject.getText(xml, "upnp:artist");
+                    if (artist) {
+                        ms+=artist;
 
-                        for(var i=0;i<l;i++) {
-                            if (ms) {
-                                ms+=", ";
+                    } else {
+                        var artists=metas.artists;
+                        if (artists && artists.length) {
+                            var l=Math.min(8, artists.length);
+
+                            for(var i=0;i<l;i++) {
+                                if (ms) {
+                                    ms+=", ";
+                                }
+
+                                ms+=artists[i];
                             }
 
-                            ms+=artists[i];
-                        }
-
-                        if (artists.length>l) {
-                            ms+=", ...";
+                            if (artists.length>l) {
+                                ms+=", ...";
+                            }
                         }
                     }
 
@@ -392,21 +466,24 @@ FocusScope {
 
                         ms+=metas.year;
                     }
+
                     metaInfos.text=ms;
 
-                    infosColumn.height=infosColumn.childrenRect.height;
+//                    infosColumn.height=infosColumn.childrenRect.height;
                 });
             }
         }
 
+
         Item {
             id: imageColumn
             visible: !!resImageSource
+            clip: true
 
             x: parent.width-256-30
             y: 30
             width: 256;
-            height: 30+256+30;
+            height: Math.max(infosColumn.height+20, 30+256+30)-30;
 
             Image {
                 id: image2
@@ -420,18 +497,39 @@ FocusScope {
 
                 antialiasing: true
                 fillMode: Image.PreserveAspectFit
-                cache: false
 
-                source: (resImageSource?resImageSource:'')
+                source: resImageSource;
+                asynchronous: true
+            }
+
+            Image {
+                x: 0
+                y: image2.paintedHeight+Math.floor((256-image2.paintedHeight)/2);
+                width: 256
+                height: 256
+
+                opacity: 0.25
+
+                smooth: true
+                antialiasing: true
                 asynchronous: true
 
+                transform: Rotation {
+                    origin.x: 128;
+                    origin.y: image2.paintedHeight/2;
+                    axis { x: 1; y: 0; z: 0 }
+                    angle: 180 }
+
+                sourceSize.width: 256
+                sourceSize.height: 256
+
+                fillMode: Image.PreserveAspectFit
+                source: resImageSource
             }
         }
 
         Component.onCompleted: {
             focusScope.forceActiveFocus();
-
-            console.log("**** audioPlayer="+audioPlayer);
         }
     }
 }

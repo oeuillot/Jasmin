@@ -39,7 +39,7 @@ Page {
                 font.bold: true
                 color: "black"
                 width: 700
-                text: text1
+                text: text3
                 displayText: "URL du server"
 
                 property string text1: "192.168.3.36:10293/description.xml"

@@ -3,6 +3,7 @@
 var XMLNS={
     fm: UpnpServer.JASMIN_FILEMEDATA,
     dc: UpnpServer.PURL_ELEMENT_XMLS,
+    upnp: UpnpServer.UPNP_METADATA_XMLNS,
     "": UpnpServer.DIDL_LITE_XMLNS
 }
 
