@@ -113,7 +113,7 @@ Page {
         focus: true
 
         function open(card, auto) {
-            console.log("Open card="+card.model);
+            //console.log("Open card="+card.model);
 
             if (info) {
                 info.destroy();

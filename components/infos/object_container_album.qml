@@ -16,15 +16,11 @@ FocusScope {
 
     property AudioPlayer audioPlayer;
     property var upnpServer;
-    property var xml
-    property string infoClass;
+    property var xml;
     property string resImageSource;
     property string objectID;
 
     property var metas: null;
-
-    property bool layoutDone: false
-
 
     function playTracks(diskIndex, trackIndex, shuffle, append) {
 
@@ -37,7 +33,7 @@ FocusScope {
 
         var ls=[];
 
-        console.log("Add track="+t+" disk="+diskIndex);
+        //        console.log("Add track="+t+" disk="+diskIndex);
 
         for(var di=0;di<disks.length;di++) {
 
@@ -110,7 +106,7 @@ FocusScope {
         var children=separator.parent.children;
         for(var i=0;i<children.length;i++) {
             var child=children[i];
-//            console.log("Child "+child+" "+child.type+" "+child.diskIndex+" "+child.trackIndex);
+            //            console.log("Child "+child+" "+child.type+" "+child.diskIndex+" "+child.trackIndex);
             if (child.type!=="track") {
                 continue;
             }
@@ -133,6 +129,102 @@ FocusScope {
         id: row
         height: imageColumn.height+30;
         width: parent.width
+
+        property var currentFocus;
+
+        Rectangle {
+            id: focusRectangle
+            color: "red"
+            opacity: 0.4
+            width: 0
+            height: 0
+            radius: 2
+        }
+
+        ParallelAnimation {
+
+            id: focusAnimation
+
+            NumberAnimation {
+                id: animationX
+                target: focusRectangle
+                properties: "x"
+                duration: 100
+                from: 0
+                to: 0
+            }
+
+            NumberAnimation {
+                id: animationY
+                target: focusRectangle
+                properties: "y"
+                duration: 100
+                from: 0
+                to: 0
+            }
+
+            NumberAnimation {
+                id: animationWidth
+                target: focusRectangle
+                properties: "width"
+                duration: 100
+                from: 0
+                to: 0
+            }
+
+            NumberAnimation {
+                id: animationHeight
+                target: focusRectangle
+                properties: "height"
+                duration: 100
+                from: 0
+                to: 0
+            }
+        }
+
+        function showFocus(comp, activeFocus) {
+//            console.log("Comp="+comp+" activeFocus="+activeFocus);
+            if (!comp || (!activeFocus && comp===currentFocus)) {
+                focusRectangle.visible=false;
+                return;
+            }
+            if (!activeFocus) {
+                return;
+            }
+
+            var x=comp.x-2;
+            var y=comp.y-2;
+
+            for(var p=comp.parent;p!==row;p=p.parent) {
+                x+=p.x;
+                y+=p.y;
+            }
+
+            if (!currentFocus) {
+                focusRectangle.x=x;
+                focusRectangle.y=y;
+                focusRectangle.width=comp.width+4;
+                focusRectangle.height=comp.height+4;
+                focusRectangle.visible=true;
+                currentFocus=comp;
+                return;
+            }
+
+            focusAnimation.stop();
+            animationX.from=animationX.to;
+            animationX.to=x;
+            animationY.from=animationY.to;
+            animationY.to=y;
+            animationWidth.from=animationWidth.to;
+            animationWidth.to=comp.width+4;;
+            animationHeight.from=animationHeight.to;
+            animationHeight.to=comp.height+4;;
+            focusRectangle.visible=true;
+            focusAnimation.start();
+
+            currentFocus=comp;
+        }
+
 
         Component {
             id: trackComponent
@@ -157,6 +249,10 @@ FocusScope {
 
                 property bool playingObjectID: (focusScope.audioPlayer!=null && focusScope.audioPlayer.playingObjectID===objectID);
 
+                onActiveFocusChanged: {
+                    row.showFocus(trackItem, activeFocus);
+                }
+
                 Item {
                     width: 400
                     height: 24
@@ -169,7 +265,7 @@ FocusScope {
                         y: 2
                         opacity: 0.7
 
-                        color: trackItem.activeFocus?"red": "black"
+                        color: "black" //  color: trackItem.activeFocus?"red": "black"
 
                         horizontalAlignment: (playingObjectID)?Text.AlignLeft:Text.AlignRight
 
@@ -184,11 +280,11 @@ FocusScope {
                         font.bold: true
                         font.pixelSize: 14
 
-                        color: trackItem.activeFocus?"red": "black"
+                        color: "black" // color: trackItem.activeFocus?"red": "black"
 
                         x: 20
                         y: 0
-                        width: 370
+                        width: 370-((duration.visible)?(duration.width+10):0)
                         height: 24
                         elide: Text.ElideRight
                     }
@@ -199,11 +295,12 @@ FocusScope {
                         x: 320
                         y: 2
 
-                        color: trackItem.activeFocus?"red": "black"
+                        color: "black" // color: trackItem.activeFocus?"red": "black"
 
                         font.bold: false
                         font.pixelSize: 12
                         opacity: 0.7
+                        visible: (duration.text.length>0)
 
                         width: 30
                     }
@@ -331,7 +428,7 @@ FocusScope {
                         font.family: "fontawesome"
 
                         focus: true
-                        color: playButton.activeFocus?"red":"black";
+                        color: "black" // playButton.activeFocus?"red":"black";
 
                         KeyNavigation.right: randomButton
                         KeyNavigation.left: menuButton
@@ -346,6 +443,11 @@ FocusScope {
                                 playTracks(-1, 0);
                             }
                         }
+
+                        onActiveFocusChanged: {
+                            row.showFocus(playButton, activeFocus);
+                        }
+
                     }
                     Text {
                         id: randomButton
@@ -355,7 +457,7 @@ FocusScope {
                         font.family: "fontawesome"
 
                         focus: true
-                        color: randomButton.activeFocus?"red":"black";
+                        color: "black" // color: randomButton.activeFocus?"red":"black";
 
                         KeyNavigation.left: playButton
                         KeyNavigation.right: menuButton
@@ -371,6 +473,10 @@ FocusScope {
                                 return;
                             }
                         }
+
+                        onActiveFocusChanged: {
+                            row.showFocus(randomButton, activeFocus);
+                        }
                     }
                     Text {
                         id: menuButton
@@ -379,11 +485,15 @@ FocusScope {
                         font.pixelSize: 20
                         font.family: "fontawesome"
 
-                        color: menuButton.activeFocus?"red":"black";
+                        color: "black" // color: menuButton.activeFocus?"red":"black";
                         focus: true
 
                         KeyNavigation.left: randomButton
                         KeyNavigation.right: playButton
+
+                        onActiveFocusChanged: {
+                            row.showFocus(menuButton, activeFocus);
+                        }
                     }
 
 
@@ -469,7 +579,7 @@ FocusScope {
 
                     metaInfos.text=ms;
 
-//                    infosColumn.height=infosColumn.childrenRect.height;
+                    //                    infosColumn.height=infosColumn.childrenRect.height;
                 });
             }
         }

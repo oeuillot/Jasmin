@@ -29,7 +29,9 @@ FocusScope {
 
     property bool infoDisplayed: false;
 
-    property real selectedScale: (selected?2:10);
+    property real selectedScale: 10;
+
+    onSelectedChanged: PropertyAnimation { target: card; property: "selectedScale"; to: (selected?2:10); duration: 150 }
 
     onModelChanged: {
         //console.log("Xml="+Util.inspect(model, false, {}));
@@ -127,7 +129,7 @@ FocusScope {
                 height: parent.height-2
 
                 opacity: 0.4
-                font.pixelSize: 92;
+                font.pixelSize: 92+(4-Math.floor((selectedScale-2)/2));
                 font.family: "fontawesome"
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
@@ -190,7 +192,7 @@ FocusScope {
         Text {
             id: label
             y: rectImage.y+rectImage.height
-            x: card.selected?2:10
+            x: selectedScale
             width: parent.width-x;
             color: "#404040"
             elide: Text.ElideMiddle
@@ -203,7 +205,7 @@ FocusScope {
             property bool infoVisible: false
             visible: infoVisible && !infoDisplayed
             y: label.y+label.height
-            x: card.selected?2:10
+            x: selectedScale
             width: parent.width-x;
             color: "#8A8A92"
             elide: Text.ElideMiddle
@@ -215,7 +217,7 @@ FocusScope {
             id: rating
             visible: false //card.rating>=0 && !card.selected
             y: label.y+label.height
-            x: card.selected?2:10
+            x: selectedScale
             color: "#FFCB00"
             font.bold: true
             font.pixelSize: 14

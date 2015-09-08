@@ -19,6 +19,7 @@ FocusScope {
 
     property var delegate;
 
+    property int lastFocusIndex: 0;
     property int focusIndex: 0;
 
     property int pageCellIndex: 0;
@@ -32,9 +33,13 @@ FocusScope {
     property int viewCells: 0;
 
     onActiveFocusChanged: {
-        console.log("Grid: Active focus "+activeFocus);
+        //console.log("Grid: Active focus "+activeFocus+" "+focusIndex);
 
         if (activeFocus) {
+            if (focusIndex<0 && lastFocusIndex>=0) {
+                focusIndex=lastFocusIndex;
+            }
+
             if (focusIndex>=0 && focus(focusIndex)) {
                 return;
             }
@@ -457,7 +462,7 @@ FocusScope {
 
             now=Date.now()-now;
 //            if (associated || created) {
-                console.log("updateContentYChanged: reason="+reason+" associated="+associated+" created="+created+" delay="+now+"ms");
+//                console.log("updateContentYChanged: reason="+reason+" associated="+associated+" created="+created+" delay="+now+"ms");
 //            }
         }
 
@@ -468,6 +473,7 @@ FocusScope {
                     return;
                 }
                 if (focusIndex===cellDelegate.cellIndex) {
+                    lastFocusIndex=focusIndex;
                     focusIndex=-1;
                 }
             };
