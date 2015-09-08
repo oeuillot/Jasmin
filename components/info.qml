@@ -67,15 +67,14 @@ FocusScope {
 
         Canvas {
             id: arrow
-            y: 0
+            y: -12
             x: markerPosition+y
             width: -y*2
             height: 2-y
+            contextType: "2d"
 
-            onPaint: {
-                var ctx = getContext('2d');
-
-    //            ctx.reset(); // If Height changed !
+            onPaint: {                
+                var ctx=context;
 
                 ctx.beginPath();
                 ctx.fillStyle = "#E9E9E9";
@@ -92,11 +91,14 @@ FocusScope {
                 ctx.lineTo(-y, 0);
                 ctx.lineTo(-y*2, -y);
                 ctx.stroke();
+
             }
+
             onYChanged: {
-                requestPaint();
+//                requestPaint();
             }
         }
+
 
         NumberAnimation {
                 id: arrowAnimation
@@ -133,6 +135,7 @@ FocusScope {
                     fastBlur.visible=true;
                 }
             }
+
             FastBlur {
                 id: fastBlur
                 visible: false
@@ -208,6 +211,6 @@ FocusScope {
         }
     }
     Component.onCompleted: {
-        arrowAnimation.start();
+//        arrowAnimation.start();
     }
 }

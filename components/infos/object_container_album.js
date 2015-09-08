@@ -182,19 +182,24 @@ function fillTracks(parent, components, y, upnpServer, xml) {
         }
 
         list.sort(function(i1, i2) {
-            var d1=i1[0].disk || 9999999;
-            var d2=i2[0].disk || 9999999;
+            var d1=i1[0].disk || 999999;
+            var d2=i2[0].disk || 999999;
 
-            return d1.disk-d2.disk;
+            return d1-d2;
         });
 
 
         metas.tracks=list;
 
+        var comps={};
+        metas.comps=comps;
+
         var rowIndex=0;
 
         var diskIndex=0;
         list.forEach(function(ds) {
+            console.log("Disk #"+ds[0].disk+" index="+diskIndex);
+
             ds.sort(function(i1, i2) {
                 var t1=i1.trackNumber || 9999999;
                 var t2=i2.trackNumber || 9999999;
@@ -249,6 +254,8 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
                 var row=components.track.createObject(parent, params);
 
+                comps[diskIndex+"/"+index]=row;
+
                 return row;
             }
 
@@ -259,7 +266,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 c1.y=y;
                 var c2=addInfos(ds[i+k], i+k);
                 if (c2){
-                    c2.x=400;
+                    c2.x=c1.width;
                     c2.y=y;
                 }
                 y+=24;

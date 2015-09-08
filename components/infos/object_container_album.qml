@@ -103,19 +103,9 @@ FocusScope {
         }
         //console.log("Search "+diskIndex+"/"+trackIndex);
 
-        var children=separator.parent.children;
-        for(var i=0;i<children.length;i++) {
-            var child=children[i];
-            //            console.log("Child "+child+" "+child.type+" "+child.diskIndex+" "+child.trackIndex);
-            if (child.type!=="track") {
-                continue;
-            }
-            if (child.diskIndex!==diskIndex || child.trackIndex!==trackIndex) {
-                continue;
-            }
-
-            child.forceActiveFocus();
-
+        var comp=metas.comps[diskIndex+"/"+trackIndex];
+        if (comp) {
+            comp.forceActiveFocus();
             return true;
         }
 
@@ -138,7 +128,7 @@ FocusScope {
             opacity: 0.4
             width: 0
             height: 0
-            radius: 2
+            radius: 4
         }
 
         ParallelAnimation {
@@ -183,7 +173,7 @@ FocusScope {
         }
 
         function showFocus(comp, activeFocus) {
-//            console.log("Comp="+comp+" activeFocus="+activeFocus);
+            //            console.log("Comp="+comp+" activeFocus="+activeFocus);
             if (!comp || (!activeFocus && comp===currentFocus)) {
                 focusRectangle.visible=false;
                 return;
@@ -231,7 +221,7 @@ FocusScope {
 
             FocusScope {
                 id: trackItem
-                width: 400
+                width: 380
                 height: 24
 
                 focus: true
@@ -254,7 +244,7 @@ FocusScope {
                 }
 
                 Item {
-                    width: 400
+                    width: 380
                     height: 24
 
                     Text {
@@ -284,7 +274,7 @@ FocusScope {
 
                         x: 20
                         y: 0
-                        width: 370-((duration.visible)?(duration.width+10):0)
+                        width: 350-((duration.visible)?(duration.width+10):0)
                         height: 24
                         elide: Text.ElideRight
                     }
@@ -292,7 +282,7 @@ FocusScope {
 
                     Text {
                         id: duration
-                        x: 320
+                        x: 340
                         y: 2
 
                         color: "black" // color: trackItem.activeFocus?"red": "black"
@@ -362,9 +352,21 @@ FocusScope {
 
                     case Qt.Key_Return:
                     case Qt.Key_Enter:
-                        //var res=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).first();
-
                         playTracks(diskIndex, trackIndex);
+                        event.accepted = true;
+                        return;
+
+                    case Qt.Key_PageUp:
+                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, 0, false, true);
+                        audioPlayer.play();
+
+                        event.accepted = true;
+                        return;
+
+                    case Qt.Key_PageDown:
+                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, 0, false, false);
+                        audioPlayer.play();
+
                         event.accepted = true;
                         return;
                     }
@@ -436,11 +438,19 @@ FocusScope {
                         Keys.onPressed: {
                             switch(event.key) {
 
+                            case Qt.Key_PageDown:
                             case Qt.Key_Return:
                             case Qt.Key_Enter:
                                 event.accepted = true;
 
                                 playTracks(-1, 0);
+                                return;
+
+                            case Qt.Key_PageUp:
+                                event.accepted = true;
+
+                                playTracks(-1, 0, false, true);
+                                return;
                             }
                         }
 

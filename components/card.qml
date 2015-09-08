@@ -31,10 +31,27 @@ FocusScope {
 
     property real selectedScale: 10;
 
-    onSelectedChanged: PropertyAnimation { target: card; property: "selectedScale"; to: (selected?2:10); duration: 150 }
+    onSelectedChanged: {
+        if (selectedAnimation.running) {
+            selectedAnimation.stop();
+        }
+
+        selectedAnimation.to=(selected?2:10);
+        selectedAnimation.start();
+    }
+
+    PropertyAnimation {
+        id: selectedAnimation;
+        target: card;
+        property: "selectedScale";
+        duration: 150
+    }
 
     onModelChanged: {
         //console.log("Xml="+Util.inspect(model, false, {}));
+
+        selectedScale=10;
+        infoDisplayed=false;
 
         if (imageItem) {
             imageItem.visible=false;

@@ -76,7 +76,9 @@ FocusScope {
             ch+=info.height;
         }
 
-        var totY=(viewRows*(cellHeight+verticalSpacing)-verticalSpacing)+(info?info.height:0);
+        var modelSize=Math.max(widget.model.length, widget.modelSize);
+
+        var totY=(Math.ceil(modelSize/viewColumns)*(cellHeight+verticalSpacing)-verticalSpacing)+(info?info.height:0);
         // console.log("DIFF "+totY+"/"+grid.contentHeight);
         if (grid.contentHeight!==totY) {
             grid.contentHeight=totY;
