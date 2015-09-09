@@ -21,12 +21,58 @@ function fillModel(upnpServer, meta) {
     return { objectID: objectID, childCount: childCount };
 }
 
+function listModel(upnpServer, objectID) {
+    var deferred = new Async.Deferred.Deferred();
+
+    var filters=[{
+                     name: "title",
+                     namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                 }];
+
+    var sorters=[
+                {
+                    ascending: true,
+                    name: "title",
+                    namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                }
+
+            ];
+
+
+    //    console.log("Request position "+position+" pageSize="+pageSize);
+
+    var d=upnpServer.browseDirectChildren(objectID, {
+                                              filters: filters,
+                                              sortCriteria: sorters
+                                          });
+
+    d.then(function onSuccess(xml){
+
+        //console.log("Return=",Util.inspect(xml.result));
+
+        var children=xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children();
+        //console.log("Children=",Util.inspect(children));
+
+        //console.log("*** RESOLVE "+children.length);
+        deferred.resolve(children.toArray());
+
+    }, function onFailure(reason) {
+
+        deferred.reject(reason);
+    });
+
+    return deferred;
+}
+
 function loadModel(upnpServer, objectID, position, pageSize, loadArtists) {
     var deferred = new Async.Deferred.Deferred();
 
     var filters=[{
                      name: "title",
                      namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                 }, {
+                     name: "class",
+                     namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
                  }, {
                      name: "date",
                      namespaceURI: UpnpServer.PURL_ELEMENT_XMLS

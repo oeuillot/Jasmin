@@ -19,27 +19,30 @@ Item {
 
     property bool shuffle;
 
-    property string playingObjectID: "";
+    property var currentTrack: null;
+
+    property string playingObjectID: (currentTrack?currentTrack.objectID:"");
 
     property int playbackState: Audio.StoppedState;
-
-    property bool manualStop: false;
 
     function setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle, append) {
         //console.log("setPlay: xml="+xmlArray+" playListIndex="+playListIndex+" shuffle="+shuffle+" append="+append);
 
         if (!append) {
-            return stop().then(function() {
+            return clear().then(function() {
                 playListIndex=0;
                 _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle);
             });
         }
 
-        _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle, append);
+        // append
+
+
+        _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle);
         return Deferred.resolved();
     }
 
-    function _fillInfo(upnpServer, xml, albumImageURL, playList, playListIndex ) {
+    function _fillInfo(upnpServer, xml, albumImageURL, playList ) {
         var found=false;
 
         xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).forEach(function(res) {
@@ -80,14 +83,14 @@ Item {
 
             found=true;
 
-            playList[playListIndex]={
+            playList.push({
                               objectID: objectID,
                               xml: xml,
                               url: url,
                               imageURL: imageURL,
                               title: title,
                               artist: artist
-                          };
+                          });
 
             return false; // Break the loop if forEach support it :-)
        });
@@ -95,15 +98,7 @@ Item {
         return found;
     }
 
-    function _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffleP, append) {
-
-        if (!append) {
-            playList=[];
-        }
-
-        if (!playListIndex) {
-            playListIndex=0;
-        }
+    function _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffleP) {
 
         if (shuffleP!==undefined) {
             shuffle=shuffleP;
@@ -115,19 +110,21 @@ Item {
             xmlArray=[xmlArray];
         }
 
-        var idx=playList.length;
         xmlArray.forEach(function(xml) {
-            if (_fillInfo(upnpServer, xml, albumImageURL, playList, idx)!==true) {
-                return;
-            }
-
-            idx++;
+            _fillInfo(upnpServer, xml, albumImageURL, playList);
         });
     }
 
     function clear() {
         return stop().then(function() {
+            // remove all ...
+            playingObjectID="";
+
+
             playList=[];
+            playListIndex=0;
+
+            return true;
         });
     }
 
@@ -141,6 +138,7 @@ Item {
         audioPlayer.playbackState=Audio.StoppedState;
         return audio.$stop().then(function() {
             //console.log("Set audio player to STOP "+audioPlayer.playbackState);
+            return true;
         });
     }
 
@@ -189,9 +187,8 @@ Item {
             if (playListIndex>=playList.length) {
                 return false;
             }
-            playListIndex++;
 
-            return playIndex(playListIndex);
+            return playIndex(playListIndex+1);
         });
     }
 
@@ -205,22 +202,12 @@ Item {
 
         return audio.$stop().then(function() {
 
-            var music=playList[playListIndex];
-
-            //console.log("playIndex.stopped #"+playListIndex+" source="+music.url);
-
-            audio.source=music.url;
-            audio.currentMusic=music;
-
-            title.text=music.title || "Inconnu";
-            artist.text=music.artist || "Inconnu";
-
-            playingObjectID=music.objectID;
-
-            //console.log("Call play of audio !");
+            currentTrack=playList[playListIndex];;
 
             return audio.$play().then(function() {
                 playbackState=Audio.PlayingState;
+
+                return playbackState;
             });
         });
     }
@@ -243,7 +230,7 @@ Item {
         id: audio
         autoLoad: true
 
-        property var currentMusic;
+        source: (currentTrack && currentTrack.url) || ""
 
         property int progress: 0;
 
@@ -259,10 +246,6 @@ Item {
                 forward();
                 return;
             }
-        }
-
-        onCurrentMusicChanged: {
-            image.source=(currentMusic && currentMusic.imageURL) || "";
         }
 
         onPositionChanged: {
@@ -319,6 +302,7 @@ Item {
         height: parent.width
         antialiasing: true
         fillMode: Image.PreserveAspectFit
+        source: (currentTrack && currentTrack.imageURL) || "";
     }
     Text {
         id: title
@@ -332,6 +316,8 @@ Item {
         font.pixelSize: 16
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
+
+        text: (currentTrack?(currentTrack.title || "Inconnu"):"")
     }
 
     Text {
@@ -346,6 +332,8 @@ Item {
         font.pixelSize: 14
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
+
+        text: (currentTrack?(currentTrack.artist || "Inconnu"):"")
     }
 
     Rectangle {

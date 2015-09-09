@@ -22,6 +22,8 @@ Page {
 
     property bool loadArtists: true;
 
+    property int pageSize: 32;
+
     Component {
         id: card
 
@@ -169,14 +171,12 @@ Page {
             }).bind(card));
         }
 
-        property int pageSize: 32;
         property var pageSizeLoaded: ([]);
         property var loadingPages: ([]);
         property bool loading: false;
         property var objectID;
 
         function loadPage(pageIndex) {
-
             if (loading) {
                 console.error("Already loading !!!!");
                 return;
@@ -219,9 +219,6 @@ Page {
 
             //            console.log("ModelSize="+infos.childCount);
 
-
-            pageSizeLoaded[0]=true;
-            loadPage(0);
 
             listView.onPageCellIndexChanged.connect(function() {
                 var cur=listView.pageCellIndex;
@@ -267,6 +264,19 @@ Page {
 
             });
 
+            if (infos.childCount<=pageSize*2) {
+                pageSizeLoaded[0]=true;
+                loadPage(0);
+
+            } else {
+                FolderScript.listModel(page.upnpServer, objectID).then(function(result) {
+                    listView.model=result;
+                    listView.updateLayout();
+
+                    pageSizeLoaded[0]=true;
+                    loadPage(0);
+                });
+            }
         }
 
         delegate: card

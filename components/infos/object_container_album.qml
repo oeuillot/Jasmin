@@ -22,7 +22,7 @@ FocusScope {
 
     property var metas: null;
 
-    function playTracks(diskIndex, trackIndex, shuffle, append) {
+    function playTracks(diskIndex, trackIndex, append) {
 
         var disks=focusScope.metas.tracks;
         if (!disks) {
@@ -54,7 +54,12 @@ FocusScope {
             }
         }
 
-        audioPlayer.setPlayList(upnpServer, ls, resImageSource, 0, shuffle, append);
+        if (append) {
+            audioPlayer.addPlayList(upnpServer, ls, resImageSource);
+        } else {
+            audioPlayer.setPlayList(upnpServer, ls, resImageSource);
+        }
+
         audioPlayer.play();
 
         return ls.length;
@@ -296,7 +301,14 @@ FocusScope {
                     }
                 }
 
+                property int _lastKey;
+                property var _lastKeyDate;
+
                 Keys.onPressed: {
+
+                    _lastKey=event.key;
+                    _lastKeyDate=Date.now();
+
                     //console.log("ITEM key "+event.key);
                     var disks=focusScope.metas.tracks;
                     var len=disks[diskIndex].length;
@@ -352,22 +364,36 @@ FocusScope {
 
                     case Qt.Key_Return:
                     case Qt.Key_Enter:
-                        playTracks(diskIndex, trackIndex);
                         event.accepted = true;
                         return;
 
-                    case Qt.Key_PageUp:
-                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, 0, false, true);
-                        audioPlayer.play();
+                    case Qt.Key_Record:
+                        audioPlayer.addPlayList(upnpServer, [xml], resImageSource);
 
                         event.accepted = true;
                         return;
+                    }
+                }
+                Keys.onReleased: {
 
-                    case Qt.Key_PageDown:
-                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, 0, false, false);
-                        audioPlayer.play();
+                    if (event.key!==_lastKey) {
+                        return;
+                    }
+                    _lastKey=0;
+                    var delayed=(Date.now()-_lastKeyDate)>500;
 
+                    switch(event.key) {
+                    case Qt.Key_Return:
+                    case Qt.Key_Enter:
                         event.accepted = true;
+
+                        if (!delayed) {
+                            playTracks(diskIndex, trackIndex);
+                            return;
+                        }
+
+                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource);
+                        audioPlayer.play();
                         return;
                     }
                 }

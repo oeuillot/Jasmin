@@ -6,8 +6,9 @@ import "../components/infos" 1.0
 
 
 FocusScope {
-    height: widget.height
-    width: widget.width
+    id: widget
+    height: infoComponent.height
+    width: infoComponent.width
 
     property Card card;
 
@@ -25,7 +26,7 @@ FocusScope {
 
 
     Item {
-        id: widget
+        id: infoComponent
         height: rowInfo.height
         width: parent.width
 
@@ -149,7 +150,9 @@ FocusScope {
 
                 switch(event.key) {
                 case Qt.Key_Up:
-                    card.forceActiveFocus();
+                    widget.destroy();
+
+                    card.forceActiveFocus();                    
                     event.accepted=true;
                 }
             }
