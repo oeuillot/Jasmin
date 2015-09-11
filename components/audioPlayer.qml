@@ -97,7 +97,7 @@ Item {
 
     function _setPlayList(upnpServer, xmlArray, albumImageURL, offset) {
 
-        // console.log("xmlArray="+xmlArray);
+        console.log("xmlArray="+xmlArray);
 
         if (!(xmlArray instanceof Array)) {
             xmlArray=[xmlArray];
@@ -203,7 +203,7 @@ Item {
         return stop().then(function() {
             //console.log("AUDIO: stopped "+playListIndex+" len="+playList.length);
 
-            if (playListIndex>=playList.length) {
+            if (playListIndex+1>=playList.length) {
                 return false;
             }
 
@@ -307,11 +307,33 @@ Item {
         id: trackItem
 
         Item {
+            id: myTrack
+
             property var model;
             x: (parent.width-width)/2
-            height: (selected)?(artist.y+artist.height):(title.y+title.height)
+            height: (selected)?(artist.y+artist.height):(title.y+title.height);
 
             property bool selected: false
+            property bool autoDestroy: false;
+
+            Behavior on y {
+
+                NumberAnimation { id: trackItemYAnimation;
+                    duration: 300;
+
+                    onRunningChanged:{
+                        if (!trackItemYAnimation.running) {
+                            if (autoDestroy) {
+                                myTrack.destroy();
+                                console.log("Destroy "+myTrack);
+                            }
+                        }
+                    }
+                }
+            }
+            Behavior on width {
+                NumberAnimation { duration: 300 }
+            }
 
             Rectangle {
                 x: 0
@@ -428,7 +450,7 @@ Item {
             text: formatTime(audio.position);
         }
         Text {
-             
+
             x: 0
             y: 1+3
             width: parent.width-1
@@ -473,50 +495,76 @@ Item {
         y: 0
         width: parent.width;
         height: parent.height;
+        clip: true
 
         property int cellWidth: width;
         property int cellHeight: cellWidth+16;
         property int cellVerticalSpacing: 4;
 
+        property var itemCache: ([]);
+
+        property Item emptyListItem: trackItem.createObject(trackList, {width: cellWidth, visible: false });
+
         function updateList() {
-            var cnt=Math.ceil(height/(cellWidth+cellVerticalSpacing));
+            var cnt=Math.ceil((height-commandItems.height)/(cellWidth+cellVerticalSpacing));
+            var cntFloor=Math.floor((height-commandItems.height)/(cellWidth+cellVerticalSpacing));
             var children=trackList.children;
 
-            var start=Math.max(0, playListIndex-1);
+            var start=0;
+            if (playListIndex>0) {
+                start=playListIndex-1;
+            }
 
             var forceFirst=(!playList.length);
+            if (forceFirst) {
+                emptyListItem.visible=true;
+                commandItems.y=emptyListItem.height;
+            } else {
+                emptyListItem.visible=false;
+            }
+
+            var currentItemCache=itemCache;
+            itemCache=[];
 
             var y=0;
             for(var i=0;i<cnt;i++) {
                 var track=playList[start+i];
-                var item=children[i];
+                var item=null;
 
-                //               console.log("UpdateList #"+i+" track="+track+" item="+item);
-
-                if (!track && (i || !forceFirst)) {
-                    if (item) {
-                        item.visible=false;
-                    }
-                    continue;
+                if (!track) {
+                    break;
                 }
 
-                if (item) {
-                    item.model=track;
-                    item.visible=true;
+                for(var j=0;j<currentItemCache.length;) {
+                    var it=currentItemCache[j];
+                    if (it.model!==track) {
+                        j++;
+                        continue;
+                    }
 
-                } else {
+                    currentItemCache.splice(j, 1);
+
+                    item=it;
+                    break;
+                }
+
+                if (!item) {
                     item=trackItem.createObject(trackList, {
-                                                    y: y,
-                                                    width: cellWidth,
-                                                    model: track
+                                                    y: (i==0 && playListIndex>0)?(-cellWidth):(height),
+                                                                                  width: cellWidth-32,
+                                                                                  model: track
                                                 } );
                 }
+
+                itemCache.push(item);
+                item.visible=true;
+                item.z=i;
 
                 if (start+i===playListIndex || (!i && forceFirst)) {
                     item.selected=true;
                     item.width=cellWidth;
                     item.y=y;
-                    y+=item.height;
+                    y+=cellWidth+40;
 
                     commandItems.y=y;
                     y+=commandItems.height;
@@ -526,11 +574,27 @@ Item {
                     item.width=cellWidth-32;
                     item.y=y;
 
-                    y+=item.height;
+                    y+=cellWidth-32+16;
                 }
 
                 y+=cellVerticalSpacing;
-            }            
+            }
+
+            for(var i=0;i<currentItemCache.length;i++) {
+                var item=currentItemCache[i];
+                item.autoDestroy=true;
+
+                if (item.y<cellHeight) {
+                    item.y=-item.height;
+                    continue;
+                }
+
+                item.y+=parent.height;
+
+
+                //                item.visible=false;
+                //                item.destroy();
+            }
         }
 
         Component.onCompleted: {

@@ -270,7 +270,7 @@ FocusInfo {
                         return;
 
                     case Qt.Key_PageDown:
-                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, true, 1);
+                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, true, audioPlayer.playListIndex+1);
 
                         event.accepted = true;
                         return;
