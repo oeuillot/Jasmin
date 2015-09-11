@@ -15,12 +15,9 @@ FocusScope {
 
     property AudioPlayer audioPlayer;
     property var upnpServer;
-    property var xml
-    property string infoClass;
+    property var xml;
     property string resImageSource;
     property string objectID;
-
-    property bool layoutDone: false
 
     Item {
         id: row
@@ -153,45 +150,6 @@ FocusScope {
             }
 
             Component.onCompleted: {
-return;
-                var components = {
-                    grid: gridComponent,
-                    disc: discComponent
-                }
-
-                var d=ObjectContainerAlbum.fillTracks(infosColumn, components, 60, upnpServer, xml);
-
-                d.then(function onSuccess(metas) {
-
-                    var ms="";
-                    var artists=metas.artists;
-                    if (artists && artists.length) {
-                        var l=Math.min(8, artists.length);
-
-                        for(var i=0;i<l;i++) {
-                            if (ms) {
-                                ms+=", ";
-                            }
-
-                            ms+=artists[i];
-                        }
-
-                        if (artists.length>l) {
-                            ms+=", ...";
-                        }
-                    }
-
-                    if (metas.year) {
-                        if (ms) {
-                            ms+=" \u25CF "
-                        }
-
-                        ms+=metas.year;
-                    }
-                    metaInfos.text=ms;
-
-                    infosColumn.height=infosColumn.childrenRect.height;
-                });
             }
         }
 

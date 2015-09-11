@@ -22,6 +22,7 @@ Item {
         id: audioPlayer
 
         width: parent.width
+        height: parent.height
     }
 }
 

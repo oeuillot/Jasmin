@@ -7,26 +7,20 @@ import ".." 1.0
 import "object.js" as UpnpObject
 import "object_container_album.js" as ObjectContainerAlbum;
 
-FocusScope {
+FocusInfo {
     id: focusScope
-    x: row.x
-    y: row.y
-    height: row.height
-    width: parent.width
 
     property AudioPlayer audioPlayer;
-    property var upnpServer;
-    property var xml;
-    property string resImageSource;
-    property string objectID;
 
     property var metas: null;
+
+    heightRef: imageColumn;
 
     function playTracks(diskIndex, trackIndex, append) {
 
         var disks=focusScope.metas.tracks;
         if (!disks) {
-            return 0;
+            return Deferred.rejected();
         }
 
         var t=trackIndex;
@@ -54,15 +48,11 @@ FocusScope {
             }
         }
 
-        if (append) {
-            audioPlayer.addPlayList(upnpServer, ls, resImageSource);
-        } else {
-            audioPlayer.setPlayList(upnpServer, ls, resImageSource);
+        if (!ls.length) {
+            return Deferred.rejected();
         }
 
-        audioPlayer.play();
-
-        return ls.length;
+        return audioPlayer.setPlayList(upnpServer, ls, resImageSource, append);
     }
 
 
@@ -121,105 +111,12 @@ FocusScope {
 
 
     Item {
-        id: row
-        height: imageColumn.height+30;
-        width: parent.width
+        id: infosColumn
 
-        property var currentFocus;
-
-        Rectangle {
-            id: focusRectangle
-            color: "red"
-            opacity: 0.4
-            width: 0
-            height: 0
-            radius: 4
-        }
-
-        ParallelAnimation {
-
-            id: focusAnimation
-
-            NumberAnimation {
-                id: animationX
-                target: focusRectangle
-                properties: "x"
-                duration: 100
-                from: 0
-                to: 0
-            }
-
-            NumberAnimation {
-                id: animationY
-                target: focusRectangle
-                properties: "y"
-                duration: 100
-                from: 0
-                to: 0
-            }
-
-            NumberAnimation {
-                id: animationWidth
-                target: focusRectangle
-                properties: "width"
-                duration: 100
-                from: 0
-                to: 0
-            }
-
-            NumberAnimation {
-                id: animationHeight
-                target: focusRectangle
-                properties: "height"
-                duration: 100
-                from: 0
-                to: 0
-            }
-        }
-
-        function showFocus(comp, activeFocus) {
-            //            console.log("Comp="+comp+" activeFocus="+activeFocus);
-            if (!comp || (!activeFocus && comp===currentFocus)) {
-                focusRectangle.visible=false;
-                return;
-            }
-            if (!activeFocus) {
-                return;
-            }
-
-            var x=comp.x-2;
-            var y=comp.y-2;
-
-            for(var p=comp.parent;p!==row;p=p.parent) {
-                x+=p.x;
-                y+=p.y;
-            }
-
-            if (!currentFocus) {
-                focusRectangle.x=x;
-                focusRectangle.y=y;
-                focusRectangle.width=comp.width+4;
-                focusRectangle.height=comp.height+4;
-                focusRectangle.visible=true;
-                currentFocus=comp;
-                return;
-            }
-
-            focusAnimation.stop();
-            animationX.from=animationX.to;
-            animationX.to=x;
-            animationY.from=animationY.to;
-            animationY.to=y;
-            animationWidth.from=animationWidth.to;
-            animationWidth.to=comp.width+4;;
-            animationHeight.from=animationHeight.to;
-            animationHeight.to=comp.height+4;;
-            focusRectangle.visible=true;
-            focusAnimation.start();
-
-            currentFocus=comp;
-        }
-
+        x: 30
+        y: 20
+        width: parent.width-((resImageSource)?(256+20):0)-60
+        height: childrenRect.height+20
 
         Component {
             id: trackComponent
@@ -245,7 +142,7 @@ FocusScope {
                 property bool playingObjectID: (focusScope.audioPlayer!=null && focusScope.audioPlayer.playingObjectID===objectID);
 
                 onActiveFocusChanged: {
-                    row.showFocus(trackItem, activeFocus);
+                    focusScope.showFocus(trackItem, activeFocus);
                 }
 
                 Item {
@@ -301,13 +198,7 @@ FocusScope {
                     }
                 }
 
-                property int _lastKey;
-                property var _lastKeyDate;
-
                 Keys.onPressed: {
-
-                    _lastKey=event.key;
-                    _lastKeyDate=Date.now();
 
                     //console.log("ITEM key "+event.key);
                     var disks=focusScope.metas.tracks;
@@ -364,39 +255,27 @@ FocusScope {
 
                     case Qt.Key_Return:
                     case Qt.Key_Enter:
+
+                        playTracks(diskIndex, trackIndex, false).then(function() {
+                            audioPlayer.play();
+                        });
+
                         event.accepted = true;
                         return;
 
-                    case Qt.Key_Record:
-                        audioPlayer.addPlayList(upnpServer, [xml], resImageSource);
+                    case Qt.Key_PageUp:
+                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, true);
+
+                        event.accepted = true;
+                        return;
+
+                    case Qt.Key_PageDown:
+                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, true, 1);
 
                         event.accepted = true;
                         return;
                     }
-                }
-                Keys.onReleased: {
-
-                    if (event.key!==_lastKey) {
-                        return;
-                    }
-                    _lastKey=0;
-                    var delayed=(Date.now()-_lastKeyDate)>500;
-
-                    switch(event.key) {
-                    case Qt.Key_Return:
-                    case Qt.Key_Enter:
-                        event.accepted = true;
-
-                        if (!delayed) {
-                            playTracks(diskIndex, trackIndex);
-                            return;
-                        }
-
-                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource);
-                        audioPlayer.play();
-                        return;
-                    }
-                }
+                }               
             }
         }
 
@@ -421,261 +300,198 @@ FocusScope {
             }
         }
 
+        function processKeyEvent(event, shuffle) {
+            switch(event.key) {
 
-        Item {
-            id: infosColumn
+            case Qt.Key_PageDown:
+                // Ajoute les pistes du disque juste après celui qui est en écoute, sans forcement lancer le PLAY
+                event.accepted = true;
 
-            x: 30
-            y: 20
-            width: parent.width-((resImageSource)?(256+20):0)-60
-            height: infosColumn.childrenRect.height+20
-
-            Row {
-                x: 0
-                y: 0
-                height: 32
-                width: parent.width
-                spacing: 16
-
-                Text {
-                    text: UpnpObject.getText(xml, "dc:title");
-                    font.bold: true
-                    font.pixelSize: 20
-                    elide: Text.ElideRight
+                if (audioPlayer.playbackState===Audio.StoppedState) {
+                    audioPlayer.clear().then(function() {
+                        return playTracks(-1, 0);
+                    });
+                    return;
                 }
 
-                Row {
-                    spacing: 8
-                    height: 32
+                audioPlayer.clearNext().then(function() {
+                    return playTracks(-1, 0, true);
 
-                    Text {
-                        id: playButton
-                        text: Fontawesome.Icon.play
-                        font.bold: true
-                        font.pixelSize: 20
-                        font.family: "fontawesome"
-
-                        focus: true
-                        color: "black" // playButton.activeFocus?"red":"black";
-
-                        KeyNavigation.right: randomButton
-                        KeyNavigation.left: menuButton
-
-                        Keys.onPressed: {
-                            switch(event.key) {
-
-                            case Qt.Key_PageDown:
-                            case Qt.Key_Return:
-                            case Qt.Key_Enter:
-                                event.accepted = true;
-
-                                playTracks(-1, 0);
-                                return;
-
-                            case Qt.Key_PageUp:
-                                event.accepted = true;
-
-                                playTracks(-1, 0, false, true);
-                                return;
-                            }
-                        }
-
-                        onActiveFocusChanged: {
-                            row.showFocus(playButton, activeFocus);
-                        }
-
-                    }
-                    Text {
-                        id: randomButton
-                        text: Fontawesome.Icon.random
-                        font.bold: true
-                        font.pixelSize: 20
-                        font.family: "fontawesome"
-
-                        focus: true
-                        color: "black" // color: randomButton.activeFocus?"red":"black";
-
-                        KeyNavigation.left: playButton
-                        KeyNavigation.right: menuButton
-
-                        Keys.onPressed: {
-                            switch(event.key) {
-
-                            case Qt.Key_Return:
-                            case Qt.Key_Enter:
-                                event.accepted = true;
-
-                                playTracks(-1, 0, true);
-                                return;
-                            }
-                        }
-
-                        onActiveFocusChanged: {
-                            row.showFocus(randomButton, activeFocus);
-                        }
-                    }
-                    Text {
-                        id: menuButton
-                        text: Fontawesome.Icon.ellipsis_h
-                        font.bold: true
-                        font.pixelSize: 20
-                        font.family: "fontawesome"
-
-                        color: "black" // color: menuButton.activeFocus?"red":"black";
-                        focus: true
-
-                        KeyNavigation.left: randomButton
-                        KeyNavigation.right: playButton
-
-                        onActiveFocusChanged: {
-                            row.showFocus(menuButton, activeFocus);
-                        }
-                    }
-
-
-                    Keys.onPressed: {
-
-                        switch(event.key) {
-                        case Qt.Key_Down:
-
-                            if (changePosition(0, 0)) {
-                                event.accepted=true;
-                            }
-                        }
-                    }
-
-                }
-            }
-
-            Text {
-                id: metaInfos
-                x: 0
-                y: 26
-                font.bold: false
-                font.pixelSize: 16
-                width: parent.width
-                elide: Text.ElideMiddle
-                height: 20
-
-            }
-
-            Rectangle {
-                id: separator
-                x: 0
-                y: 50
-                width: parent.width
-                height: 1
-                opacity: 0.3
-                color: "black"
-            }
-
-            Component.onCompleted: {
-
-                var components = {
-                    track: trackComponent,
-                    disc: discComponent
-                }
-
-                var d=ObjectContainerAlbum.fillTracks(infosColumn, components, 60, upnpServer, xml);
-
-                d.then(function onSuccess(metas) {
-                    focusScope.metas=metas;
-
-                    var ms="";
-                    var artist=UpnpObject.getText(xml, "upnp:artist");
-                    if (artist) {
-                        ms+=artist;
-
-                    } else {
-                        var artists=metas.artists;
-                        if (artists && artists.length) {
-                            var l=Math.min(8, artists.length);
-
-                            for(var i=0;i<l;i++) {
-                                if (ms) {
-                                    ms+=", ";
-                                }
-
-                                ms+=artists[i];
-                            }
-
-                            if (artists.length>l) {
-                                ms+=", ...";
-                            }
-                        }
-                    }
-
-                    if (metas.year) {
-                        if (ms) {
-                            ms+=" \u25CF "
-                        }
-
-                        ms+=metas.year;
-                    }
-
-                    metaInfos.text=ms;
-
-                    //                    infosColumn.height=infosColumn.childrenRect.height;
                 });
+                return;
+
+            case Qt.Key_Return:
+            case Qt.Key_Enter:
+                // Joue le disque immediatement
+                event.accepted = true;
+
+                audioPlayer.clear().then(function() {
+                    return playTracks(-1, 0);
+
+                }).then(function() {
+                    audioPlayer.play();
+                });
+                return;
+
+            case Qt.Key_PageUp:
+                // Ajoute les pistes du disque après les morceaux
+                event.accepted = true;
+
+                playTracks(-1, 0, false, true);
+                return;
             }
+
         }
 
+        TitleInfo {
+            id: title
+            title: UpnpObject.getText(xml, "dc:title")
 
-        Item {
-            id: imageColumn
-            visible: !!resImageSource
-            clip: true
+            Row {
+                spacing: 8
+                height: 32
 
-            x: parent.width-256-30
-            y: 30
-            width: 256;
-            height: Math.max(infosColumn.height+20, 30+256+30)-30;
+                Text {
+                    id: playButton
+                    text: Fontawesome.Icon.play
+                    font.bold: true
+                    font.pixelSize: 20
+                    font.family: "fontawesome"
 
-            Image {
-                id: image2
-                width: 256
-                height: 256
-                x: 0
-                y: 0
+                    focus: true
+                    color: "black" // playButton.activeFocus?"red":"black";
 
-                sourceSize.width: 256
-                sourceSize.height: 256
+                    KeyNavigation.right: randomButton
+                    KeyNavigation.left: randomButton
+//                    KeyNavigation.left: menuButton
 
-                antialiasing: true
-                fillMode: Image.PreserveAspectFit
+                    Keys.onPressed: {                       
+                        infosColumn.processKeyEvent(event, false);
+                    }
 
-                source: resImageSource;
-                asynchronous: true
-            }
+                    onActiveFocusChanged: {
+                        focusScope.showFocus(playButton, activeFocus);
+                    }
 
-            Image {
-                x: 0
-                y: image2.paintedHeight+Math.floor((256-image2.paintedHeight)/2);
-                width: 256
-                height: 256
+                    Component.onCompleted: {
+                       playButton.forceActiveFocus();
+                    }
 
-                opacity: 0.25
+                }
+                Text {
+                    id: randomButton
+                    text: Fontawesome.Icon.random
+                    font.bold: true
+                    font.pixelSize: 20
+                    font.family: "fontawesome"
 
-                smooth: true
-                antialiasing: true
-                asynchronous: true
+                    focus: true
+                    color: "black" // color: randomButton.activeFocus?"red":"black";
 
-                transform: Rotation {
-                    origin.x: 128;
-                    origin.y: image2.paintedHeight/2;
-                    axis { x: 1; y: 0; z: 0 }
-                    angle: 180 }
+                    KeyNavigation.left: playButton
+                    KeyNavigation.right: playButton
+//                    KeyNavigation.right: menuButton
 
-                sourceSize.width: 256
-                sourceSize.height: 256
+                    Keys.onPressed: {
+                        infosColumn.processKeyEvent(event, true);
+                     }
 
-                fillMode: Image.PreserveAspectFit
-                source: resImageSource
+                    onActiveFocusChanged: {
+                        focusScope.showFocus(randomButton, activeFocus);
+                    }
+                }
+                /*
+                Text {
+                    id: menuButton
+                    text: Fontawesome.Icon.ellipsis_h
+                    font.bold: true
+                    font.pixelSize: 20
+                    font.family: "fontawesome"
+
+                    color: "black" // color: menuButton.activeFocus?"red":"black";
+                    focus: true
+
+                    KeyNavigation.left: randomButton
+                    KeyNavigation.right: playButton
+
+                    onActiveFocusChanged: {
+                        focusScope.showFocus(menuButton, activeFocus);
+                    }
+                }
+                */
+
+
+                Keys.onPressed: {
+
+                    switch(event.key) {
+                    case Qt.Key_Down:
+
+                        if (changePosition(0, 0)) {
+                            event.accepted=true;
+                        }
+                    }
+                }
+
             }
         }
 
         Component.onCompleted: {
-            focusScope.forceActiveFocus();
-        }
+
+            var components = {
+                track: trackComponent,
+                disc: discComponent
+            }
+
+            var d=ObjectContainerAlbum.fillTracks(infosColumn, components, 60, upnpServer, xml);
+
+            d.then(function onSuccess(metas) {
+                focusScope.metas=metas;
+
+                var ms="";
+                var artist=UpnpObject.getText(xml, "upnp:artist");
+                if (artist) {
+                    ms+=artist;
+
+                } else {
+                    var artists=metas.artists;
+                    if (artists && artists.length) {
+                        var l=Math.min(8, artists.length);
+
+                        for(var i=0;i<l;i++) {
+                            if (ms) {
+                                ms+=", ";
+                            }
+
+                            ms+=artists[i];
+                        }
+
+                        if (artists.length>l) {
+                            ms+=", ...";
+                        }
+                    }
+                }
+
+                if (metas.year) {
+                    if (ms) {
+                        ms+=" \u25CF "
+                    }
+
+                    ms+=metas.year;
+                }
+
+                title.textInfo=ms;
+
+                //                    infosColumn.height=infosColumn.childrenRect.height;
+            });
+        }    
     }
-}
+
+    ImageColumn {
+        id: imageColumn
+        x: parent.width-256-30
+        y: 30
+        resImageSource: focusScope.resImageSource
+        infosColumn: infosColumn
+    }
+
+   }

@@ -132,7 +132,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 }
             }
 
-            var disk=item.byPath("mm:diskNo", UpnpServer.DIDL_XMLNS_SET).text();
+            var disk=item.byPath("upnp:originalDiscNumber", UpnpServer.DIDL_XMLNS_SET).text();
             if (disk) {
                 infos.disk=parseInt(disk, 10);
             } else {
@@ -198,7 +198,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
         var diskIndex=0;
         list.forEach(function(ds) {
-            console.log("Disk #"+ds[0].disk+" index="+diskIndex);
+            //console.log("Disk #"+ds[0].disk+" index="+diskIndex);
 
             ds.sort(function(i1, i2) {
                 var t1=i1.trackNumber || 9999999;

@@ -6,7 +6,7 @@
 function fillModel(upnpServer, meta) {
 
     // console.profile();
-    console.log(Util.inspect(meta.result, false, {}));
+    //console.log(Util.inspect(meta.result, false, {}));
 
     var container=meta.result.byPath("DIDL-Lite/container", UpnpServer.DIDL_XMLNS_SET);
     // console.log("Container=",Util.inspect(container));
@@ -15,7 +15,7 @@ function fillModel(upnpServer, meta) {
     // console.log("ID="+objectID);
 
     var childCount=container.attr("childCount");
-    console.log("ChildCount="+childCount);
+    //console.log("ChildCount="+childCount);
 
 
     return { objectID: objectID, childCount: childCount };

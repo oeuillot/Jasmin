@@ -76,6 +76,9 @@ FocusScope {
 
             onPaint: {                
                 var ctx=context;
+                if (!ctx) {
+                    ctx=getContext("2d");
+                }
 
                 ctx.beginPath();
                 ctx.fillStyle = "#E9E9E9";

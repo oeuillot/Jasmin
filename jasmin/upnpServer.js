@@ -156,7 +156,7 @@ UpnpServer.prototype._fillDeviceDescription=function(xmlDocument) {
 
     var controlURL=this.relativeURL(contentDirectoryService.controlURL);
 
-    console.log("controlURL=", controlURL);
+    //console.log("controlURL=", controlURL);
 
     var soapTransport=new Soap.SoapTransport(controlURL.toString(), this.xmlParserWorker);
     this.soapTransport=soapTransport;
@@ -165,15 +165,15 @@ UpnpServer.prototype._fillDeviceDescription=function(xmlDocument) {
 
     var deferred = this.getSortCapabilities().then(function onSuccess(sortCaps) {
         self.sortCaps=sortCaps;
-        console.log("SortCaps="+Util.inspect(sortCaps));
+        //console.log("SortCaps="+Util.inspect(sortCaps));
 
         var deferred2=self.getSearchCapabilities().then(function onSuccess(searchCaps) {
             self.searchCaps=searchCaps;
-            console.log("SearchCaps="+Util.inspect(searchCaps));
+            //console.log("SearchCaps="+Util.inspect(searchCaps));
 
             var deferred3=self.getSystemUpdateID().then(function onSuccess(systemUpdateID) {
                 self.systemUpdateID=systemUpdateID;
-                console.log("SystemUpdateID="+systemUpdateID);
+                //console.log("SystemUpdateID="+systemUpdateID);
 
                 var deferred4=self.browseMetadata(0).then(function(meta) {
                     //console.log("Meta="+Util.inspect(meta, false, {}));

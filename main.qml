@@ -113,8 +113,7 @@ Application {
     }
 
     Component.onCompleted: {
-        if (fontawesome.status===FontLoader.Ready) {
-            console.log("GO 2 ...");
+        if (fontawesome.status===FontLoader.Ready) {           
             startup();
         }
     }

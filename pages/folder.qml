@@ -307,19 +307,15 @@ Page {
             audioPlayer.togglePlayPause();
             event.accepted = true;
             break;
+        case Qt.Key_Asterisk:
         case Qt.Key_AudioForward:
             audioPlayer.forward();
             event.accepted = true;
             break;
+        case Qt.Key_Slash:
         case Qt.Key_AudioRewind:
-            audioPlayer.backForward();
+            audioPlayer.back();
             event.accepted = true;
-            break;
-        case Qt.Key_PageUp:
-            // Prog+
-            break;
-        case Qt.Key_PageDow:
-            // Prog-
             break;
         case Qt.Key_Escape:
         case Qt.Key_Back:

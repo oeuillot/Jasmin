@@ -11,7 +11,6 @@ import "fontawesome.js" as Fontawesome;
 
 Item {
     id: audioPlayer
-    height: childrenRect.height
 
     property var playList: ([]);
 
@@ -25,20 +24,20 @@ Item {
 
     property int playbackState: Audio.StoppedState;
 
-    function setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle, append) {
+    function setPlayList(upnpServer, xmlArray, albumImageURL, append, offset) {
         //console.log("setPlay: xml="+xmlArray+" playListIndex="+playListIndex+" shuffle="+shuffle+" append="+append);
 
         if (!append) {
             return clear().then(function() {
                 playListIndex=0;
-                _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle);
+                _setPlayList(upnpServer, xmlArray, albumImageURL, offset);
             });
         }
 
         // append
 
 
-        _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffle);
+        _setPlayList(upnpServer, xmlArray, albumImageURL, offset);
         return Deferred.resolved();
     }
 
@@ -81,28 +80,22 @@ Item {
 
             url=upnpServer.relativeURL(url).toString();
 
-            found=true;
-
-            playList.push({
-                              objectID: objectID,
-                              xml: xml,
-                              url: url,
-                              imageURL: imageURL,
-                              title: title,
-                              artist: artist
-                          });
+            found={
+                objectID: objectID,
+                xml: xml,
+                url: url,
+                imageURL: imageURL,
+                title: title,
+                artist: artist
+            };
 
             return false; // Break the loop if forEach support it :-)
-       });
+        });
 
         return found;
     }
 
-    function _setPlayList(upnpServer, xmlArray, albumImageURL, playListIndex, shuffleP) {
-
-        if (shuffleP!==undefined) {
-            shuffle=shuffleP;
-        }
+    function _setPlayList(upnpServer, xmlArray, albumImageURL, offset) {
 
         // console.log("xmlArray="+xmlArray);
 
@@ -111,8 +104,19 @@ Item {
         }
 
         xmlArray.forEach(function(xml) {
-            _fillInfo(upnpServer, xml, albumImageURL, playList);
+            var info=_fillInfo(upnpServer, xml, albumImageURL, playList);
+            if (!info) {
+                return;
+            }
+            if (offset===undefined) {
+                playList.push(info);
+                return;
+            }
+            playList.splice(offset, 0, info);
+            offset++;
         });
+
+        trackList.updateList();
     }
 
     function clear() {
@@ -124,9 +128,24 @@ Item {
             playList=[];
             playListIndex=0;
 
+            trackList.updateList();
+
             return true;
         });
     }
+
+    function clearNext() {
+        if (playList.length && playListIndex<=playList.length) {
+            var current=playList[playListIndex];
+            playList=[current];
+            playListIndex=0;
+        }
+
+        trackList.updateList();
+
+        return Deferred.resolved(true);
+    }
+
 
     function playMusic(upnpServer, xml, albumImageURL) {
         return setPlayList(upnpServer, [xml], albumImageURL, 0, false, false).then(function() {
@@ -192,10 +211,28 @@ Item {
         });
     }
 
+    function back() {
+        //console.log("AUDIO: Forward");
+
+        return stop().then(function() {
+            //console.log("AUDIO: stopped "+playListIndex+" len="+playList.length);
+
+            if (playListIndex<1) {
+                return false;
+            }
+
+            return playIndex(playListIndex-1);
+        });
+    }
+
+
     function playIndex(index) {
         //console.log("PLAY index #"+index);
 
         playListIndex=index;
+
+        trackList.updateList();
+
         if (playListIndex>=playList.length) {
             return Deferred.resolved(false);
         }
@@ -265,117 +302,135 @@ Item {
         }
     }
 
-    Rectangle {
-        id: image0
-        width: parent.width
-        height: parent.width
-        x: 0
-        y: 0
 
-        border.color: "#D3D3D3"
-        border.width: 1
-        color: "#E9E9E9"
+    Component {
+        id: trackItem
+
+        Item {
+            property var model;
+            x: (parent.width-width)/2
+            height: (selected)?(artist.y+artist.height):(title.y+title.height)
+
+            property bool selected: false
+
+            Rectangle {
+                x: 0
+                y: 0
+                width: parent.width
+                height: parent.width
+
+                border.color: "#D3D3D3"
+                border.width: 1
+                color: "#E9E9E9"
+
+                property var model;
+            }
+
+            Text {
+                x: 1
+                y: 1
+                width: parent.width-2
+                height: parent.width-2
+
+                font.pixelSize: 72
+                font.family: "fontawesome"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                opacity: 0.4
+                text: Fontawesome.Icon.music
+            }
+
+
+            Image {
+                x: 0
+                y: 0
+                width: parent.width
+                height: parent.width
+                antialiasing: true
+                smooth: true
+                fillMode: Image.PreserveAspectFit
+                source: (model && model.imageURL) || "";
+            }
+
+            Text {
+                id: title
+                x: 0
+                y: parent.width
+                width: parent.width
+                height: (selected)?20:16
+
+                font.bold: true
+                font.pixelSize: (selected)?16:14
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+
+                text: (model?(model.title || "Inconnu"):"")
+            }
+
+            Text {
+                id: artist
+
+                visible: selected
+
+                x: 0
+                y: title.y+title.height
+                width: parent.width
+                height: 20
+
+                font.bold: false
+                font.pixelSize: 14
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+
+                text: (currentTrack?(currentTrack.artist || "Inconnu"):"")
+            }
+        }
     }
 
-    Text {
-        id: text
 
-        x: 1
-        y: 1
-        width: parent.width-2
-        height: parent.width-2
-
-        font.pixelSize: 72
-        font.family: "fontawesome"
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        opacity: 0.4
-        text: Fontawesome.Icon.music
-    }
-
-    Image {
-        id: image
-        x: 0
-        y: 0
-        visible: !!image.source
-        width: parent.width
-        height: parent.width
-        antialiasing: true
-        fillMode: Image.PreserveAspectFit
-        source: (currentTrack && currentTrack.imageURL) || "";
-    }
-    Text {
-        id: title
-
-        x: 0
-        y: parent.width
-        width: parent.width
-        height: 20
-
-        font.bold: true
-        font.pixelSize: 16
-        horizontalAlignment: Text.AlignHCenter
-        elide: Text.ElideRight
-
-        text: (currentTrack?(currentTrack.title || "Inconnu"):"")
-    }
-
-    Text {
-        id: artist
-
-        x: 0
-        y: title.y+title.height
-        width: parent.width
-        height: 20
-
-        font.bold: false
-        font.pixelSize: 14
-        horizontalAlignment: Text.AlignHCenter
-        elide: Text.ElideRight
-
-        text: (currentTrack?(currentTrack.artist || "Inconnu"):"")
-    }
-
-    Rectangle {
-        id: bgProgress
-        x: 0
-        y: artist.y+artist.height
-        width: parent.width
-        height: 3
-        color: "#BCBCBC"
-    }
-    Rectangle {
-        id: cursorProgress
-        x: 0
-        y: bgProgress.y
-        width: 0
-        height: 3
-        color: "#707070"
-    }
-    Rectangle {
-        id: cursorProgress2
-        x: 0
-        y: bgProgress.y-2
-        width: 2
-        height: 5
-        color: "black"
-        visible: (audio.playbackState!==Audio.StopState)
-    }
     Item {
+        id: commandItems
         x: 0
-        y: bgProgress.y+bgProgress.height
-        height: 24
+        height: 24+3
         width: parent.width
+
+        Rectangle {
+            id: bgProgress
+            x: 0
+            y: 0
+            width: parent.width
+            height: 3
+            color: "#BCBCBC"
+        }
+        Rectangle {
+            id: cursorProgress
+            x: 0
+            y: 0
+            width: 0
+            height: 3
+            color: "#707070"
+        }
+        Rectangle {
+            id: cursorProgress2
+            x: 0
+            y: 0
+            width: 2
+            height: 5
+            color: "black"
+            visible: (audio.playbackState!==Audio.StopState)
+        }
+
 
         Text {
             x: 1
-            y: 1
+            y: 1+3
             font.pixelSize: (audio.position>=60*60*1000)?10:12
             text: formatTime(audio.position);
         }
         Text {
+             
             x: 0
-            y: 1
+            y: 1+3
             width: parent.width-1
             font.pixelSize: ((audio.duration-audio.position)>=60*60*1000)?10:12
             text: "-"+formatTime(audio.duration-audio.position);
@@ -386,6 +441,7 @@ Item {
         Row {
             id: commands
             x: (parent.width-childrenRect.width)/2
+            y: 3
             width: childrenRect.width
             height: 24
             spacing: 8
@@ -408,6 +464,77 @@ Item {
                 font.pixelSize: 16
                 font.family: "fontawesome"
             }
+        }
+    }
+
+    Item {
+        id: trackList
+        x: 0
+        y: 0
+        width: parent.width;
+        height: parent.height;
+
+        property int cellWidth: width;
+        property int cellHeight: cellWidth+16;
+        property int cellVerticalSpacing: 4;
+
+        function updateList() {
+            var cnt=Math.ceil(height/(cellWidth+cellVerticalSpacing));
+            var children=trackList.children;
+
+            var start=Math.max(0, playListIndex-1);
+
+            var forceFirst=(!playList.length);
+
+            var y=0;
+            for(var i=0;i<cnt;i++) {
+                var track=playList[start+i];
+                var item=children[i];
+
+                //               console.log("UpdateList #"+i+" track="+track+" item="+item);
+
+                if (!track && (i || !forceFirst)) {
+                    if (item) {
+                        item.visible=false;
+                    }
+                    continue;
+                }
+
+                if (item) {
+                    item.model=track;
+                    item.visible=true;
+
+                } else {
+                    item=trackItem.createObject(trackList, {
+                                                    y: y,
+                                                    width: cellWidth,
+                                                    model: track
+                                                } );
+                }
+
+                if (start+i===playListIndex || (!i && forceFirst)) {
+                    item.selected=true;
+                    item.width=cellWidth;
+                    item.y=y;
+                    y+=item.height;
+
+                    commandItems.y=y;
+                    y+=commandItems.height;
+
+                } else {
+                    item.selected=false;
+                    item.width=cellWidth-32;
+                    item.y=y;
+
+                    y+=item.height;
+                }
+
+                y+=cellVerticalSpacing;
+            }            
+        }
+
+        Component.onCompleted: {
+            updateList();
         }
     }
 }
