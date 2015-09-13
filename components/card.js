@@ -23,6 +23,10 @@ function computeType(upnpClass) {
         return Fontawesome.Icon.file_picture_o;
     }
 
+    if (upnpClass.indexOf("object.item.textItem")===0) {
+        return Fontawesome.Icon.file_text_o;
+    }
+
     if (!upnpClass.indexOf("object.container")) {
         return Fontawesome.Icon.folder_open_o;
     }

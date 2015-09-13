@@ -5,6 +5,8 @@ function parseXML(text, xmlns, callbacks) {
     var node;
     callbacks=callbacks || {};
 
+//    console.log("PARSE '"+text+"'");
+
     var sp={};
 
     var dictionnary={};
@@ -148,7 +150,11 @@ function parseXML(text, xmlns, callbacks) {
 
                 sp=splitName(item, sp);
 
-                if (sp.xmlns) {
+                if (!sp) {
+                    n.tagName=item;
+                    n.namespaceURI=defaultNamespaceURI;
+
+                } else if (sp.xmlns) {
                     n.tagName=sp.xmlns+":"+sp.name;
                     //                    n.prefix=nms[1];
                     n.namespaceURI=dictionnary[sp.xmlns];
@@ -282,6 +288,9 @@ function splitName(name, ret) {
     ret=ret || {};
 
     var kv = _splitNameRegExp.exec(name);
+    if (!kv) {
+        return null;
+    }
 
     if (kv[1]) {
         ret.xmlns=kv[1].slice(0, -1);

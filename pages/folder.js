@@ -9,14 +9,17 @@ function fillModel(upnpServer, meta) {
     //console.log(Util.inspect(meta.result, false, {}));
 
     var container=meta.result.byPath("DIDL-Lite/container", UpnpServer.DIDL_XMLNS_SET);
-    // console.log("Container=",Util.inspect(container));
+//    console.log("Container=",Util.inspect(container));
 
     var objectID=container.attr("id");
-    // console.log("ID="+objectID);
+//    console.log("ID="+objectID);
 
-    var childCount=container.attr("childCount");
-    //console.log("ChildCount="+childCount);
-
+    var childCount= -1;
+    var cc=container.attr("childCount");
+    if (cc) {
+        childCount=parseInt(cc, 10);
+    }
+//    console.log("ChildCount="+childCount);
 
     return { objectID: objectID, childCount: childCount };
 }
@@ -125,7 +128,8 @@ function loadModel(upnpServer, objectID, position, pageSize, loadArtists) {
         deferred.resolve({
                              list: children.toArray(),
                              position: position,
-                             pageSize: pageSize
+                             pageSize: pageSize,
+                             totalMatches: xml.totalMatches
                          });
 
     }, function onFailure(reason) {

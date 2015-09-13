@@ -8,7 +8,7 @@
 .import "xmlParser.js" as XmlParser
 .import "soapTransport.js" as Soap
 
-var LOG_DIDL=false;
+var LOG_DIDL=true;
 
 var UPNP_SERVICE_XMLNS="urn:schemas-upnp-org:service-1-0";
 var UPNP_DEVICE_XMLNS="urn:schemas-upnp-org:device-1-0";
@@ -62,9 +62,14 @@ UpnpServer.prototype.tryConnection=function(){
         return Async.Deferred.rejected(this.errored);
     }
 
+    var application=Qt.application;
+
     var transaction=Web.Http.Transaction.factory({
-                                                     method: "get",
-                                                     url: this.url
+                                                     method: "GET",
+                                                     url: this.url,
+                                                     headers: {
+                                                         "user-agent": application.name+"/"+application.version+" (QML client; "+application.organization+")"
+                                                     }
                                                  });
 
     var deferred = transaction.send();
@@ -72,7 +77,7 @@ UpnpServer.prototype.tryConnection=function(){
     var self=this;
 
     deferred=deferred.then(function onSuccess(response) {
-        //console.log("Deferred succes: ", Util.inspect(response), response.status, response.statusText);
+        console.log("Deferred succes: ", Util.inspect(response), response.status, response.statusText);
 
         if (response.isError() || !response.status) {
             self.errored="Server error "+response.statusText;
@@ -127,7 +132,7 @@ UpnpServer.prototype._fillDeviceDescription=function(xmlDocument) {
 
     var jsDocument=xmlDocument.toObject();
     this.deviceDescription=jsDocument;
-    //console.log("DeviceDescription=",Util.inspect(jsDocument, false, {} ));
+    console.log("DeviceDescription=",Util.inspect(jsDocument, false, {} ));
     //console.log("DeviceDescription XML=",Util.inspect(xmlDocument, false, {} ));
 
     var url=xmlDocument.byPath("root/device/URLBase", DEVICE_XMLNS_SET).text();
@@ -156,7 +161,7 @@ UpnpServer.prototype._fillDeviceDescription=function(xmlDocument) {
 
     var controlURL=this.relativeURL(contentDirectoryService.controlURL);
 
-    //console.log("controlURL=", controlURL);
+    console.log("controlURL=", controlURL);
 
     var soapTransport=new Soap.SoapTransport(controlURL.toString(), this.xmlParserWorker);
     this.soapTransport=soapTransport;
@@ -165,11 +170,11 @@ UpnpServer.prototype._fillDeviceDescription=function(xmlDocument) {
 
     var deferred = this.getSortCapabilities().then(function onSuccess(sortCaps) {
         self.sortCaps=sortCaps;
-        //console.log("SortCaps="+Util.inspect(sortCaps));
+        console.log("SortCaps="+Util.inspect(sortCaps));
 
         var deferred2=self.getSearchCapabilities().then(function onSuccess(searchCaps) {
             self.searchCaps=searchCaps;
-            //console.log("SearchCaps="+Util.inspect(searchCaps));
+            console.log("SearchCaps="+Util.inspect(searchCaps));
 
             var deferred3=self.getSystemUpdateID().then(function onSuccess(systemUpdateID) {
                 self.systemUpdateID=systemUpdateID;
@@ -211,7 +216,7 @@ UpnpServer.prototype.getContentDirectoryService=function() {
 
 UpnpServer.prototype.getSortCapabilities=function() {
     var deferred=this.soapTransport.sendAction("urn:schemas-upnp-org:service:ContentDirectory:1#GetSortCapabilities", {
-                                                   _name: "u:GetSortCapabilitiesRequest",
+                                                   _name: "u:GetSortCapabilities",
                                                    _attrs: {
                                                        "xmlns:u" :"urn:schemas-upnp-org:service:ContentDirectory:1"
                                                    }
@@ -252,7 +257,7 @@ UpnpServer.prototype.getSortCapabilities=function() {
 
 UpnpServer.prototype.getSearchCapabilities=function() {
     var deferred=this.soapTransport.sendAction("urn:schemas-upnp-org:service:ContentDirectory:1#GetSearchCapabilities", {
-                                                   _name: "u:GetSearchCapabilitiesRequest",
+                                                   _name: "u:GetSearchCapabilities",
                                                    _attrs: {
                                                        "xmlns:u" :"urn:schemas-upnp-org:service:ContentDirectory:1"
                                                    }
@@ -273,7 +278,7 @@ UpnpServer.prototype.getSearchCapabilities=function() {
 UpnpServer.prototype.getSystemUpdateID=function() {
 
     var deferred=this.soapTransport.sendAction("urn:schemas-upnp-org:service:ContentDirectory:1#GetSystemUpdateID", {
-                                                   _name: "u:GetSystemUpdateIDRequest",
+                                                   _name: "u:GetSystemUpdateID",
                                                    _attrs: {
                                                        "xmlns:u" :"urn:schemas-upnp-org:service:ContentDirectory:1"
                                                    }
@@ -311,9 +316,9 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, options) {
     var xmlns={
     };
     xmlns[PURL_ELEMENT_XMLS]="dc";
-    xmlns[UPNP_SERVICE_XMLNS]="u";
+    xmlns["urn:schemas-upnp-org:service:ContentDirectory:1"]="u";
     xmlns[UPNP_METADATA_XMLNS]="upnp"
-    xmlns[DIDL_LITE_XMLNS]="didl"
+//    xmlns[DIDL_LITE_XMLNS]="didl"
 
     var xmlnsAno=0;
 
@@ -366,7 +371,7 @@ UpnpServer.prototype.browse=function(objectId, browseFlag, options) {
         Filter: (filterParams.length?filterParams.join():"*"),
         StartingIndex: startingIndex,
         RequestedCount: requestCount ,
-        SortCriteria: (sortParams.length?sortParams.join():"*"),
+        SortCriteria: (sortParams.length?sortParams.join():""),
     };
 
     var self=this;

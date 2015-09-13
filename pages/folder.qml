@@ -1,6 +1,7 @@
 import QtQuick 2.2
 import fbx.ui.page 1.0
 import fbx.ui.control 1.0
+import fbx.async 1.0
 
 import "folder.js" as FolderScript
 import "../components" 1.0
@@ -166,9 +167,11 @@ Page {
 
             //row.parent.infoContainer.visible=true;
 
-            info.Component.onDestruction.connect((function() {
-                card.selected=false;
-            }).bind(card));
+            if (info) {
+                info.Component.onDestruction.connect((function() {
+                    card.selected=false;
+                }).bind(card));
+            }
         }
 
         property var pageSizeLoaded: ([]);
@@ -179,7 +182,7 @@ Page {
         function loadPage(pageIndex) {
             if (loading) {
                 console.error("Already loading !!!!");
-                return;
+                return Deferred.rejected();
             }
 
             loading=true;
@@ -189,6 +192,13 @@ Page {
             def.then(function onSuccess(result) {
                 //                console.log("Response List["+pageIndex+"]="+result.list.length+" position="+result.position+"/"+pageIndex*pageSize);
                 loading=false;
+
+                if (typeof(listView.modelSize)!=="nubmer" && result.totalMatches) {
+                    listView.modelSize=result.totalMatches;
+
+                    console.log("SET TOTAL MATCHES to "+result.totalMatches);
+                }
+
 
                 var list=result.list;
                 var model=listView.model;
@@ -207,6 +217,8 @@ Page {
             }, function onFailed(reason) {
                 console.error("Can not load model "+reason);
             });
+
+            return def;
         }
 
         Component.onCompleted: {
@@ -215,7 +227,9 @@ Page {
             objectID=infos.objectID;
 
             listView.model=[];
-            listView.modelSize=infos.childCount;
+            if (infos.childCount>0) {
+                listView.modelSize=infos.childCount;
+            }
 
             //            console.log("ModelSize="+infos.childCount);
 
@@ -266,7 +280,15 @@ Page {
 
             if (infos.childCount<=pageSize*2) {
                 pageSizeLoaded[0]=true;
-                loadPage(0);
+                loadPage(0).then(function() {
+
+                    console.log("ModelSize="+listView.modelSize);
+                    if (listView.modelSize===0) {
+                        emptyFolder.visible=true;
+                        backFolderTimer.start();
+
+                    }
+                });
 
             } else {
                 FolderScript.listModel(page.upnpServer, objectID).then(function(result) {
@@ -280,6 +302,95 @@ Page {
         }
 
         delegate: card
+    }
+
+    Text {
+        id: emptyFolder
+        visible: false
+        text: "Le dossier est vide"
+
+        x: (page.width-contentWidth)/2
+        y: (page.height-contentHeight)/2
+
+        color: "#404040"
+        font.bold: true
+        font.pixelSize: 20
+    }
+
+    Timer {
+        id: backFolderTimer
+        interval: 1000;
+        repeat: false
+        onTriggered: {
+            page.pop();
+        }
+    }
+
+    Item {
+        id: flashMessage
+        x:0
+        y: 0
+        width: parent.width
+        height: childrenRect.height
+        clip: true
+        visible: true
+        opacity: 0.75
+
+        Rectangle {
+            id: flashRectangle
+            x:0;
+            y: -height;
+            width: parent.width
+            height: childrenRect.height;
+            color: "red"
+
+            Text {
+                x: (parent.width-contentWidth)/2;
+                y: 4
+
+                color: "white"
+                text: "Le dossier est vide !"
+            }
+        }
+
+
+        NumberAnimation {
+            id: showAnim;
+            property: "y"
+            duration: 300;
+            target: flashRectangle
+
+            onRunningChanged:{
+                if (!showAnim.running) {
+                    hideAnim.from=1
+                    hideAnim.to=0;
+                    hideAnim.start();
+                }
+            }
+        }
+
+        NumberAnimation {
+            id: hideAnim;
+            property: "opacity"
+            duration: 2000;
+            target: flashRectangle
+
+            onRunningChanged:{
+                if (!hideAnim.running) {
+                    flashMessage.visible=false;
+                }
+            }
+        }
+
+        function flash() {
+            showAnim.from=-flashRectangle.height;
+            showAnim.to=0;
+
+            showAnim.start();
+            flashRectangle.opacity=1
+            flashMessage.visible=true;
+        }
+
     }
 
     onStackChanged: {
@@ -303,20 +414,24 @@ Page {
         }
 
         switch(event.key) {
+        case Qt.Key_Period:
         case Qt.Key_MediaTogglePlayPause:
             audioPlayer.togglePlayPause();
             event.accepted = true;
             break;
+
         case Qt.Key_Asterisk:
         case Qt.Key_AudioForward:
             audioPlayer.forward();
             event.accepted = true;
             break;
+
         case Qt.Key_Slash:
         case Qt.Key_AudioRewind:
             audioPlayer.back();
             event.accepted = true;
             break;
+
         case Qt.Key_Escape:
         case Qt.Key_Back:
             if (info!=null) {

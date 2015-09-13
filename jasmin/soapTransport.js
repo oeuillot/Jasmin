@@ -28,7 +28,6 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
     var jxml = {
         _name: "s:Envelope",
         _attrs: {
-            xmlns: "urn:schemas-upnp-org:service-1-0",
             "xmlns:s": "http://schemas.xmlsoap.org/soap/envelope/",
             "s:encodingStyle": "http://schemas.xmlsoap.org/soap/encoding/"
         },
@@ -37,18 +36,21 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
         }
     };
 
-    var xml = JsToXML.toXML(jxml);
+    var xml = JsToXML.toXML(jxml, { header: true });
 
     if (LOG_TRANSPORT) {
         console.log("SOAP url='"+this.url+"' request="+xml);
     }
+
+    var application=Qt.application;
 
     var transaction = Web.Http.Transaction.factory({
                                                        method: "POST",
                                                        url: this.url,
                                                        headers: {
                                                            "SOAPACTION": "\""+soapAction+"\"",
-                                                           "Content-Type": "text/xml; charset=\"utf-8\""
+                                                           "Content-Type": "text/xml; charset=\"utf-8\"",
+                                                           "User-Agent": application.name+"/"+application.version+" (QML client; "+application.organization+")"
                                                        },
                                                        body: xml
                                                    });

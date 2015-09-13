@@ -45,11 +45,11 @@ function toXML(obj, config){
     var attrsString = '';
     var outputString = '';
     var attrs = tag.attrs || '';
-    
+
     // turn the attributes object into a string with key="value" pairs
     for(var attr in attrs){
       if(attrs.hasOwnProperty(attr)) {
-        attrsString += ' ' + attr + '="' + attrs[attr] + '"';
+          attrsString += ' ' + attr + '="' + attrs[attr] + '"';
       }
     }
     

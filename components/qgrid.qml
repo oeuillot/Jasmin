@@ -270,6 +270,7 @@ FocusScope {
             width: cellWidth
             height: cellHeight
             radius: 4
+            visible: Math.max(widget.model.length, widget.modelSize);
 
             Component.onCompleted: {
                 widget.onFocusIndexChanged.connect(function() {

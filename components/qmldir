@@ -13,3 +13,5 @@ AudioPlayer 1.0 audioPlayer.qml
 DeferredAudio 1.0 deferredAudio.qml
 
 QGrid 1.0 qgrid.qml
+
+Flash 1.0 flash.qml

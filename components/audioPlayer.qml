@@ -181,7 +181,9 @@ Item {
     }
 
     function togglePlayPause() {
-        //console.log("PlayPause playbackState="+playbackState+"/"+Audio.PlayingState);
+        togglePlayPauseFlash.flash();
+
+        console.log("PlayPause playbackState="+playbackState+"/"+Audio.PlayingState);
         if (playbackState===Audio.PlayingState) {
             return audio.$pause().then(function() {
                 playbackState=Audio.StoppedState;
@@ -189,7 +191,7 @@ Item {
         }
 
         if (audio.playbackState===Audio.PausedState) {
-            return audio.$start().then(function() {
+            return audio.$play().then(function() {
                 playbackState=Audio.PlayingState;
             });
         }
@@ -199,6 +201,8 @@ Item {
 
     function forward() {
         //console.log("AUDIO: Forward");
+
+        forwardFlash.flash();
 
         return stop().then(function() {
             //console.log("AUDIO: stopped "+playListIndex+" len="+playList.length);
@@ -213,6 +217,8 @@ Item {
 
     function back() {
         //console.log("AUDIO: Forward");
+
+        backFlash.flash();
 
         return stop().then(function() {
             //console.log("AUDIO: stopped "+playListIndex+" len="+playList.length);
@@ -449,8 +455,8 @@ Item {
             font.pixelSize: (audio.position>=60*60*1000)?10:12
             text: formatTime(audio.position);
         }
-        Text {
 
+        Text {
             x: 0
             y: 1+3
             width: parent.width-1
@@ -469,23 +475,38 @@ Item {
             spacing: 8
 
             Text {
+                id: backButton
                 text: Fontawesome.Icon.backward
                 font.bold: true
                 font.pixelSize: 16
                 font.family: "fontawesome"
             }
             Text {
+                id: togglePlayPauseButton
                 text: (audio.playbackState==Audio.PlayingState)?Fontawesome.Icon.pause:Fontawesome.Icon.play
                 font.bold: true
                 font.pixelSize: 16
                 font.family: "fontawesome"
             }
             Text {
+                id: forwardButton
                 text: Fontawesome.Icon.forward
                 font.bold: true
                 font.pixelSize: 16
                 font.family: "fontawesome"
             }
+        }
+        Flash {
+            id: backFlash
+            target: backButton
+        }
+        Flash {
+            id: togglePlayPauseFlash
+            target: togglePlayPauseButton
+        }
+        Flash {
+            id: forwardFlash
+            target: forwardButton
         }
     }
 
