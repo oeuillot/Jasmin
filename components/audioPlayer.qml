@@ -97,7 +97,7 @@ Item {
 
     function _setPlayList(upnpServer, xmlArray, albumImageURL, offset) {
 
-        console.log("xmlArray="+xmlArray);
+        //console.log("xmlArray="+xmlArray);
 
         if (!(xmlArray instanceof Array)) {
             xmlArray=[xmlArray];
