@@ -79,7 +79,7 @@ function computeImage(xml, upnpClass) {
         var additionalInfo=ps[4];
 
         if (protocol!=="http-get") {
-            console.error("Unknown protocol : "+protocolInfo);
+            //console.error("Unknown protocol : "+protocolInfo);
             return;
         }
 
@@ -210,6 +210,6 @@ function computeInfo(xml, upnpClass, component) {
         }
     }
 
-    console.log("unknown="+Util.inspect(xml, false, {}));
+    //console.log("No infos for="+Util.inspect(xml, false, {}));
     return null;
 }
