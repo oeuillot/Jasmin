@@ -2,6 +2,7 @@ import QtQuick 2.2
 import fbx.ui.page 1.0
 import fbx.ui.control 1.0
 import fbx.async 1.0
+import QtMultimedia 5.0
 
 import "folder.js" as FolderScript
 import "../components" 1.0
@@ -12,8 +13,10 @@ Page {
     title: ""
 
     property var meta;
-    property var upnpServer;
+    property var contentDirectoryService;
     property AudioPlayer audioPlayer;
+
+    property JSettings settings;
 
     property var fillModelDeferred;
 
@@ -29,7 +32,6 @@ Page {
         id: card
 
         Card {
-            upnpServer: page.upnpServer
 
             property int cellIndex;
 
@@ -44,7 +46,46 @@ Page {
                     }
 
                     event.accepted=true;
-                    return;
+                    return;                                        
+                 }
+
+                if (upnpClass) {
+                    if (!upnpClass.indexOf("object.item.audioItem")) {
+                        switch(event.key) {
+                        case Qt.Key_PageDown:
+                            // Ajoute les pistes du disque juste après celui qui est en écoute, sans forcement lancer le PLAY
+                            event.accepted = true;
+
+                            return audioPlayer.setPlayList(contentDirectoryService, [model], resImageSource, true, audioPlayer.playListIndex+1);
+
+                        case Qt.Key_PageUp:
+                            // Ajoute les pistes du disque après les morceaux
+                            event.accepted = true;
+
+                            audioPlayer.setPlayList(contentDirectoryService, [model], resImageSource, true);
+                            return;
+                        }
+
+                    } else if (!upnpClass.indexOf("object.container.album.musicAlbum")) {
+                        switch(event.key) {
+                        case Qt.Key_PageDown:
+                            // Ajoute les pistes du disque juste après celui qui est en écoute, sans forcement lancer le PLAY
+                            event.accepted = true;
+
+                            var list=getMusicTrackList(model);
+
+                            return audioPlayer.setPlayList(contentDirectoryService, list, resImageSource, true, audioPlayer.playListIndex+1);
+
+                        case Qt.Key_PageUp:
+                            // Ajoute les pistes du disque après les morceaux
+                            event.accepted = true;
+
+                            var list=getMusicTrackList(model);
+
+                            audioPlayer.setPlayList(contentDirectoryService, list, resImageSource, true);
+                            return;
+                        }
+                    }
                 }
             }
 
@@ -60,7 +101,7 @@ Page {
                     this.selected=true;
 
                     if (info) {
-                        info.card.infoDisplayed=false;
+                        info.card.hideInfo=false;
 
                         info.destroy();
                         info=null;
@@ -85,6 +126,10 @@ Page {
                     page.focusCard=null;
                 }
             }
+
+            Component.onCompleted: {
+                this.contentDirectoryService=page.contentDirectoryService;
+            }
         }
     }
     Component {
@@ -94,18 +139,6 @@ Page {
 
         }
     }
-
-    Component {
-        id: infoContainerComponent
-
-        Item {
-            id: infoContainer
-            visible: false
-            width: parent.width
-            height: 10
-        }
-    }
-
 
     QGrid {
         id: listView
@@ -132,15 +165,15 @@ Page {
 
             if (upnpClass.indexOf("object.container")===0 && upnpClass.indexOf("object.container.album")<0) {
                 if (!auto) {
-
-                    upnpServer.browseMetadata(objectID).then(function onSuccess(meta) {
+                    contentDirectoryService.browseMetadata(objectID).then(function onSuccess(meta) {
 
                         page.push("folder.qml", {
-                                      upnpServer: page.upnpServer,
+                                      contentDirectoryService: page.contentDirectoryService,
                                       meta: meta,
                                       title: card.title,
                                       audioPlayer: page.audioPlayer,
-                                      loadArtists: true
+                                      loadArtists: true,
+                                      settings: settings
                                   });
 
 
@@ -156,22 +189,16 @@ Page {
             info=showInfo(card, infoComponent, {
                               xml: xml,
                               markerPosition: card.x+card.width/2,
-                              resImageSource: card.resImageSource,
+                              imagesList: card.getImagesList(),
                               upnpClass: upnpClass,
-                              upnpServer: upnpServer,
+                              contentDirectoryService: contentDirectoryService,
                               audioPlayer: page.audioPlayer,
                               card: card
                           });
 
-            card.infoDisplayed=true;
+            card.hideInfo=true;
 
             //row.parent.infoContainer.visible=true;
-
-            if (info) {
-                info.Component.onDestruction.connect((function() {
-                    card.selected=false;
-                }).bind(card));
-            }
         }
 
         property var pageSizeLoaded: ([]);
@@ -186,17 +213,17 @@ Page {
             }
 
             loading=true;
-            //            console.log("LOAD PAGE "+pageIndex);
+            // console.log("LOAD PAGE "+pageIndex);
 
-            var def=FolderScript.loadModel(page.upnpServer, objectID, pageIndex*pageSize, pageSize, loadArtists);
+            var def=FolderScript.loadModel(contentDirectoryService, objectID, pageIndex*pageSize, pageSize, loadArtists);
             def.then(function onSuccess(result) {
                 //                console.log("Response List["+pageIndex+"]="+result.list.length+" position="+result.position+"/"+pageIndex*pageSize);
                 loading=false;
 
-                if (typeof(listView.modelSize)!=="nubmer" && result.totalMatches) {
+                if (!listView.modelSize  && result.totalMatches) {
                     listView.modelSize=result.totalMatches;
 
-                    console.log("SET TOTAL MATCHES to "+result.totalMatches);
+                    //console.log("SET TOTAL MATCHES to "+result.totalMatches);
                 }
 
 
@@ -212,6 +239,7 @@ Page {
                 //console.log("Loading pages="+loadingPages);
 
                 if (loadingPages.length) {
+                    //console.log("Next page !");
                     loadPage(loadingPages.shift());
                 }
             }, function onFailed(reason) {
@@ -222,7 +250,7 @@ Page {
         }
 
         Component.onCompleted: {
-            var infos=FolderScript.fillModel(page.upnpServer, page.meta);
+            var infos=FolderScript.fillModel(contentDirectoryService, page.meta);
 
             objectID=infos.objectID;
 
@@ -234,7 +262,9 @@ Page {
             //            console.log("ModelSize="+infos.childCount);
 
 
-            listView.onPageCellIndexChanged.connect(function() {
+            listView.onUserScrollingChanged.connect(function() {
+                //console.log("UserScrolling="+listView.userScrolling);
+
                 var cur=listView.pageCellIndex;
 
                 if (loadingPages.length) {
@@ -242,38 +272,41 @@ Page {
                         var idx=loadingPages.shift();
 
                         pageSizeLoaded[idx]=false;
-                    }
+                    }                   
                 }
 
+                if (listView.userScrolling) {
+                    return;
+                }
 
                 for(var i=0;i<listView.viewRows;i++) {
                     var ix=cur+i*listView.viewColumns;
                     var pi=Math.floor(ix/pageSize);
 
-                    //                    console.log("Test #"+pi+" "+ix+" => "+pageSizeLoaded[pi]);
+                    // console.log("Test "+cur+" ix="+ix+" pi="+pi);
 
-                    if (pageSizeLoaded[pi]) {
-                        ix=cur+(i+1)*listView.viewColumns-1;
-                        pi=Math.floor(ix/pageSize);
-
-                        //                        console.log("Test 2#"+pi+" "+ix+" => "+pageSizeLoaded[pi]);
-
-                        if (pageSizeLoaded[pi]) {
+                    if (!pageSizeLoaded[pi]) {
+                        pageSizeLoaded[pi]=true;
+                        if (loading) {
+                            loadingPages.unshift(pi);
                             continue;
+                        } else {
+                            loadPage(pi);
                         }
                     }
 
-                    pageSizeLoaded[pi]=true;
+                    ix=ix+listView.viewColumns-1;
+                    pi=Math.floor(ix/pageSize);
 
-                    if (loading) {
-                        loadingPages.unshift(pi);
-                        //                        console.log("MARK page #"+pi+" and wait ... lp="+loadingPages);
-                        continue;
+                    if (!pageSizeLoaded[pi]) {
+                        pageSizeLoaded[pi]=true;
+                        if (loading) {
+                            loadingPages.unshift(pi);
+                            continue;
+                        } else {
+                            loadPage(pi);
+                        }
                     }
-
-                    //                    console.log("MARK page #"+pi);
-                    loadPage(pi);
-                    break;
                 }
 
             });
@@ -282,16 +315,15 @@ Page {
                 pageSizeLoaded[0]=true;
                 loadPage(0).then(function() {
 
-                    console.log("ModelSize="+listView.modelSize);
+                    //console.log("ModelSize="+listView.modelSize);
                     if (listView.modelSize===0) {
                         emptyFolder.visible=true;
                         backFolderTimer.start();
-
                     }
                 });
 
             } else {
-                FolderScript.listModel(page.upnpServer, objectID).then(function(result) {
+                FolderScript.listModel(contentDirectoryService, objectID).then(function(result) {
                     listView.model=result;
                     listView.updateLayout();
 
@@ -400,35 +432,24 @@ Page {
     }
 
     Keys.onPressed: {
-        if (true) {
-            for(var i in Qt) {
-                if (i.indexOf("Key_")) {
-                    continue;
-                }
-
-                if (Qt[i]===event.key) {
-                    console.log("#"+i);
-                    break;
-                }
-            }
-        }
+        Util.logKeyName(event);
 
         switch(event.key) {
         case Qt.Key_Period:
         case Qt.Key_MediaTogglePlayPause:
-            audioPlayer.togglePlayPause();
+            audioPlayer.togglePlayPause(true);
             event.accepted = true;
             break;
 
         case Qt.Key_Asterisk:
         case Qt.Key_AudioForward:
-            audioPlayer.forward();
+            audioPlayer.forward(true);
             event.accepted = true;
             break;
 
         case Qt.Key_Slash:
         case Qt.Key_AudioRewind:
-            audioPlayer.back();
+            audioPlayer.back(true);
             event.accepted = true;
             break;
 
@@ -437,7 +458,7 @@ Page {
             if (info!=null) {
                 var card=info.card;
 
-                info.card.infoDisplayed=false;
+                info.card.hideInfo=false;
                 info.destroy();
                 info=null;
 

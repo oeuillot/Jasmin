@@ -1,10 +1,11 @@
 .import "../../jasmin/upnpServer.js" as UpnpServer
+.import "../../jasmin/contentDirectoryService.js" as ContentDirectoryService
 
 var XMLNS={
-    fm: UpnpServer.JASMIN_FILEMEDATA,
-    dc: UpnpServer.PURL_ELEMENT_XMLS,
+    fm: ContentDirectoryService.JASMIN_FILEMEDATA,
+    dc: ContentDirectoryService.PURL_ELEMENT_XMLS,
     upnp: UpnpServer.UPNP_METADATA_XMLNS,
-    "": UpnpServer.DIDL_LITE_XMLNS
+    "": ContentDirectoryService.DIDL_LITE_XMLNS
 }
 
 
@@ -78,7 +79,11 @@ function dateFormatter(stringDate) {
     return  Qt.formatDateTime(date, "dddd dd MMMM yyyy hh:mm:ss")
 }
 function sizeFormatter(stringSize) {
-    var size=parseFloat(stringSize);
+    var size=Math.floor(parseFloat(stringSize));
+
+    if (size<2) {
+        return size+" octet";
+    }
 
     return humanFileSize(size, 1024);
 }

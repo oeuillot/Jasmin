@@ -1,14 +1,15 @@
 .import "../jasmin/upnpServer.js" as UpnpServer
+.import "../jasmin/contentDirectoryService.js" as ContentDirectoryService
 .import fbx.async 1.0 as Async
 
 .import "../jasmin/util.js" as Util
 
-function fillModel(upnpServer, meta) {
+function fillModel(contentDirectoryService, meta) {
 
     // console.profile();
     //console.log(Util.inspect(meta.result, false, {}));
 
-    var container=meta.result.byPath("DIDL-Lite/container", UpnpServer.DIDL_XMLNS_SET);
+    var container=meta.result.byPath("DIDL-Lite/container", ContentDirectoryService.DIDL_XMLNS_SET);
 //    console.log("Container=",Util.inspect(container));
 
     var objectID=container.attr("id");
@@ -24,19 +25,19 @@ function fillModel(upnpServer, meta) {
     return { objectID: objectID, childCount: childCount };
 }
 
-function listModel(upnpServer, objectID) {
+function listModel(contentDirectoryService, objectID) {
     var deferred = new Async.Deferred.Deferred();
 
     var filters=[{
                      name: "title",
-                     namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                     namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
                  }];
 
     var sorters=[
                 {
                     ascending: true,
                     name: "title",
-                    namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                    namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
                 }
 
             ];
@@ -44,7 +45,7 @@ function listModel(upnpServer, objectID) {
 
     //    console.log("Request position "+position+" pageSize="+pageSize);
 
-    var d=upnpServer.browseDirectChildren(objectID, {
+    var d=contentDirectoryService.browseDirectChildren(objectID, {
                                               filters: filters,
                                               sortCriteria: sorters
                                           });
@@ -53,7 +54,7 @@ function listModel(upnpServer, objectID) {
 
         //console.log("Return=",Util.inspect(xml.result));
 
-        var children=xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children();
+        var children=xml.result.byPath("DIDL-Lite", ContentDirectoryService.DIDL_XMLNS_SET).children();
         //console.log("Children=",Util.inspect(children));
 
         //console.log("*** RESOLVE "+children.length);
@@ -67,21 +68,21 @@ function listModel(upnpServer, objectID) {
     return deferred;
 }
 
-function loadModel(upnpServer, objectID, position, pageSize, loadArtists) {
+function loadModel(contentDirectoryService, objectID, position, pageSize, loadArtists) {
     var deferred = new Async.Deferred.Deferred();
 
     var filters=[{
                      name: "title",
-                     namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                     namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
                  }, {
                      name: "class",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
                  }, {
                      name: "date",
-                     namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                     namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
                  }, {
                      name: "res",
-                     namespaceURI: UpnpServer.DIDL_LITE_XMLNS
+                     namespaceURI: ContentDirectoryService.DIDL_LITE_XMLNS
                  }, {
                      name: "albumArtURI",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
@@ -102,7 +103,7 @@ function loadModel(upnpServer, objectID, position, pageSize, loadArtists) {
                 {
                     ascending: true,
                     name: "title",
-                    namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                    namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
                 }
 
             ];
@@ -110,7 +111,7 @@ function loadModel(upnpServer, objectID, position, pageSize, loadArtists) {
 
     //    console.log("Request position "+position+" pageSize="+pageSize);
 
-    var d=upnpServer.browseDirectChildren(objectID, {
+    var d=contentDirectoryService.browseDirectChildren(objectID, {
                                               filters: filters,
                                               startingIndex: position,
                                               requestCount: Math.max(pageSize, 32),
@@ -121,7 +122,7 @@ function loadModel(upnpServer, objectID, position, pageSize, loadArtists) {
 
         //console.log("Return=",Util.inspect(xml.result));
 
-        var children=xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children();
+        var children=xml.result.byPath("DIDL-Lite", ContentDirectoryService.DIDL_XMLNS_SET).children();
         //console.log("Children=",Util.inspect(children));
 
         //console.log("*** RESOLVE "+children.length);

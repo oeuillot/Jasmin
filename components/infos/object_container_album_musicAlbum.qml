@@ -5,7 +5,7 @@ import "../../jasmin" 1.0
 import ".." 1.0
 
 import "object.js" as UpnpObject
-import "object_container_album.js" as ObjectContainerAlbum;
+import "object_container_album_musicAlbum.js" as ObjectContainerAlbum;
 
 FocusInfo {
     id: focusScope
@@ -52,7 +52,7 @@ FocusInfo {
             return Deferred.rejected();
         }
 
-        return audioPlayer.setPlayList(upnpServer, ls, resImageSource, append);
+        return audioPlayer.setPlayList(contentDirectoryService, ls, resImageSource, append);
     }
 
 
@@ -264,18 +264,18 @@ FocusInfo {
                         return;
 
                     case Qt.Key_PageUp:
-                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, true);
+                        audioPlayer.setPlayList(contentDirectoryService, [xml], resImageSource, true);
 
                         event.accepted = true;
                         return;
 
                     case Qt.Key_PageDown:
-                        audioPlayer.setPlayList(upnpServer, [xml], resImageSource, true, audioPlayer.playListIndex+1);
+                        audioPlayer.setPlayList(contentDirectoryService, [xml], resImageSource, true, audioPlayer.playListIndex+1);
 
                         event.accepted = true;
                         return;
                     }
-                }               
+                }
             }
         }
 
@@ -329,6 +329,8 @@ FocusInfo {
                     return playTracks(-1, 0);
 
                 }).then(function() {
+                    audioPlayer.shuffle=shuffle;
+
                     audioPlayer.play();
                 });
                 return;
@@ -347,25 +349,32 @@ FocusInfo {
             id: title
             title: UpnpObject.getText(xml, "dc:title")
 
+            Rating {
+                id: rating
+
+                xml: focusScope.xml
+            }
+
             Row {
                 spacing: 8
                 height: 32
+                x: (rating.visible)?(rating.x+rating.width+32):0;
 
                 Text {
                     id: playButton
                     text: Fontawesome.Icon.play
                     font.bold: true
                     font.pixelSize: 20
-                    font.family: "fontawesome"
+                    font.family: Fontawesome.Name
 
                     focus: true
                     color: "black" // playButton.activeFocus?"red":"black";
 
                     KeyNavigation.right: randomButton
                     KeyNavigation.left: randomButton
-//                    KeyNavigation.left: menuButton
+                    //                    KeyNavigation.left: menuButton
 
-                    Keys.onPressed: {                       
+                    Keys.onPressed: {
                         infosColumn.processKeyEvent(event, false);
                     }
 
@@ -374,27 +383,27 @@ FocusInfo {
                     }
 
                     Component.onCompleted: {
-                       playButton.forceActiveFocus();
+                        playButton.forceActiveFocus();
                     }
-
                 }
+
                 Text {
                     id: randomButton
                     text: Fontawesome.Icon.random
                     font.bold: true
                     font.pixelSize: 20
-                    font.family: "fontawesome"
+                    font.family: Fontawesome.Name
 
                     focus: true
                     color: "black" // color: randomButton.activeFocus?"red":"black";
 
                     KeyNavigation.left: playButton
                     KeyNavigation.right: playButton
-//                    KeyNavigation.right: menuButton
+                    //                    KeyNavigation.right: menuButton
 
                     Keys.onPressed: {
                         infosColumn.processKeyEvent(event, true);
-                     }
+                    }
 
                     onActiveFocusChanged: {
                         focusScope.showFocus(randomButton, activeFocus);
@@ -406,7 +415,7 @@ FocusInfo {
                     text: Fontawesome.Icon.ellipsis_h
                     font.bold: true
                     font.pixelSize: 20
-                    font.family: "fontawesome"
+                    font.family: Fontawesome.Name
 
                     color: "black" // color: menuButton.activeFocus?"red":"black";
                     focus: true
@@ -442,7 +451,7 @@ FocusInfo {
                 disc: discComponent
             }
 
-            var d=ObjectContainerAlbum.fillTracks(infosColumn, components, 60, upnpServer, xml);
+            var d=ObjectContainerAlbum.fillTracks(infosColumn, components, 60, contentDirectoryService, xml);
 
             d.then(function onSuccess(metas) {
                 focusScope.metas=metas;
@@ -483,15 +492,13 @@ FocusInfo {
 
                 //                    infosColumn.height=infosColumn.childrenRect.height;
             });
-        }    
+        }
     }
 
     ImageColumn {
         id: imageColumn
-        x: parent.width-256-30
-        y: 30
         resImageSource: focusScope.resImageSource
         infosColumn: infosColumn
     }
 
-   }
+}

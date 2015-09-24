@@ -3,6 +3,7 @@
 
 .import "../jasmin/util.js" as Util
 .import "../jasmin/upnpServer.js" as UpnpServer
+.import "../jasmin/contentDirectoryService.js" as ContentDirectoryService
 .import "../jasmin/xml.js" as Xml
 .import "fontawesome.js" as Fontawesome
 
@@ -34,30 +35,27 @@ function computeType(upnpClass) {
     return Fontawesome.Icon.question;
 }
 
-function computeImage(xml, upnpClass) {
+function computeImage(xml, upnpClass, contentDirectoryService) {
     if (!upnpClass) {
         return;
     }
 
-    if (upnpClass.indexOf("object.container.album")===0 || upnpClass.indexOf("object.item.audioItem")===0) {
-        var res=xml.byPath("upnp:albumArtURI", UpnpServer.DIDL_XMLNS_SET).first().text();
-        if (!res) {
+    var l=[];
+    var urls={};
+
+    xml.byPath("upnp:albumArtURI", ContentDirectoryService.DIDL_XMLNS_SET).forEach(function(res) {
+        var url=contentDirectoryService.upnpServer.relativeURL(res.text()).toString();
+
+        if (urls[url]) {
             return;
         }
 
-        // No transparency for albumArtURI
-        var imageSource=upnpServer.relativeURL(res).toString();
-        return {
-            source: imageSource,
-            transparent: false
-        };
-    }
+        urls[url]=true;
 
-    if (upnpClass.indexOf("object.item.videoItem")===0) {
-        // return;
-    }
+        l.push({url: url });
+    });
 
-    var ret=xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).forEach(function(res) {
+    xml.byPath("res", ContentDirectoryService.DIDL_XMLNS_SET).forEach(function(res) {
 
         //console.log("Test res "+Util.inspect(xml, false, {}));
 
@@ -100,15 +98,21 @@ function computeImage(xml, upnpClass) {
 
         var url=res.text();
 
-        var imageSource=upnpServer.relativeURL(url).toString();
+        var imageSource=contentDirectoryService.upnpServer.relativeURL(url).toString();
 
-        return {
-            source: imageSource,
+        if (urls[imageSource]) {
+            return;
+        }
+
+        urls[imageSource]=true;
+
+        l.push({
+            url: imageSource,
             transparent: transparent
-        };
+        });
     });
 
-    return ret;
+    return l;
 }
 
 function computeLabel(xml) {
@@ -116,7 +120,7 @@ function computeLabel(xml) {
         return null;
     }
 
-    return xml.byPath("dc:title", UpnpServer.DIDL_XMLNS_SET).first().text();
+    return xml.byPath("dc:title", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
 }
 
 function getRating(xml) {
@@ -124,7 +128,7 @@ function getRating(xml) {
         return -1;
     }
 
-    var rating=xml.byPath("upnp:rating", UpnpServer.DIDL_XMLNS_SET).first().text();
+    var rating=xml.byPath("upnp:rating", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
 
     if (!rating) {
         // console.log("NO RATING");
@@ -138,31 +142,6 @@ function getRating(xml) {
     return r;
 }
 
-function computeRatingText(rating) {
-    var txt="";
-    if (rating<0) {
-        return txt;
-    }
-
-    for(var i=0;i<5;i++) {
-        if (rating>=1) {
-            txt+=Fontawesome.Icon.star;
-            rating--;
-            continue;
-        }
-        if (rating>=0.5) {
-            txt+=Fontawesome.Icon.star_half_full;
-            rating=0;
-            continue;
-        }
-        txt+=Fontawesome.Icon.star_o;
-    }
-
-    //console.log("Rating string="+txt);
-
-    return txt;
-}
-
 function computeInfo(xml, upnpClass, component) {
     //console.log(Util.inspect(xml, false, {}));
 
@@ -173,7 +152,7 @@ function computeInfo(xml, upnpClass, component) {
     if (upnpClass.indexOf("object.item.videoItem")!==0) {
         // Not for movie
 
-        var artists=xml.byPath("upnp:artist", UpnpServer.DIDL_XMLNS_SET);
+        var artists=xml.byPath("upnp:artist", ContentDirectoryService.DIDL_XMLNS_SET);
         if (artists.count) {
             var ar=artists.first().text();
             if (artists.count()>1) {
@@ -183,7 +162,7 @@ function computeInfo(xml, upnpClass, component) {
         }
     }
 
-    var date=xml.byPath("dc:date", UpnpServer.DIDL_XMLNS_SET).first().text();
+    var date=xml.byPath("dc:date", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
     if (date) {
         var jdate=new Date(date);
 

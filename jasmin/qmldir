@@ -3,3 +3,5 @@ Util 1.0 util.js
 Xml 1.0 xml.js
 XmlParserWorker 1.0 xmlParserWorker.qml
 XmlParser 1.0 xmlParser.js
+AvTransportService 1.0 avTransportService.js
+ContentDirectoryService 1.0 contentDirectoryService.js

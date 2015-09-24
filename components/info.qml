@@ -1,3 +1,7 @@
+/**
+ * Copyright Olivier Oeuillot
+ */
+ 
 import QtQuick 2.2
 import QtGraphicalEffects 1.0
 
@@ -13,9 +17,12 @@ FocusScope {
     property Card card;
 
     property AudioPlayer audioPlayer;
-    property var upnpServer;
+    property var contentDirectoryService;
     property var xml
-    property string resImageSource;
+    property var imagesList;
+
+    property string resImageSource: (imagesList && imagesList.length)?imagesList[0].url:'';
+
     property string upnpClass;
     property int cellIndex;
 
@@ -41,7 +48,7 @@ FocusScope {
         Component {
             id: object_container_album
 
-            ObjectContainerAlbum {
+            ObjectContainerAlbumMusic {
 
             }
         }
@@ -51,6 +58,14 @@ FocusScope {
             id: object_item_audioItem_musicTrack
 
             ObjectItemAudioItemMusicTrack {
+
+            }
+        }
+
+        Component {
+            id: object_item_videoItem
+
+            ObjectItemVideoItem {
 
             }
         }
@@ -164,9 +179,10 @@ FocusScope {
 
                 //console.log("COMPLETED ! "+xml);
 
-                console.log("AudioPlayer="+audioPlayer);
+                //console.log("AudioPlayer="+audioPlayer);
 
                 var upnpClasses = {
+                     "object.item.videoItem": object_item_videoItem,
                     "object.container.album": object_container_album,
                     "object.item.audioItem.musicTrack": object_item_audioItem_musicTrack,
                     "object": object
@@ -196,9 +212,9 @@ FocusScope {
 
                 var objectID=xml.attr("id");
 
-                upnpServer.browseMetadata(objectID).then(function onSuccess(meta) {
+                contentDirectoryService.browseMetadata(objectID).then(function onSuccess(meta) {
 
-                    var xml=meta.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).first().children();
+                    var xml=meta.result.byPath("DIDL-Lite", ContentDirectoryService.DIDL_XMLNS_SET).first().children();
 
                     //console.log("xml1="+Util.inspect(xml));
 
@@ -208,7 +224,7 @@ FocusScope {
                                                        width: rowInfo.width,
                                                        xml: xml,
                                                        resImageSource: resImageSource,
-                                                       upnpServer: upnpServer,
+                                                       contentDirectoryService: contentDirectoryService,
                                                        audioPlayer: audioPlayer,
                                                        objectID: objectID
                                                    });

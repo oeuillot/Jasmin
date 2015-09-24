@@ -15,21 +15,25 @@ FocusScope {
 
     property var model;
 
-    property string resImageSource;
+    property alias resImageSource: imageItem.source;
 
-    property var upnpServer;
+    property var imagesList;
 
-    property Item imageItem;
+    property var contentDirectoryService;
 
     property alias title: label.text;
 
     property bool selected: false;
 
-    property bool transparentImage: false;
-
-    property bool infoDisplayed: false;
+    property alias transparentImage: bgImage.visible;
 
     property real selectedScale: 10;
+
+    property string upnpClass;
+
+    property bool hideInfo: false;
+
+    property string infoType: "";
 
     onSelectedChanged: {
         if (selectedAnimation.running) {
@@ -50,74 +54,65 @@ FocusScope {
     onModelChanged: {
         //console.log("Xml="+Util.inspect(model, false, {}));
 
-        selectedScale=10;
-        infoDisplayed=false;
+        // console.log("contentDirectoryService="+contentDirectoryService);
 
-        if (imageItem) {
-            imageItem.visible=false;
-            if (!model) {
-                imageItem.destroy();
-                imageItem=null;
-            }
-        }
+        selectedScale=10;
+        resImageSource="";
+        transparentImage=false;
+        imagesList=null;
 
         if (!model) {
-            resImageSource="";
-            transparentImage=false;
+            upnpClass="";
             label.text="";
-            info.infoVisible=false;
-            rating.visible=false;
+            card.infoType="";
             itemType.text=CardScript.computeType(null);
             itemType.visible=true;
             return;
         }
 
 
-        var upnpClass=model.byPath("upnp:class", UpnpServer.DIDL_XMLNS_SET).text() || "object.item";
+        upnpClass=model.byPath("upnp:class", ContentDirectoryService.DIDL_XMLNS_SET).text() || "object.item";
 
         // console.log("upnpclass="+upnpClass);
-
-        var img=CardScript.computeImage(model, upnpClass);
-        if (img) {
-            resImageSource=img.source;
-            transparentImage=img.transparent;
-
-        } else {
-            resImageSource="";
-            transparentImage=false;
-        }
-
         itemType.text= CardScript.computeType(upnpClass);
         itemType.visible=true;
 
-        label.text=CardScript.computeLabel(model, upnpClass) || "";
-        itemType.text= CardScript.computeType(upnpClass);
+        title=CardScript.computeLabel(model, upnpClass) || "";
 
+        var ratingV=CardScript.getRating(model);
+        rating.rating=ratingV;
 
-        var ratingV=CardScript.getRating(model)
-        if (ratingV<0) {
-            rating.visible=false;
+        if (ratingV < 0) {
             info.text=CardScript.computeInfo(model, upnpClass) || "";
-            info.infoVisible=true;
+            card.infoType="description";
+
         } else {
-            info.infoVisible=false;
-            rating.text=CardScript.computeRatingText(ratingV)
-            rating.visible=true;
+             card.infoType="rating";
         }
     }
 
     function delayedUpdateModel() {
-        if (imageItem) {
-            imageItem.visible=false;
-            imageItem.destroy();
-            imageItem=null;
+        getImagesList();
+    }
+
+    function getImagesList() {
+        if (card.imagesList) {
+            return card.imagesList;
         }
 
-        if (!resImageSource) {
+        var imagesList=CardScript.computeImage(model, upnpClass, contentDirectoryService);
+        //console.log("ImagesList="+imagesList);
+
+        if (!imagesList) {
             return false;
         }
 
-        imageItem=resImage.createObject(rectImage);
+        card.imagesList=imagesList;
+
+        if (imagesList.length) {
+            resImageSource=imagesList[0].url;
+            transparentImage=imagesList[0].transparent || false;
+        }
     }
 
 
@@ -147,60 +142,50 @@ FocusScope {
 
                 opacity: 0.4
                 font.pixelSize: 92+(4-Math.floor((selectedScale-2)/2));
-                font.family: "fontawesome"
+                font.family: Fontawesome.Name
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
 
-            Component {
-                id: resImage
+           Image {
+                id: bgImage
+                x: 1
+                y: 1
+                width: parent.width-2
+                height: parent.height-2
 
-                Item {
-                    x: 1
-                    y: 1
-                    width: parent.width-2
-                    height: parent.height-2
+                visible: transparentImage
+                smooth: true
+                antialiasing: true
+                asynchronous: true
+                fillMode: Image.PreserveAspectFit
 
-                    Image {
-                        x: 0
-                        y: 0
-                        width: parent.width
-                        height: parent.height
+                sourceSize.width: 256
+                sourceSize.height: 256
 
-                        visible: transparentImage
-                        smooth: true
-                        antialiasing: true
-                        asynchronous: true
-                        fillMode: Image.PreserveAspectFit
+                source: "card/transparent.png"
+            }
 
-                        sourceSize.width: 256
-                        sourceSize.height: 256
+            Image {
+                id: imageItem
+                x: 1
+                y: 1
+                width: parent.width-2
+                height: parent.height-2
 
-                        source: "card/transparent.png"
-                    }
+                visible: (source!="")
 
-                    Image {
-                        x: 0
-                        y: 0
-                        width: parent.width
-                        height: parent.height
+                smooth: true
+                antialiasing: true
+                asynchronous: true
+                fillMode: Image.PreserveAspectFit
 
-                        smooth: true
-                        antialiasing: true
-                        asynchronous: true
-                        fillMode: Image.PreserveAspectFit
+                sourceSize.width: 256
+                sourceSize.height: 256
 
-                        sourceSize.width: 256
-                        sourceSize.height: 256
-
-                        source: resImageSource
-
-                        onStatusChanged: {
-//                            console.log("status="+status);
-                            if (status===Image.Ready) {
-                                itemType.visible=false;
-                            }
-                        }
+                onStatusChanged: {
+                    if (status===Image.Ready) {
+                        itemType.visible=false;
                     }
                 }
             }
@@ -219,8 +204,7 @@ FocusScope {
 
         Text {
             id: info
-            property bool infoVisible: false
-            visible: infoVisible && !infoDisplayed
+            visible: (infoType==="description") && !hideInfo
             y: label.y+label.height
             x: selectedScale
             width: parent.width-x;
@@ -230,15 +214,11 @@ FocusScope {
             font.pixelSize: (text && text.length>14)?12:14
         }
 
-        Text {
+        Rating {
             id: rating
-            visible: false //card.rating>=0 && !card.selected
+            visible:  (infoType==="rating") && !hideInfo;
             y: label.y+label.height
             x: selectedScale
-            color: "#FFCB00"
-            font.bold: true
-            font.pixelSize: 14
-            font.family: "fontawesome"
         }
     }
 }

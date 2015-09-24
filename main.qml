@@ -3,10 +3,10 @@ import "components" 1.0
 import fbx.application 1.0
 import fbx.ui.page 1.0
 import fbx.ui.layout 1.0
+import QtQuick.LocalStorage 2.0
 
 import "./pages" 1.0
 import "./jasmin" 1.0
-import "./sax" 1.0
 
 Application {
     id: app
@@ -30,9 +30,10 @@ Application {
 
         menu=menuComponent.createObject(app);
 
-        pageStack.push("server.qml", {
+        pageStack.push("server2.qml", {
                            audioPlayer: menu.audioPlayer,
                            menu: menu,
+                           settings: settings
 //                           xmlParserWorker: xmlParserWorker
                        });
     }
@@ -55,6 +56,10 @@ Application {
         background: "jasmin"
     }
 
+    JSettings {
+        id: settings
+    }
+
     Stack {
         id: pageStack
 
@@ -69,9 +74,6 @@ Application {
         baseUrl: Qt.resolvedUrl("pages/")
 
         KeyNavigation.up: breadcrumb
-
-        Component.onCompleted: {
-        }
     }
 
     Breadcrumb {
@@ -113,6 +115,7 @@ Application {
     }
 
     Component.onCompleted: {
+
         if (fontawesome.status===FontLoader.Ready) {           
             startup();
         }

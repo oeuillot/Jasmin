@@ -192,3 +192,11 @@ function toXML(obj, config){
   
   return out;
 }
+
+var xmlFilters = {
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  '\'': '&apos;',
+  '&': '&amp;'
+};

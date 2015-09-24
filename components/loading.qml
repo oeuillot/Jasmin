@@ -1,4 +1,8 @@
-import QtQuick 2.0
+/**
+ * Copyright Olivier Oeuillot
+ */
+ 
+ import QtQuick 2.0
 
 Item {
     id: widget

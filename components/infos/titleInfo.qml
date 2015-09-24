@@ -6,7 +6,7 @@ FocusScope {
     id: focusScope
     x: titleRow.x
     y: titleRow.y
-    height: 70
+    height: childrenRect.height
     width: parent.width
 
     focus: false
@@ -27,7 +27,6 @@ FocusScope {
 
         Text {
             id: titleText
-            text: UpnpObject.getText(xml, "dc:title");
             font.bold: true
             font.pixelSize: 20
             elide: Text.ElideRight
@@ -37,18 +36,19 @@ FocusScope {
     Text {
         id: metaInfos
         x: 0
-        y: 26
+        y: 25
         font.bold: false
         font.pixelSize: 16
         width: parent.width
         elide: Text.ElideMiddle
         height: 20
+        visible: (!!metaInfos.text)
     }
 
     Rectangle {
         id: separator
         x: 0
-        y: 50
+        y: titleRow.height+(metaInfos.visible?metaInfos.height:0)
         width: parent.width
         height: 1
         opacity: 0.3

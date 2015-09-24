@@ -15,3 +15,9 @@ DeferredAudio 1.0 deferredAudio.qml
 QGrid 1.0 qgrid.qml
 
 Flash 1.0 flash.qml
+
+ServerCard 1.0 serverCard.qml
+
+JSettings 1.0 settings.qml
+
+Rating 1.0 rating.qml

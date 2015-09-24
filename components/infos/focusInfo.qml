@@ -7,7 +7,7 @@ FocusScope {
     height: row.height
     width: parent.width
 
-    property var upnpServer;
+    property var contentDirectoryService;
     property var xml;
     property string resImageSource;
     property string objectID;

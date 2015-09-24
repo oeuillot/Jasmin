@@ -1,10 +1,11 @@
 import QtQuick 2.2
 import QtGraphicalEffects 1.0
+import QtMultimedia 5.0
+
 import "../../jasmin" 1.0
 import ".." 1.0
 
 import "object.js" as UpnpObject
-import "object_container_album.js" as ObjectContainerAlbum;
 
 FocusScope {
     id: focusScope
@@ -56,6 +57,8 @@ FocusScope {
         }
 
 
+
+
         Item {
             id: infosColumn
 
@@ -63,6 +66,12 @@ FocusScope {
             y: 20
             width: parent.width-((resImageSource)?(256+20):0)-60
             height: childrenRect.height+30
+
+            Rating {
+                id: rating
+
+                xml: metas
+            }
 
             Row {
                 x: 0
@@ -79,53 +88,83 @@ FocusScope {
                 }
 
                 Row {
+                    id: commands
                     spacing: 8
                     height: 32
+
+
+                    function processKeyEvent(event, shuffle) {
+                        switch(event.key) {
+
+                        case Qt.Key_PageDown:
+                            // Ajoute les pistes du disque juste après celui qui est en écoute, sans forcement lancer le PLAY
+                            event.accepted = true;
+
+                            return audioPlayer.setPlayList(upnpServer, [xml], resImageSource, true, audioPlayer.playListIndex+1);
+
+                        case Qt.Key_PageUp:
+                            // Ajoute les pistes du disque après les morceaux
+                            event.accepted = true;
+
+                            audioPlayer.setPlayList(upnpServer, [xml], resImageSource, true);
+                            return;
+
+                        case Qt.Key_Return:
+                        case Qt.Key_Enter:
+                            // Joue le disque immediatement
+                            event.accepted = true;
+
+                            audioPlayer.clear().then(function() {
+                                 return audioPlayer.setPlayList(upnpServer, [xml], resImageSource);
+
+                            }).then(function() {
+                                audioPlayer.shuffle=shuffle;
+
+                                audioPlayer.play();
+                            });
+                            return;
+                        }
+
+                    }
 
                     Text {
                         id: playButton
                         text: Fontawesome.Icon.play
                         font.bold: true
                         font.pixelSize: 20
-                        font.family: "fontawesome"
+                        font.family: Fontawesome.Name
 
                         focus: true
                         color: playButton.activeFocus?"red":"black";
 
                         KeyNavigation.right: randomButton
-                        KeyNavigation.left: menuButton
+                        KeyNavigation.left: randomButton
                         KeyNavigation.down: separator;
+
+                        Keys.onPressed: {
+                            commands.processKeyEvent(event, false);
+                        }
                     }
                     Text {
                         id: randomButton
                         text: Fontawesome.Icon.random
                         font.bold: true
                         font.pixelSize: 20
-                        font.family: "fontawesome"
+                        font.family: Fontawesome.Name
 
                         focus: true
                         color: randomButton.activeFocus?"red":"black";
 
                         KeyNavigation.left: playButton
-                        KeyNavigation.right: menuButton
-                        KeyNavigation.down: separator;
-                    }
-                    Text {
-                        id: menuButton
-                        text: Fontawesome.Icon.ellipsis_h
-                        font.bold: true
-                        font.pixelSize: 20
-                        font.family: "fontawesome"
-
-                        color: menuButton.activeFocus?"red":"black";
-                        focus: true
-
-                        KeyNavigation.left: randomButton
                         KeyNavigation.right: playButton
                         KeyNavigation.down: separator;
+
+                        Keys.onPressed: {
+                           commands.processKeyEvent(event, true);
+                        }
                     }
                 }
-            }
+             }
 
             Text {
                 id: metaInfos

@@ -1,6 +1,7 @@
-ObjectContainerAlbum 1.0 object_container_album.qml
+ObjectContainerAlbumMusic 1.0 object_container_album_musicAlbum.qml
 Object 1.0 object.qml
 ObjectItemAudioItemMusicTrack 1.0 object_item_audioItem_musicTrack.qml
+ObjectItemVideoItem 1.0 object_item_videoItem.qml
 
 ImageColumn 1.0 imageColumn.qml
 

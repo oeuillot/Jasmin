@@ -3,9 +3,13 @@ import QtQuick 2.0
 
 Item {
     id: imageColumn
+    x: parent.width-256-30
+    y: 30
 
     property string resImageSource;
     property Item infosColumn;
+
+    property bool showReversedImage: true;
 
     visible: !!resImageSource
     clip: true
@@ -35,6 +39,8 @@ Item {
         y: image2.paintedHeight+Math.floor((256-image2.paintedHeight)/2);
         width: 256
         height: 256
+
+        visible: showReversedImage
 
         opacity: 0.25
 

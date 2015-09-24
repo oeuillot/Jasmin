@@ -8,7 +8,7 @@
 .import "jstoxml.js" as JsToXML
 .import "util.js" as Util
 
-var LOG_TRANSPORT = false;
+var LOG_TRANSPORT = true;
 
 var XMLSOAP_XMLNS={
     "": "http://schemas.xmlsoap.org/soap/envelope/"
@@ -36,7 +36,7 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
         }
     };
 
-    var xml = JsToXML.toXML(jxml, { header: true });
+    var xml = JsToXML.toXML(jxml, { header: true, filter: JsToXML.xmlFilters });
 
     if (LOG_TRANSPORT) {
         console.log("SOAP url='"+this.url+"' request="+xml);

@@ -1,9 +1,10 @@
 .import "../../jasmin/upnpServer.js" as UpnpServer
 .import "../../jasmin/util.js" as Util
+.import "../../jasmin/contentDirectoryService.js" as ContentDirectoryService
 
 var XMLNS={
-    dc: UpnpServer.PURL_ELEMENT_XMLS,
-    "": UpnpServer.DIDL_LITE_XMLNS,
+    dc: ContentDirectoryService.PURL_ELEMENT_XMLS,
+    "": ContentDirectoryService.DIDL_LITE_XMLNS,
     "upnp": UpnpServer.UPNP_METADATA_XMLNS
 }
 
@@ -26,7 +27,7 @@ function normalizeName(str) {
 }
 
 
-function fillTracks(parent, components, y, upnpServer, xml) {
+function fillTracks(parent, components, y, contentDirectoryService, xml) {
 
     var objectID=xml.attr("id");
 
@@ -39,7 +40,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 {
                     ascending: true,
                     name: "date",
-                    namespaceURI: UpnpServer.PURL_ELEMENT_XMLS
+                    namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
                 },
 
 
@@ -47,7 +48,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
     // console.log("Request "+objectID);
 
-    var deferred=upnpServer.browseDirectChildren(objectID, {
+    var deferred=contentDirectoryService.browseDirectChildren(objectID, {
         sorters: trackSorters,
         requestCount: 256
 
@@ -65,11 +66,11 @@ function fillTracks(parent, components, y, upnpServer, xml) {
             tracks: null
         };
 
-        xml.result.byPath("DIDL-Lite", UpnpServer.DIDL_XMLNS_SET).children().forEach(function(item) {
+        xml.result.byPath("DIDL-Lite", ContentDirectoryService.DIDL_XMLNS_SET).children().forEach(function(item) {
 
             // console.log("item=",Util.inspect(item, false, {}));
 
-            var upnpClass=item.byPath("upnp:class", UpnpServer.DIDL_XMLNS_SET).text();
+            var upnpClass=item.byPath("upnp:class", ContentDirectoryService.DIDL_XMLNS_SET).text();
             // console.log("item=",Util.inspect(item, false, {})+" =>
                         // "+upnpClass);
             if (!upnpClass){
@@ -82,13 +83,13 @@ function fillTracks(parent, components, y, upnpServer, xml) {
 
             var infos={ xml: item};
 
-            var title=item.byPath("dc:title", UpnpServer.DIDL_XMLNS_SET).text();
+            var title=item.byPath("dc:title", ContentDirectoryService.DIDL_XMLNS_SET).text();
             if (!title) {
                 title="Inconnu";
             }
             infos.title=title;
 
-            var trackNumber=item.byPath("upnp:originalTrackNumber", UpnpServer.DIDL_XMLNS_SET).text();
+            var trackNumber=item.byPath("upnp:originalTrackNumber", ContentDirectoryService.DIDL_XMLNS_SET).text();
             if (trackNumber) {
                 infos.trackNumber = parseInt(trackNumber, 10);
 
@@ -96,7 +97,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 infos.trackNumber = 0;
             }
 
-            var date=item.byPath("dc:date", UpnpServer.DIDL_XMLNS_SET).text();
+            var date=item.byPath("dc:date", ContentDirectoryService.DIDL_XMLNS_SET).text();
             if (date) {
                 var d=new Date(date);
                 infos.date=d.getTime();
@@ -106,7 +107,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 }
             }
 
-            var res=item.byPath("res", UpnpServer.DIDL_XMLNS_SET).first();
+            var res=item.byPath("res", ContentDirectoryService.DIDL_XMLNS_SET).first();
             if (!res) {
                 return;
             }
@@ -132,14 +133,14 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 }
             }
 
-            var disk=item.byPath("upnp:originalDiscNumber", UpnpServer.DIDL_XMLNS_SET).text();
+            var disk=item.byPath("upnp:originalDiscNumber", ContentDirectoryService.DIDL_XMLNS_SET).text();
             if (disk) {
                 infos.disk=parseInt(disk, 10);
             } else {
                 infos.disk=0;
             }
 
-            item.byPath("upnp:artist", UpnpServer.DIDL_XMLNS_SET).forEach(function(ax) {
+            item.byPath("upnp:artist", ContentDirectoryService.DIDL_XMLNS_SET).forEach(function(ax) {
                var txt=normalizeName(ax.text());
                 if (!txt) {
                     return;
@@ -152,7 +153,7 @@ function fillTracks(parent, components, y, upnpServer, xml) {
                 });
             });
 
-            item.byPath("upnp:genre", UpnpServer.DIDL_XMLNS_SET).forEach(function(ax) {
+            item.byPath("upnp:genre", ContentDirectoryService.DIDL_XMLNS_SET).forEach(function(ax) {
                var txt=normalizeName(ax.text());
                 if (!txt.length) {
                     return;

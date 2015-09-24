@@ -6,42 +6,18 @@
 .import "util.js" as Util
 .import "xml.js" as Xml
 .import "xmlParser.js" as XmlParser
-.import "soapTransport.js" as Soap
-
-var LOG_DIDL=true;
 
 var UPNP_SERVICE_XMLNS="urn:schemas-upnp-org:service-1-0";
 var UPNP_DEVICE_XMLNS="urn:schemas-upnp-org:device-1-0";
 var DLNA_DEVICE_XMLNS="urn:schemas-dlna-org:device-1-0";
-var UPNP_CONTENT_DIRECTORY_1_XMLNS="urn:schemas-upnp-org:service:ContentDirectory:1";
 var SOAP_ENVELOPE_XMLNS="http://schemas.xmlsoap.org/soap/envelope/";
-var DIDL_LITE_XMLNS="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/";
 var UPNP_METADATA_XMLNS="urn:schemas-upnp-org:metadata-1-0/upnp/";
-var PURL_ELEMENT_XMLS="http://purl.org/dc/elements/1.1/";
 
-var JASMIN_MUSICMETADATA="urn:schemas-jasmin-upnp.net:musicmetadata/";
-var JASMIN_FILEMEDATA="urn:schemas-jasmin-upnp.net:filemetadata/";
-
-var CONTENT_DIRECTORY_TYPE=UPNP_CONTENT_DIRECTORY_1_XMLNS;
-
-var CONTENT_DIRECTORY_XMLNS_SET={
-    "": UPNP_SERVICE_XMLNS,
-    "dlna": DLNA_DEVICE_XMLNS,
-    "u": UPNP_CONTENT_DIRECTORY_1_XMLNS,
-    "s": SOAP_ENVELOPE_XMLNS
-}
 
 var DEVICE_XMLNS_SET={
     "": UPNP_DEVICE_XMLNS,
     "dlna": DLNA_DEVICE_XMLNS,
     "s": SOAP_ENVELOPE_XMLNS
-}
-
-var DIDL_XMLNS_SET = {
-    "": DIDL_LITE_XMLNS,
-    "upnp": UPNP_METADATA_XMLNS,
-    "dc": PURL_ELEMENT_XMLS,
-    "mm": JASMIN_MUSICMETADATA
 }
 
 
@@ -97,7 +73,13 @@ UpnpServer.prototype.tryConnection=function(){
 
         deferred=deferred.then(function(xmlResponse) {
             try {
-                return self._fillDeviceDescription(xmlResponse);
+                self._fillDeviceDescription(xmlResponse).then(function(services) {
+                    return {
+                        upnpServer: self,
+                        services: services,
+                        xml: xmlResponse
+                    };
+                });
 
             } catch (x){
                 self.errored="Can not parse document "+x;
@@ -154,280 +136,13 @@ UpnpServer.prototype._fillDeviceDescription=function(xmlDocument) {
 
     //console.log("services=", Util.inspect(services));
 
-    var contentDirectoryService=this.services[CONTENT_DIRECTORY_TYPE];
-    if (!contentDirectoryService){
-        throw new Error("No content directory service !");
-    }
-
-    var controlURL=this.relativeURL(contentDirectoryService.controlURL);
-
-    console.log("controlURL=", controlURL);
-
-    var soapTransport=new Soap.SoapTransport(controlURL.toString(), this.xmlParserWorker);
-    this.soapTransport=soapTransport;
-
-    var self=this;
-
-    var deferred = this.getSortCapabilities().then(function onSuccess(sortCaps) {
-        self.sortCaps=sortCaps;
-        console.log("SortCaps="+Util.inspect(sortCaps));
-
-        var deferred2=self.getSearchCapabilities().then(function onSuccess(searchCaps) {
-            self.searchCaps=searchCaps;
-            console.log("SearchCaps="+Util.inspect(searchCaps));
-
-            var deferred3=self.getSystemUpdateID().then(function onSuccess(systemUpdateID) {
-                self.systemUpdateID=systemUpdateID;
-                //console.log("SystemUpdateID="+systemUpdateID);
-
-                var deferred4=self.browseMetadata(0).then(function(meta) {
-                    //console.log("Meta="+Util.inspect(meta, false, {}));
-
-                    return {
-                        upnpServer: self,
-                        rootMeta: meta
-                    };
-                });
-
-                return deferred4;
-            });
-
-            return deferred3;
-        });
-
-        return deferred2;
-    });
-
-    return deferred;
+    return Async.Deferred.resolved(services);
 }
 
 UpnpServer.prototype._validServer=function() {
     if (this.errored!==false) {
         throw new Error("Server is not ready ("+this.errored+")");
     }
-}
-
-UpnpServer.prototype.getContentDirectoryService=function() {
-    this._validServer();
-
-    return this.services[CONTENT_DIRECTORY_TYPE];
-}
-
-
-UpnpServer.prototype.getSortCapabilities=function() {
-    var deferred=this.soapTransport.sendAction("urn:schemas-upnp-org:service:ContentDirectory:1#GetSortCapabilities", {
-                                                   _name: "u:GetSortCapabilities",
-                                                   _attrs: {
-                                                       "xmlns:u" :"urn:schemas-upnp-org:service:ContentDirectory:1"
-                                                   }
-                                               });
-
-    deferred.then(function onSuccess(response) {
-        var sc=response.soapBody.byPath("u:GetSortCapabilitiesResponse/SortCaps", CONTENT_DIRECTORY_XMLNS_SET);
-        if (!sc.length) {
-            return undefined;
-        }
-
-        var ret={};
-        var sorts=sc.text().split(',');
-        var xmlns=sc.xmlNode().namespaceURIs;
-
-        var sp={};
-        sorts.forEach(function(sort) {
-            XmlParser.splitName(sort, sp);
-
-            //            console.log("X="+sp.xmlns+" => "+xmlns[sp.xmlns || '']);
-
-            var x=xmlns[sp.xmlns || ""];
-            if (!x){
-                console.error("Can not find uri associated to prefix '"+sp.xmlns+"'");
-                return;
-            }
-
-            var key=sp.name+"##"+x;
-
-            ret[key]={xmlns:x, name: sp.name };
-        });
-
-        return ret;
-    });
-
-    return deferred;
-}
-
-UpnpServer.prototype.getSearchCapabilities=function() {
-    var deferred=this.soapTransport.sendAction("urn:schemas-upnp-org:service:ContentDirectory:1#GetSearchCapabilities", {
-                                                   _name: "u:GetSearchCapabilities",
-                                                   _attrs: {
-                                                       "xmlns:u" :"urn:schemas-upnp-org:service:ContentDirectory:1"
-                                                   }
-                                               });
-
-    deferred.then(function onSuccess(response) {
-        var sc=response.soapBody.byPath("u:GetSearchCapabilitiesResponse/SearchCaps", CONTENT_DIRECTORY_XMLNS_SET);
-        if (sc.length) {
-            return sc.text().split(',');
-        }
-
-        return undefined;
-    });
-
-    return deferred;
-}
-
-UpnpServer.prototype.getSystemUpdateID=function() {
-
-    var deferred=this.soapTransport.sendAction("urn:schemas-upnp-org:service:ContentDirectory:1#GetSystemUpdateID", {
-                                                   _name: "u:GetSystemUpdateID",
-                                                   _attrs: {
-                                                       "xmlns:u" :"urn:schemas-upnp-org:service:ContentDirectory:1"
-                                                   }
-                                               });
-
-    deferred.then(function onSuccess(response) {
-
-        var id=response.soapBody.byPath("u:SystemUpdateID/Id", CONTENT_DIRECTORY_XMLNS_SET);
-        if (!id.length) {
-            return undefined;
-        }
-
-        return id.text();
-    });
-
-    return deferred;
-}
-
-
-UpnpServer.prototype.browseDirectChildren=function(objectId, options ) {
-
-    return this.browse(objectId, "BrowseDirectChildren", options);
-}
-
-UpnpServer.prototype.browseMetadata=function(objectId, options) {
-    return this.browse(objectId, "BrowseMetadata", options);
-}
-
-
-UpnpServer.prototype.browse=function(objectId, browseFlag, options) {
-    // filters, startingIndex, requestedCount, sortCriteria
-
-    options=options || {};
-
-    var xmlns={
-    };
-    xmlns[PURL_ELEMENT_XMLS]="dc";
-    xmlns["urn:schemas-upnp-org:service:ContentDirectory:1"]="u";
-    xmlns[UPNP_METADATA_XMLNS]="upnp"
-//    xmlns[DIDL_LITE_XMLNS]="didl"
-
-    var xmlnsAno=0;
-
-    function getPrefix(namespaceURI) {
-
-        var prefix=xmlns[namespaceURI];
-        if (prefix!==undefined) {
-            return prefix;
-        }
-
-        prefix="jasmin"+(++xmlnsAno);
-        xmlns[namespaceURI]=prefix;
-
-        return prefix;
-    }
-
-
-    var filterParams=[];
-    if (options.filters) {
-        options.filters.forEach(function(filter) {
-            var name=filter.name;
-            var prefix=getPrefix(filter.namespaceURI);
-
-            filterParams.push((prefix?(prefix+":"):"")+name);
-        });
-    }
-
-    var sortParams=[];
-    if (options.sortCriteria) {
-        options.sortCriteria.forEach(function(criteria) {
-            var name=criteria.name;
-            var prefix=getPrefix(criteria.namespaceURI);
-
-            sortParams.push((criteria.ascending?'+':'-')+(prefix?(prefix+":"):"")+name);
-        });
-    }
-
-    var attrs={};
-    for(var x in xmlns) {
-        var prefix=xmlns[x];
-        attrs["xmlns"+(prefix?(':'+prefix):'')]=x;
-    }
-
-    var startingIndex=(typeof(options.startingIndex)==="number")?options.startingIndex:0;
-    var requestCount=(typeof(options.requestCount)==="number")?options.requestCount:0;
-
-    var params={
-        ObjectID: objectId,
-        BrowseFlag: browseFlag,
-        Filter: (filterParams.length?filterParams.join():"*"),
-        StartingIndex: startingIndex,
-        RequestedCount: requestCount ,
-        SortCriteria: (sortParams.length?sortParams.join():""),
-    };
-
-    var self=this;
-
-    var deferred=this.soapTransport.sendAction("urn:schemas-upnp-org:service:ContentDirectory:1#Browse", {
-                                                   _name: "u:Browse",
-                                                   _attrs: attrs,
-                                                   _content: params
-                                               });
-
-    deferred.then(function onSuccess(response) {
-        var soapBody=response.soapBody;
-
-        var ret={
-            numberReturned: parseInt(soapBody.byPath("u:BrowseResponse/NumberReturned", CONTENT_DIRECTORY_XMLNS_SET).text(), 10),
-            totalMatches: parseInt(soapBody.byPath("u:BrowseResponse/TotalMatches", CONTENT_DIRECTORY_XMLNS_SET).text(), 10),
-            updateID: parseInt(soapBody.byPath("u:BrowseResponse/UpdateID", CONTENT_DIRECTORY_XMLNS_SET).text(), 10)
-        };
-
-        var result=soapBody.byPath("u:BrowseResponse/Result", CONTENT_DIRECTORY_XMLNS_SET);
-        if (!result.length) {
-            console.error("No result ? ", Util.inspect(soapBody, false, {}));
-        } else {
-            var didl=result.text();
-
-            if (LOG_DIDL) {
-                console.log("DIDL="+didl);
-            }
-
-            var xmlDeferred;
-
-            if (self.xmlParserWorker) {
-                xmlDeferred=self.xmlParserWorker.parseXML(didl);
-
-            } else {
-                xmlDeferred=Xml.parseXML(didl);
-            }
-
-            xmlDeferred=xmlDeferred.then(function onSuccess(xml) {
-                ret.result = xml;
-
-                return ret;
-            }, null, function onProgress(data) {
-                //console.log("PDD="+data);
-                deferred.progress(data);
-            });
-
-            return xmlDeferred;
-        }
-
-        // console.log("Parsed response="+Util.inspect(ret, false, {}));
-
-        return Async.Deferred.resolved(ret);
-    });
-
-    return deferred;
 }
 
 UpnpServer.prototype.relativeURL = function(url) {

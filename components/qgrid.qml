@@ -1,3 +1,7 @@
+/**
+ * Copyright Olivier Oeuillot
+ */
+ 
 import QtQuick 2.0
 
 import "../jasmin" 1.0
@@ -32,6 +36,8 @@ FocusScope {
 
     property int viewCells: 0;
 
+    property bool userScrolling: false;
+
     onActiveFocusChanged: {
         //console.log("Grid: Active focus "+activeFocus+" "+focusIndex);
 
@@ -62,6 +68,11 @@ FocusScope {
         widget.onModelSizeChanged.connect(function() {
             updateLayout("onModelSizeChanged");
         });
+    }
+
+
+    function setParams(params) {
+        return params;
     }
 
     function updateLayout(reason) {
@@ -152,7 +163,6 @@ FocusScope {
 
         //listView.updateLayout("showInfo");
 
-
         info.Component.onDestruction.connect(destructingEvent(info));
 
         //        grid.updateLayout();
@@ -164,6 +174,11 @@ FocusScope {
             //            console.log("Catch a destruction ! "+info.cellIndex+" "+grid.info);
             if (grid.info!==info) {
                 return;
+            }
+
+            var card=info.card;
+            if (card) {
+                card.selected=false;
             }
 
             grid.info=null;
@@ -259,9 +274,6 @@ FocusScope {
         property var cellUpdate: ([]);
 
         property int viewShadows: 0;
-
-        property double repeatStop: 0;
-
 
         Rectangle {
             id: focusRectangle
@@ -435,14 +447,16 @@ FocusScope {
                             continue;
                         }
 
-                        cellDelegate=widget.delegate.createObject(grid.contentItem, {
-                                                                      x: i*(widget.cellWidth+widget.horizontalSpacing),
-                                                                      y: y,
-                                                                      width: cellWidth,
-                                                                      height: cellHeight,
-                                                                      model: cellModel,
-                                                                      cellIndex: idx
-                                                                  });
+                        var params=setParams({
+                                                 x: i*(widget.cellWidth+widget.horizontalSpacing),
+                                                 y: y,
+                                                 width: cellWidth,
+                                                 height: cellHeight,
+                                                 model: cellModel,
+                                                 cellIndex: idx
+                                             });
+
+                        cellDelegate=widget.delegate.createObject(grid.contentItem, params);
 
                         cellDelegate.onActiveFocusChanged.connect(delegateActiveFocus(cellDelegate));
 
@@ -536,7 +550,10 @@ FocusScope {
 
     Keys.onPressed: {
         function markRepeat() {
-            grid.repeatStop=Date.now()+250;
+            //console.log(Date.now()+" MARK REPEAT");
+
+            userScrolling=true;
+            timerRepeat.restart();
         }
 
         switch(event.key) {
@@ -571,15 +588,27 @@ FocusScope {
 
 
     Timer {
+        id: timerRepeat
+        interval: 400;
+        running: false;
+        repeat: false;
+
+        onTriggered: {
+            //console.log(Date.now()+" Timer trigger: "+running);
+            if (!running) {
+                userScrolling=false;
+            }
+        }
+    }
+
+    Timer {
         id: timer
         interval: 50;
         running: false
         repeat: true
 
         onTriggered: {
-            var now=Date.now();
-
-            if (grid.repeatStop && grid.repeatStop>now) {
+            if (timerRepeat.running) {
                 return;
             }
 

@@ -24,27 +24,27 @@ Item {
 
     property int playbackState: Audio.StoppedState;
 
-    function setPlayList(upnpServer, xmlArray, albumImageURL, append, offset) {
+    function setPlayList(contentDirectoryService, xmlArray, albumImageURL, append, offset) {
         //console.log("setPlay: xml="+xmlArray+" playListIndex="+playListIndex+" shuffle="+shuffle+" append="+append);
 
         if (!append) {
             return clear().then(function() {
                 playListIndex=0;
-                _setPlayList(upnpServer, xmlArray, albumImageURL, offset);
+                _setPlayList(contentDirectoryService, xmlArray, albumImageURL, offset);
             });
         }
 
         // append
 
 
-        _setPlayList(upnpServer, xmlArray, albumImageURL, offset);
+        _setPlayList(contentDirectoryService, xmlArray, albumImageURL, offset);
         return Deferred.resolved();
     }
 
-    function _fillInfo(upnpServer, xml, albumImageURL, playList ) {
+    function _fillInfo(contentDirectoryService, xml, albumImageURL, playList ) {
         var found=false;
 
-        xml.byPath("res", UpnpServer.DIDL_XMLNS_SET).forEach(function(res) {
+        xml.byPath("res", ContentDirectoryService.DIDL_XMLNS_SET).forEach(function(res) {
             if (found) {
                 return;
             }
@@ -64,21 +64,21 @@ Item {
                 return;
             }
 
-            var imageURL=xml.byPath("upnp:albumArtURI", UpnpServer.DIDL_XMLNS_SET).first().text();
+            var imageURL=xml.byPath("upnp:albumArtURI", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
             if (imageURL) {
-                imageURL=upnpServer.relativeURL(imageURL).toString();
+                imageURL=contentDirectoryService.upnpServer.relativeURL(imageURL).toString();
             }
 
             if (!imageURL) {
                 imageURL = albumImageURL;
             }
 
-            var title=xml.byPath("dc:title", UpnpServer.DIDL_XMLNS_SET).first().text();
-            var artist=xml.byPath("upnp:artist", UpnpServer.DIDL_XMLNS_SET).first().text();
+            var title=xml.byPath("dc:title", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
+            var artist=xml.byPath("upnp:artist", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
 
             var objectID=xml.attr("id");
 
-            url=upnpServer.relativeURL(url).toString();
+            url=contentDirectoryService.upnpServer.relativeURL(url).toString();
 
             found={
                 objectID: objectID,
@@ -95,7 +95,7 @@ Item {
         return found;
     }
 
-    function _setPlayList(upnpServer, xmlArray, albumImageURL, offset) {
+    function _setPlayList(contentDirectoryService, xmlArray, albumImageURL, offset) {
 
         //console.log("xmlArray="+xmlArray);
 
@@ -104,7 +104,7 @@ Item {
         }
 
         xmlArray.forEach(function(xml) {
-            var info=_fillInfo(upnpServer, xml, albumImageURL, playList);
+            var info=_fillInfo(contentDirectoryService, xml, albumImageURL, playList);
             if (!info) {
                 return;
             }
@@ -147,8 +147,8 @@ Item {
     }
 
 
-    function playMusic(upnpServer, xml, albumImageURL) {
-        return setPlayList(upnpServer, [xml], albumImageURL, 0, false, false).then(function() {
+    function playMusic(contentDirectoryService, xml, albumImageURL) {
+        return setPlayList(contentDirectoryService, [xml], albumImageURL, 0, false, false).then(function() {
             return play();
         });
     }
@@ -181,7 +181,9 @@ Item {
     }
 
     function togglePlayPause() {
-        togglePlayPauseFlash.flash();
+        if (flash) {
+          togglePlayPauseFlash.flash();
+        }
 
         console.log("PlayPause playbackState="+playbackState+"/"+Audio.PlayingState);
         if (playbackState===Audio.PlayingState) {
@@ -202,7 +204,9 @@ Item {
     function forward() {
         //console.log("AUDIO: Forward");
 
-        forwardFlash.flash();
+        if (flash) {
+            forwardFlash.flash();
+        }
 
         return stop().then(function() {
             //console.log("AUDIO: stopped "+playListIndex+" len="+playList.length);
@@ -218,7 +222,9 @@ Item {
     function back() {
         //console.log("AUDIO: Forward");
 
-        backFlash.flash();
+        if (flash) {
+            backFlash.flash();
+        }
 
         return stop().then(function() {
             //console.log("AUDIO: stopped "+playListIndex+" len="+playList.length);
@@ -361,7 +367,7 @@ Item {
                 height: parent.width-2
 
                 font.pixelSize: 72
-                font.family: "fontawesome"
+                font.family: Fontawesome.Name
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 opacity: 0.4
@@ -457,9 +463,9 @@ Item {
         }
 
         Text {
-            x: 0
+            x: parent.width-contentWidth
             y: 1+3
-            width: parent.width-1
+            //            width: parent.width-1
             font.pixelSize: ((audio.duration-audio.position)>=60*60*1000)?10:12
             text: "-"+formatTime(audio.duration-audio.position);
             visible: audio.duration>0
@@ -479,21 +485,21 @@ Item {
                 text: Fontawesome.Icon.backward
                 font.bold: true
                 font.pixelSize: 16
-                font.family: "fontawesome"
+                font.family: Fontawesome.Name
             }
             Text {
                 id: togglePlayPauseButton
                 text: (audio.playbackState==Audio.PlayingState)?Fontawesome.Icon.pause:Fontawesome.Icon.play
                 font.bold: true
                 font.pixelSize: 16
-                font.family: "fontawesome"
+                font.family: Fontawesome.Name
             }
             Text {
                 id: forwardButton
                 text: Fontawesome.Icon.forward
                 font.bold: true
                 font.pixelSize: 16
-                font.family: "fontawesome"
+                font.family: Fontawesome.Name
             }
         }
         Flash {
@@ -611,10 +617,6 @@ Item {
                 }
 
                 item.y+=parent.height;
-
-
-                //                item.visible=false;
-                //                item.destroy();
             }
         }
 
