@@ -7,6 +7,7 @@ import QtGraphicalEffects 1.0
 
 import "../jasmin" 1.0
 import "../components/infos" 1.0
+import "card.js" as CardScript
 
 
 FocusScope {
@@ -19,9 +20,8 @@ FocusScope {
     property AudioPlayer audioPlayer;
     property var contentDirectoryService;
     property var xml
-    property var imagesList;
 
-    property string resImageSource: (imagesList && imagesList.length)?imagesList[0].url:'';
+    property string resImageSource: ''; //(imagesList && imagesList.length)?imagesList[0].url:'';
 
     property string upnpClass;
     property int cellIndex;
@@ -216,6 +216,8 @@ FocusScope {
 
                     var xml=meta.result.byPath("DIDL-Lite", ContentDirectoryService.DIDL_XMLNS_SET).first().children();
 
+                    var imagesList2=CardScript.computeImage(xml, contentDirectoryService);
+
                     //console.log("xml1="+Util.inspect(xml));
 
                     var obj=infoClass.createObject(rowInfo, {
@@ -223,7 +225,7 @@ FocusScope {
                                                        y: 0,
                                                        width: rowInfo.width,
                                                        xml: xml,
-                                                       resImageSource: resImageSource,
+                                                       imagesList: imagesList2,
                                                        contentDirectoryService: contentDirectoryService,
                                                        audioPlayer: audioPlayer,
                                                        objectID: objectID

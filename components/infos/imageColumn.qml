@@ -6,8 +6,13 @@ Item {
     x: parent.width-256-30
     y: 30
 
-    property string resImageSource;
+    property var imagesList;
+    property string resImageSource: (imagesList && imagesList.length)?imagesList[0].url:'';
     property Item infosColumn;
+
+    property int cycleIndex: 0;
+
+    property real imagesOpacity: 1;
 
     property bool showReversedImage: true;
 
@@ -29,6 +34,7 @@ Item {
 
         antialiasing: true
         fillMode: Image.PreserveAspectFit
+        opacity: imagesOpacity
 
         source: resImageSource;
         asynchronous: true
@@ -42,7 +48,7 @@ Item {
 
         visible: showReversedImage
 
-        opacity: 0.25
+        opacity: imagesOpacity*0.25
 
         smooth: true
         antialiasing: true
@@ -59,5 +65,99 @@ Item {
 
         fillMode: Image.PreserveAspectFit
         source: resImageSource
+    }
+
+    onImagesListChanged: {
+        if (!imagesList || imagesList.length<2) {
+            timer.stop();
+            return;
+        }
+
+        timer.restart();
+    }
+
+    Timer {
+        id: timer
+        interval: 4000;
+        repeat: true
+
+        onTriggered: {
+            if (!running) {
+                return;
+            }
+
+            cycleIndex++;
+
+            animations.start();
+        }
+    }
+
+    SequentialAnimation {
+        id: animations
+        NumberAnimation {
+            target: imageColumn
+            property: "imagesOpacity"
+            duration: 400
+            from: 1;
+            to: 0;
+        }
+        ScriptAction {
+            script: resImageSource=imagesList[cycleIndex % imagesList.length].url
+        }
+        ParallelAnimation {
+            NumberAnimation {
+                target: imageColumn
+                property: "imagesOpacity"
+                duration: 400
+                from: 0;
+                to: 1;
+            }
+            NumberAnimation {
+                target: imageIndexItem
+                property: "opacity"
+                duration: 400
+                from: 0;
+                to: 0.7;
+            }
+        }
+        NumberAnimation {
+            target: imageIndexItem
+            property: "opacity"
+            duration: 2500
+            from: 0.7;
+            to: 0;
+        }
+    }
+
+    Item {
+        id: imageIndexItem
+        width: idxText.contentWidth+8;
+        height: idxText.contentHeight+4;
+        x: image2.width-width
+        y: image2.height-height
+
+        opacity: 0
+
+        visible: (imagesList && imagesList.length>1) || false;
+
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+
+            opacity: 0.7
+            color: "white";
+
+            border.color: "black";
+            border.width: 1
+        }
+
+        Text {
+            id: idxText
+            x: 4
+
+            property int imagesCount: (imagesList && imagesList.length) || 1;
+
+           text: "Image "+((cycleIndex % imagesCount)+1)+"/"+imagesCount;
+        }
     }
 }

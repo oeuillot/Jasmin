@@ -110,29 +110,22 @@ Page {
 
         var upnpServer = new UpnpServer.UpnpServer(model.url);
 
-        deferredRequest = upnpServer.tryConnection();
+        var contentDirectoryService=new ContentDirectoryService.ContentDirectoryService(upnpServer);
 
-        deferredRequest.then(function(result) {
-            console.log("SUCCESS !");
-            //text.text="Tentative réussie";
+        contentDirectoryService.connect().then(function onSuccess(cresult) {
+            page.menu.visible=true;
 
-            var contentDirectoryService=new ContentDirectoryService.ContentDirectoryService(upnpServer);
+            page.title="Serveurs";
 
-            contentDirectoryService.scanService().then(function(cresult) {
-                page.menu.visible=true;
+            page.push("folder.qml", {
+                          contentDirectoryService: contentDirectoryService,
+                          meta: cresult.rootMeta,
+                          title: upnpServer.name,
+                          audioPlayer: page.audioPlayer,
+                          settings: settings
+                      });
 
-                page.title="Serveurs";
-
-                page.push("folder.qml", {
-                              contentDirectoryService: contentDirectoryService,
-                              meta: cresult.rootMeta,
-                              title: upnpServer.name,
-                              audioPlayer: page.audioPlayer,
-                              settings: settings
-                          });
-               });
-
-        }, function(reason) {
+        }, function onError(reason) {
             console.log("FAIL "+reason);
 
             // text.text="La tentative de connexion a échoué : "+reason;
@@ -141,7 +134,7 @@ Page {
             // urlEntry.forceActiveFocus();
             // connectButton.enabled=true;
 
-        }, function(message) {
+        }, function onProgress(message) {
             text.text="Tentative en cours : "+message;
         });
     }

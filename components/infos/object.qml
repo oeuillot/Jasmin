@@ -6,22 +6,15 @@ import ".." 1.0
 import "object.js" as UpnpObject
 
 FocusInfo {
-    id: row
-    height: childrenRect.height;
-
-    property var upnpServer;
-    property var xml
-    property var infoClass;
-    property var resImageSource;
-    property var objectID;
-
+    id: row   
+    heightRef: imageColumn;
 
     Item {
         id: infosColumn
 
         x: 30
         y: 20
-        width: parent.width-((resImageSource)?(256+20):0)-60
+        width: parent.width-((row.imagesList && row.imagesList.length)?(256+20):0)-60
         height: childrenRect.height+20
 
 
@@ -94,7 +87,7 @@ FocusInfo {
 
     ImageColumn {
         id: imageColumn
-        resImageSource: row.resImageSource
+        imagesList: row.imagesList
         infosColumn: infosColumn
         showReversedImage: false
     }

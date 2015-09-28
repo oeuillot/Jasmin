@@ -9,14 +9,33 @@ var XMLNS={
 }
 
 
-function getText(xml, path, xmlns) {
+function getText(xml, path, xmlns, separator) {
     if (!xml) {
         return;
     }
 
-    var text=xml.byPath(path, xmlns || XMLNS).text();
+    var texts=xml.byPath(path, xmlns || XMLNS);
+    if (!texts || !texts.length) {
+        return;
+    }
 
-    return text;
+    var ls=[];
+    texts.forEach(function(x) {
+        ls.push(x.text());
+    });
+
+    return ls.join(separator || ", ");
+}
+
+function addLine2(grid, labelComponent, valueComponent, labelText, valueText) {
+
+    labelComponent.createObject(grid, {
+                                text: labelText
+                            });
+
+    valueComponent.createObject(grid, {
+                                text: valueText
+                            });
 }
 
 function addLine(grid, labelTitle, valueTitle, title, xml, path, formatter) {
@@ -48,13 +67,7 @@ function addLine(grid, labelTitle, valueTitle, title, xml, path, formatter) {
         return;
     }
 
-    labelTitle.createObject(grid, {
-                                text: title
-                            });
-
-    valueTitle.createObject(grid, {
-                                text: value
-                            });
+    addLine2(grid, labelTitle, valueTitle, title, value);
 
     return true;
 }

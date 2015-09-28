@@ -87,7 +87,7 @@ FocusScope {
             card.infoType="description";
 
         } else {
-             card.infoType="rating";
+            card.infoType="rating";
         }
     }
 
@@ -100,7 +100,11 @@ FocusScope {
             return card.imagesList;
         }
 
-        var imagesList=CardScript.computeImage(model, upnpClass, contentDirectoryService);
+        if (!upnpClass) {
+            return null;
+        }
+
+        var imagesList=CardScript.computeImage(model, contentDirectoryService);
         //console.log("ImagesList="+imagesList);
 
         if (!imagesList) {
@@ -113,6 +117,8 @@ FocusScope {
             resImageSource=imagesList[0].url;
             transparentImage=imagesList[0].transparent || false;
         }
+
+        return card.imagesList;
     }
 
 
@@ -147,7 +153,7 @@ FocusScope {
                 verticalAlignment: Text.AlignVCenter
             }
 
-           Image {
+            Image {
                 id: bgImage
                 x: 1
                 y: 1

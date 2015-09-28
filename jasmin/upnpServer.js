@@ -13,13 +13,11 @@ var DLNA_DEVICE_XMLNS="urn:schemas-dlna-org:device-1-0";
 var SOAP_ENVELOPE_XMLNS="http://schemas.xmlsoap.org/soap/envelope/";
 var UPNP_METADATA_XMLNS="urn:schemas-upnp-org:metadata-1-0/upnp/";
 
-
 var DEVICE_XMLNS_SET={
     "": UPNP_DEVICE_XMLNS,
     "dlna": DLNA_DEVICE_XMLNS,
     "s": SOAP_ENVELOPE_XMLNS
 }
-
 
 function UpnpServer(url, xmlParserWorker) {
     this.url=url;
@@ -32,13 +30,19 @@ function UpnpServer(url, xmlParserWorker) {
 
 UpnpServer.prototype.constructor = UpnpServer;
 
-UpnpServer.prototype.tryConnection=function(){
+UpnpServer.prototype.connect=function(){
 
     if (this.errored!==undefined) {
         return Async.Deferred.rejected(this.errored);
     }
 
+    if (this.errored===false) {
+        return Async.Deferred.resolved(this);
+    }
+
     var application=Qt.application;
+
+    console.log("URL="+this.url);
 
     var transaction=Web.Http.Transaction.factory({
                                                      method: "GET",
@@ -53,7 +57,7 @@ UpnpServer.prototype.tryConnection=function(){
     var self=this;
 
     deferred=deferred.then(function onSuccess(response) {
-        console.log("Deferred succes: ", Util.inspect(response), response.status, response.statusText);
+        console.log("Deferred success: ", Util.inspect(response), response.status, response.statusText);
 
         if (response.isError() || !response.status) {
             self.errored="Server error "+response.statusText;
@@ -71,9 +75,9 @@ UpnpServer.prototype.tryConnection=function(){
             deferred = Xml.parseXML(response.body);
         }
 
-        deferred=deferred.then(function(xmlResponse) {
+        deferred=deferred.then(function onSuccess(xmlResponse) {
             try {
-                self._fillDeviceDescription(xmlResponse).then(function(services) {
+                self._fillDeviceDescription(xmlResponse).then(function onSuccess(services) {
                     return {
                         upnpServer: self,
                         services: services,
@@ -102,9 +106,6 @@ UpnpServer.prototype.tryConnection=function(){
         self.errored=failed;
 
         return failed;
-
-    }, function onProgress(message){
-        console.log("Deferred progress: ",message);
     });
 
     return deferred;

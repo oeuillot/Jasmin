@@ -37,26 +37,31 @@ function listResources(contentDirectoryService, xml) {
         var ts=/^video\/(.*)/.exec(contentFormat);
         if (!ts) {
             //console.log("Invalid content format '"+contentFormat+"'");
-            return;
+           //return;
         }
-
-        var imageType=ts[1];
-
-        /*
-        if ([ "png", "jpeg", "gif", "bmp", "svg+xml" ].indexOf(imageType)<0) {
-            console.log("Unkown image Type '"+imageType+"'");
-            return;
-        }
-        */
 
         var url=res.text();
 
         var imageSource=contentDirectoryService.upnpServer.relativeURL(url).toString();
 
+        var additionalInfos={};
+        if (additionalInfo) {
+            additionalInfo.split(',').forEach(function(token) {
+               var req=/([^=]+)(=.*)/.exec(token);
+               if (!req) {
+                  return;
+               }
+
+               additionalInfos[req[1]]=(req[2] && req[2].slice(1));
+            });
+        }
+
         lst.push({
-            type: contentFormat,
-            source: imageSource
-        });
+                     type: contentFormat,
+                     additionalInfo: additionalInfo,
+                     additionalInfos: additionalInfos,
+                     source: imageSource
+                 });
     });
 
     return lst;

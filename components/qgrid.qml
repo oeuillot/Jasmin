@@ -188,21 +188,22 @@ FocusScope {
     }
 
     function focusLeft(cellIndex) {
+        /*
         var x=(cellIndex % widget.viewColumns);
 
         if (!x) {
-            return focus(cellIndex+widget.viewColumns-1);
-        }
+            return focus(cellIndex-1);
+        }*/
 
         return focus(cellIndex-1);
     }
 
     function focusRight(cellIndex) {
-        var x=(cellIndex % widget.viewColumns);
+        /* var x=(cellIndex % widget.viewColumns);
 
         if (x+1===widget.viewColumns) {
             return focus(cellIndex-widget.viewColumns+1);
-        }
+        } */
 
         return focus(cellIndex+1);
     }

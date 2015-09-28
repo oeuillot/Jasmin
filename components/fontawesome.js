@@ -19,7 +19,7 @@ var Icon = {
 	angle_double_up: "\uf102",
 	angle_down: "\uf107",
 	angle_left: "\uf104",
-	angle_right: "\uf105",
+    angle_right: "\uf105",
     angle_up: "\uf106",
 	apple: "\uf179",
 	archive: "\uf187",

@@ -497,7 +497,7 @@ FocusInfo {
 
     ImageColumn {
         id: imageColumn
-        resImageSource: focusScope.resImageSource
+        imagesList: focusScope.imagesList
         infosColumn: infosColumn
     }
 

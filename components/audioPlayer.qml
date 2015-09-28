@@ -161,7 +161,7 @@ Item {
         });
     }
 
-    function play() {
+    function play(flash) {
         //console.log("Play: Current playback="+playbackState+" audioPlayback="+audio.playbackState);
 
         if (playbackState===Audio.PlayingState) {
@@ -174,13 +174,28 @@ Item {
         }
 
         if (audio.playbackState===Audio.PausedState) {
-            return togglePlayPause();
+            return togglePlayPause(flash);
         }
 
         return Deferred.resolved(playbackState);
     }
 
-    function togglePlayPause() {
+
+    function pause(flash) {
+        if (flash) {
+          togglePlayPauseFlash.flash();
+        }
+
+        console.log("Pause playbackState="+playbackState+"/"+Audio.PlayingState);
+        if (playbackState===Audio.PlayingState) {
+            return audio.$pause().then(function() {
+                playbackState=Audio.StoppedState;
+            });
+        }
+
+        return Deferred.resolved(false);
+    }
+    function togglePlayPause(flash) {
         if (flash) {
           togglePlayPauseFlash.flash();
         }
@@ -201,7 +216,7 @@ Item {
         return play();
     }
 
-    function forward() {
+    function forward(flash) {
         //console.log("AUDIO: Forward");
 
         if (flash) {
@@ -219,7 +234,7 @@ Item {
         });
     }
 
-    function back() {
+    function back(flash) {
         //console.log("AUDIO: Forward");
 
         if (flash) {

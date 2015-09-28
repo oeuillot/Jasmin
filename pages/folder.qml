@@ -188,8 +188,7 @@ Page {
 
             info=showInfo(card, infoComponent, {
                               xml: xml,
-                              markerPosition: card.x+card.width/2,
-                              imagesList: card.getImagesList(),
+                              markerPosition: card.x+card.width/2,                              
                               upnpClass: upnpClass,
                               contentDirectoryService: contentDirectoryService,
                               audioPlayer: page.audioPlayer,

@@ -9,7 +9,7 @@ FocusScope {
 
     property var contentDirectoryService;
     property var xml;
-    property string resImageSource;
+    property var imagesList;
     property string objectID;
 
     default property alias contents: row.children
@@ -81,9 +81,34 @@ FocusScope {
         }
     }
 
+    function updateFocusPosition() {
+        var comp=focusRectangle;
+        if (!comp) {
+            return;
+        }
+
+        var x=comp.x-2;
+        var y=comp.y-2;
+
+        for(var p=comp.parent;p!==row;p=p.parent) {
+            x+=p.x;
+            y+=p.y;
+        }
+
+        focusAnimation.stop();
+        focusRectangle.x=x;
+        focusRectangle.y=y;
+        focusRectangle.width=comp.width+4;
+        focusRectangle.height=comp.height+4;
+        focusRectangle.visible=true;
+        animationX.to=focusRectangle.x;
+        animationY.to=focusRectangle.y;
+        animationWidth.to=focusRectangle.width;
+        animationHeight.to=focusRectangle.height;
+    }
 
     function showFocus(comp, activeFocus) {
-		//console.log("Comp="+comp+" activeFocus="+activeFocus);
+        //console.log("Comp="+comp+" activeFocus="+activeFocus);
         if (!comp || (!activeFocus && comp===currentFocus)) {
             focusRectangle.visible=false;
             return;

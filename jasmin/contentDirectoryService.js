@@ -41,61 +41,66 @@ function ContentDirectoryService(upnpServer) {
 ContentDirectoryService.prototype.constructor = ContentDirectoryService;
 
 
-ContentDirectoryService.prototype.scanService=function() {
+ContentDirectoryService.prototype.connect=function() {
 
     var self=this;
 
+    var upnpServer=this.upnpServer;
 
-    var contentDirectoryService=this.getContentDirectoryService();
-    if (!contentDirectoryService){
-        throw new Error("No content directory service !");
-    }
+    var deferred0 = upnpServer.connect().then(function onSuccess() {
 
-    var controlURL=this.upnpServer.relativeURL(contentDirectoryService.controlURL);
+        var contentDirectoryService=self.getService();
+        if (!contentDirectoryService){
+            return Async.Deferred.rejected("No content directory service !");
+        }
 
-    console.log("controlURL=", controlURL);
+        var controlURL=upnpServer.relativeURL(contentDirectoryService.controlURL);
 
-    var soapTransport=new Soap.SoapTransport(controlURL.toString(), this.upnpServer.xmlParserWorker);
-    this.soapTransport=soapTransport;
+    //    console.log("controlURL=", controlURL);
 
+        var soapTransport=new Soap.SoapTransport(controlURL.toString(), upnpServer.xmlParserWorker);
+        self.soapTransport=soapTransport;
 
-    var deferred = self.getSortCapabilities().then(function onSuccess(sortCaps) {
-        self.sortCaps=sortCaps;
-        console.log("SortCaps="+Util.inspect(sortCaps));
+        var deferred = self.getSortCapabilities().then(function onSuccess(sortCaps) {
+            self.sortCaps=sortCaps;
+            console.log("SortCaps="+Util.inspect(sortCaps));
 
-        var deferred2=self.getSearchCapabilities().then(function onSuccess(searchCaps) {
-            self.searchCaps=searchCaps;
-            console.log("SearchCaps="+Util.inspect(searchCaps));
+            var deferred2=self.getSearchCapabilities().then(function onSuccess(searchCaps) {
+                self.searchCaps=searchCaps;
+                console.log("SearchCaps="+Util.inspect(searchCaps));
 
-            var deferred3=self.getSystemUpdateID().then(function onSuccess(systemUpdateID) {
-                self.systemUpdateID=systemUpdateID;
-                //console.log("SystemUpdateID="+systemUpdateID);
+                var deferred3=self.getSystemUpdateID().then(function onSuccess(systemUpdateID) {
+                    self.systemUpdateID=systemUpdateID;
+                    //console.log("SystemUpdateID="+systemUpdateID);
 
-                var deferred4=self.browseMetadata(0).then(function(meta) {
-                    //console.log("Meta="+Util.inspect(meta, false, {}));
+                    var deferred4=self.browseMetadata(0).then(function(meta) {
+                        //console.log("Meta="+Util.inspect(meta, false, {}));
 
-                    return {
-                        contentDirectoryService: self,
-                        sortCaps: sortCaps,
-                        searchCaps: searchCaps,
-                        systemUpdateID: systemUpdateID,
-                        rootMeta: meta
-                    };
+                        return {
+                            contentDirectoryService: self,
+                            sortCaps: sortCaps,
+                            searchCaps: searchCaps,
+                            systemUpdateID: systemUpdateID,
+                            rootMeta: meta
+                        };
+                    });
+
+                    return deferred4;
                 });
 
-                return deferred4;
+                return deferred3;
             });
 
-            return deferred3;
+            return deferred2;
         });
 
-        return deferred2;
+        return deferred;
     });
 
-    return deferred;
+    return deferred0;
 }
 
-ContentDirectoryService.prototype.getContentDirectoryService=function() {
+ContentDirectoryService.prototype.getService=function() {
     this.upnpServer._validServer();
 
     console.log("services"+Util.inspect(this.upnpServer.services));

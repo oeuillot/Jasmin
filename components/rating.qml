@@ -23,7 +23,7 @@ Text {
         rating=parseFloat(r);
     }
 
-    property int rating: 0;
+    property real rating: 0;
 
     onRatingChanged: {
         if (rating<0) {

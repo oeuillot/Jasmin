@@ -35,10 +35,7 @@ function computeType(upnpClass) {
     return Fontawesome.Icon.question;
 }
 
-function computeImage(xml, upnpClass, contentDirectoryService) {
-    if (!upnpClass) {
-        return;
-    }
+function computeImage(xml, contentDirectoryService) {
 
     var l=[];
     var urls={};
