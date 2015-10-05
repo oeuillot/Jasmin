@@ -3,7 +3,6 @@ import "components" 1.0
 import fbx.application 1.0
 import fbx.ui.page 1.0
 import fbx.ui.layout 1.0
-import QtQuick.LocalStorage 2.0
 
 import "./pages" 1.0
 import "./jasmin" 1.0
@@ -67,7 +66,7 @@ Application {
 
         x: 0
         y: breadcrumb.height
-        width: parent.width
+        width: parent.width-(menu.visible?menu.width:0)
         height: parent.height-breadcrumb.height
         focus: true
 
@@ -106,11 +105,12 @@ Application {
     Component {
         id: menuComponent
 
+        // On passe en component pour un probleme de temps de chargement de la fonte !
+
         Menu {
             id: menu
-            visible: false
             x: parent.width-menu.width
-            y: breadcrumb.y+breadcrumb.height+20
+            y: breadcrumb.y+breadcrumb.height;
         }
     }
 

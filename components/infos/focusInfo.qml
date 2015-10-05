@@ -82,7 +82,7 @@ FocusScope {
     }
 
     function updateFocusPosition() {
-        var comp=focusRectangle;
+        var comp=currentFocus;
         if (!comp) {
             return;
         }
@@ -93,6 +93,10 @@ FocusScope {
         for(var p=comp.parent;p!==row;p=p.parent) {
             x+=p.x;
             y+=p.y;
+        }
+
+        if (x<0) {
+            return;
         }
 
         focusAnimation.stop();
@@ -113,8 +117,18 @@ FocusScope {
             focusRectangle.visible=false;
             return;
         }
+
         if (!activeFocus) {
             return;
+        }
+
+        for(var p=comp.parent;p;p=p.parent) {
+            if (p.objectName!=="net.jasmin.Grid") {
+                continue;
+            }
+
+            p.scrollIntoView(comp);
+            break;
         }
 
         var x=comp.x-2;

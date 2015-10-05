@@ -2,8 +2,10 @@ import QtQuick 2.0
 
 import "card.js" as CardScript
 import "../jasmin" 1.0
+import "../resources/genres" 1.0
 
 import "fontawesome.js" as Fontawesome;
+
 
 FocusScope {
     id: card
@@ -17,7 +19,7 @@ FocusScope {
 
     property alias resImageSource: imageItem.source;
 
-    property var imagesList;
+    property var imagesList: undefined;
 
     property var contentDirectoryService;
 
@@ -34,6 +36,8 @@ FocusScope {
     property bool hideInfo: false;
 
     property string infoType: "";
+
+    property Item certificateItem;
 
     onSelectedChanged: {
         if (selectedAnimation.running) {
@@ -60,6 +64,9 @@ FocusScope {
         resImageSource="";
         transparentImage=false;
         imagesList=null;
+        if (certificateItem) {
+            certificateItem.visible=false;
+        }
 
         if (!model) {
             upnpClass="";
@@ -69,7 +76,6 @@ FocusScope {
             itemType.visible=true;
             return;
         }
-
 
         upnpClass=model.byPath("upnp:class", ContentDirectoryService.DIDL_XMLNS_SET).text() || "object.item";
 
@@ -92,31 +98,54 @@ FocusScope {
     }
 
     function delayedUpdateModel() {
-        getImagesList();
+        var imagesList=getImagesList();
+
+        if (imagesList && imagesList.length) {
+            resImageSource=imagesList[0].url;
+            transparentImage=imagesList[0].transparent || false;
+
+            if (transparentImage) {
+                bgImage.source="card/transparent.png";
+            }
+        }
+
+        var certificate=CardScript.computeCertificate(model);
+        if (certificate) {            
+            if (!certificateItem) {
+                certificateItem=certificateComponent.createObject(card);
+            }
+
+            certificateItem.text=certificate;
+            certificateItem.visible=true;
+        }
     }
 
     function getImagesList() {
-        if (card.imagesList) {
+        if (card.imagesList!==null) {
             return card.imagesList;
         }
 
         if (!upnpClass) {
-            return null;
-        }
-
-        var imagesList=CardScript.computeImage(model, contentDirectoryService);
-        //console.log("ImagesList="+imagesList);
-
-        if (!imagesList) {
+            card.imagesList=false;
             return false;
         }
 
-        card.imagesList=imagesList;
+        var imagesList;
 
-        if (imagesList.length) {
-            resImageSource=imagesList[0].url;
-            transparentImage=imagesList[0].transparent || false;
+        if (!upnpClass.indexOf("object.container.genre.musicGenre")) {
+            var imageURL=GenreImageRepository.getGenreImageURL(title);
+            if (imageURL) {
+                imagesList=[{ url: imageURL }];
+            }
         }
+
+
+        if (!imagesList) {
+            imagesList=CardScript.computeImage(model, contentDirectoryService);
+            //console.log("ImagesList="+imagesList);
+        }
+
+        card.imagesList=imagesList || false;
 
         return card.imagesList;
     }
@@ -169,7 +198,7 @@ FocusScope {
                 sourceSize.width: 256
                 sourceSize.height: 256
 
-                source: "card/transparent.png"
+                source: ""
             }
 
             Image {
@@ -225,6 +254,34 @@ FocusScope {
             visible:  (infoType==="rating") && !hideInfo;
             y: label.y+label.height
             x: selectedScale
+        }
+    }
+    Component {
+        id: certificateComponent
+
+        Item {
+            x: card.width-certificateText.contentWidth-8-8-selectedScale;
+            y: selectedScale+4;
+            width: certificateText.contentWidth+4;
+            height: certificateText.height+4;
+
+            property alias text: certificateText.text;
+
+            Rectangle {
+                width: parent.width
+                height: parent.height
+                color: "#FF0000"
+                opacity: 0.80
+                radius: 10;
+            }
+
+            Text {
+                id: certificateText
+                color: "white"
+                x: 2
+                y: 2
+                font.pixelSize: 14;
+            }
         }
     }
 }

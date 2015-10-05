@@ -189,3 +189,14 @@ function computeInfo(xml, upnpClass, component) {
     //console.log("No infos for="+Util.inspect(xml, false, {}));
     return null;
 }
+
+function computeCertificate(xml) {
+    if (!xml) {
+        return null;
+    }
+
+    var certificate = xml.byPath("mo:certificate", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
+    //console.log("Certificate="+certificate);
+
+    return certificate;
+}

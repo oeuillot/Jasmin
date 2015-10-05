@@ -15,13 +15,17 @@ FocusScope {
     height: infoComponent.height
     width: infoComponent.width
 
+    property bool winOS: false;
+
     property Card card;
 
     property AudioPlayer audioPlayer;
     property var contentDirectoryService;
     property var xml
 
-    property string resImageSource: ''; //(imagesList && imagesList.length)?imagesList[0].url:'';
+    property var imagesList: null;
+
+    property string resImageSource: (imagesList && imagesList.length)?imagesList[0].url:'';
 
     property string upnpClass;
     property int cellIndex;
@@ -114,10 +118,10 @@ FocusScope {
             }
 
             onYChanged: {
-//                requestPaint();
+                //requestPaint();
             }
         }
-
+/*
 
         NumberAnimation {
                 id: arrowAnimation
@@ -127,7 +131,7 @@ FocusScope {
                 to: -12
                 duration: 200
            }
-
+*/
         Item {
             id: rowInfo
             width: parent.width
@@ -216,7 +220,9 @@ FocusScope {
 
                     var xml=meta.result.byPath("DIDL-Lite", ContentDirectoryService.DIDL_XMLNS_SET).first().children();
 
-                    var imagesList2=CardScript.computeImage(xml, contentDirectoryService);
+                    if (!imagesList || !imagesList.length) {
+                        imagesList=CardScript.computeImage(xml, contentDirectoryService);
+                    }
 
                     //console.log("xml1="+Util.inspect(xml));
 
@@ -225,7 +231,7 @@ FocusScope {
                                                        y: 0,
                                                        width: rowInfo.width,
                                                        xml: xml,
-                                                       imagesList: imagesList2,
+                                                       imagesList: imagesList,
                                                        contentDirectoryService: contentDirectoryService,
                                                        audioPlayer: audioPlayer,
                                                        objectID: objectID

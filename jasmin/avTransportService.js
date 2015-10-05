@@ -20,7 +20,7 @@ AvTransportService.prototype.constructor = AvTransportService;
 AvTransportService.prototype.getService=function() {
     this.upnpServer._validServer();
 
-    console.log("services"+Util.inspect(this.upnpServer.services));
+    //console.log("services"+Util.inspect(this.upnpServer.services));
 
     return this.upnpServer.services[UPNP_AV_TRANSPORT_1];
 }
@@ -40,7 +40,7 @@ AvTransportService.prototype.connect=function() {
 
         var controlURL=upnpServer.relativeURL(avTransportService.controlURL);
 
-       console.log("controlURL=", controlURL);
+        //console.log("controlURL=", controlURL);
 
         var soapTransport=new Soap.SoapTransport(controlURL.toString(), upnpServer.xmlParserWorker);
         self.soapTransport=soapTransport;

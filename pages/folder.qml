@@ -28,6 +28,58 @@ Page {
 
     property int pageSize: 32;
 
+    property bool pageShown: false;
+
+    property bool autoPop: false;
+
+    onDidAppear: {        
+        pageShown=true;
+
+        listView.pageSizeLoaded[0]=true;
+        listView.loadPage(0);
+    }
+
+    onWillAppear: {
+        console.log("ON WILL APPEAR ********* model="+listView.model);
+
+        //listView.model=[]
+        if (listView.model && listView.model.length) {
+            console.log("ON WILL APPEAR back");
+            listView.onFront();
+            listView.updateLayout();
+            return;
+        }
+
+        if (listView.modelInfos.childCount<=pageSize*2) {
+            // Petites pages, on charge directe
+            listView.pageSizeLoaded[0]=true;
+            listView.loadPage(0).then(function() {
+
+                console.log(Date.now()+" little ModelSize="+listView.modelSize);
+                if (listView.modelSize===0) {
+                    emptyFolder.visible=true;
+                    backFolderTimer.start();
+                }
+            });
+
+        } else {
+            // Grosse liste, on ne charge que le titre/class
+            FolderScript.listModel(contentDirectoryService, listView.objectID).then(function(result) {
+
+                console.log(Date.now()+" big ModelSize="+result.length);
+
+                listView.model=result;
+                listView.updateLayout();
+            });
+        }
+    }
+
+    onDidDisappear: {
+        //console.log("ON DID DISAPPEAR *********");
+        listView.onBack();
+        //listView.model=null;
+    }
+
     Component {
         id: card
 
@@ -139,12 +191,20 @@ Page {
 
         }
     }
+    /*
+    Rectangle {
+        x: 5
+        y: 5
+        width: parent.width-5
+        height: parent.height-5
+color: "red";
+    }*/
 
     QGrid {
         id: listView
         x: 5
         y: 5
-        width: parent.width-140-5
+        width: parent.width-5
         height: parent.height-5
         focus: true
 
@@ -204,6 +264,7 @@ Page {
         property var loadingPages: ([]);
         property bool loading: false;
         property var objectID;
+        property var modelInfos;
 
         function loadPage(pageIndex) {
             if (loading) {
@@ -249,20 +310,19 @@ Page {
         }
 
         Component.onCompleted: {
-            var infos=FolderScript.fillModel(contentDirectoryService, page.meta);
+            modelInfos=FolderScript.getModelInfo(contentDirectoryService, page.meta);
 
-            objectID=infos.objectID;
+            objectID=modelInfos.objectID;
 
             listView.model=[];
-            if (infos.childCount>0) {
-                listView.modelSize=infos.childCount;
+            if (modelInfos.childCount>0) {
+                listView.modelSize=modelInfos.childCount;
             }
 
-            //            console.log("ModelSize="+infos.childCount);
-
+           // console.log("ModelSize="+modelInfos.childCount);
 
             listView.onUserScrollingChanged.connect(function() {
-                //console.log("UserScrolling="+listView.userScrolling);
+                //console.log(Date.now()+" UserScrolling="+listView.userScrolling);
 
                 var cur=listView.pageCellIndex;
 
@@ -310,26 +370,7 @@ Page {
 
             });
 
-            if (infos.childCount<=pageSize*2) {
-                pageSizeLoaded[0]=true;
-                loadPage(0).then(function() {
-
-                    //console.log("ModelSize="+listView.modelSize);
-                    if (listView.modelSize===0) {
-                        emptyFolder.visible=true;
-                        backFolderTimer.start();
-                    }
-                });
-
-            } else {
-                FolderScript.listModel(contentDirectoryService, objectID).then(function(result) {
-                    listView.model=result;
-                    listView.updateLayout();
-
-                    pageSizeLoaded[0]=true;
-                    loadPage(0);
-                });
-            }
+            //console.log(Date.now()+" Loading page");
         }
 
         delegate: card
@@ -353,13 +394,18 @@ Page {
         interval: 1000;
         repeat: false
         onTriggered: {
+            if (autoPop) {
+                return;
+            }
+
+            autoPop=true;
             page.pop();
         }
     }
 
     Item {
         id: flashMessage
-        x:0
+        x: 0
         y: 0
         width: parent.width
         height: childrenRect.height
@@ -468,6 +514,12 @@ Page {
                 event.accepted = true;
                 return;
             }
+            if (autoPop) {
+                // Deja en cours de fermeture !
+                event.accepted=true;
+                return;
+            }
+            autoPop=true;
 
             break;
         }

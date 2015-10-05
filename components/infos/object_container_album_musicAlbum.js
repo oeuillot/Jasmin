@@ -267,7 +267,7 @@ function fillTracks(parent, components, y, contentDirectoryService, xml) {
                 c1.y=y;
                 var c2=addInfos(ds[i+k], i+k);
                 if (c2){
-                    c2.x=c1.width;
+                    c2.x=c1.width+4;
                     c2.y=y;
                 }
                 y+=24;

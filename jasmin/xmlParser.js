@@ -1,3 +1,4 @@
+.pragma library
 
 function parseXML(text, xmlns, callbacks) {
     var stack = [];

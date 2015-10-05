@@ -18,6 +18,7 @@ var PURL_ELEMENT_XMLS="http://purl.org/dc/elements/1.1/";
 
 var JASMIN_MUSICMETADATA="urn:schemas-jasmin-upnp.net:musicmetadata/";
 var JASMIN_FILEMEDATA="urn:schemas-jasmin-upnp.net:filemetadata/";
+var JASMIN_MOVIEMETADATA="urn:schemas-jasmin-upnp.net:moviemetadata/";
 
 var CONTENT_DIRECTORY_XMLNS_SET={
     "": UpnpServer.UPNP_SERVICE_XMLNS,
@@ -30,7 +31,9 @@ var DIDL_XMLNS_SET = {
     "": DIDL_LITE_XMLNS,
     "upnp": UpnpServer.UPNP_METADATA_XMLNS,
     "dc": PURL_ELEMENT_XMLS,
-    "mm": JASMIN_MUSICMETADATA
+    "mm": JASMIN_MUSICMETADATA,
+    "mo": JASMIN_MOVIEMETADATA,
+    "fm": JASMIN_FILEMEDATA
 }
 
 
@@ -50,13 +53,14 @@ ContentDirectoryService.prototype.connect=function() {
     var deferred0 = upnpServer.connect().then(function onSuccess() {
 
         var contentDirectoryService=self.getService();
+        console.log("Return contentDirectoryService="+contentDirectoryService);
         if (!contentDirectoryService){
             return Async.Deferred.rejected("No content directory service !");
         }
 
         var controlURL=upnpServer.relativeURL(contentDirectoryService.controlURL);
 
-    //    console.log("controlURL=", controlURL);
+        console.log("controlURL=", controlURL);
 
         var soapTransport=new Soap.SoapTransport(controlURL.toString(), upnpServer.xmlParserWorker);
         self.soapTransport=soapTransport;
@@ -103,9 +107,13 @@ ContentDirectoryService.prototype.connect=function() {
 ContentDirectoryService.prototype.getService=function() {
     this.upnpServer._validServer();
 
-    console.log("services"+Util.inspect(this.upnpServer.services));
+    var service = this.upnpServer.services[UPNP_CONTENT_DIRECTORY_1];
+    if (service) {
+        return service;
+    }
 
-    return this.upnpServer.services[UPNP_CONTENT_DIRECTORY_1];
+    console.error("Can not find service="+UPNP_CONTENT_DIRECTORY_1+" in list "+Util.inspect(this.upnpServer.services));
+    return null;
 }
 
 
@@ -116,6 +124,8 @@ ContentDirectoryService.prototype.getSortCapabilities=function() {
                                                        "xmlns:u" : UPNP_CONTENT_DIRECTORY_1
                                                    }
                                                });
+
+    console.log("Get SortCapabilities ...");
 
     deferred.then(function onSuccess(response) {
         var sc=response.soapBody.byPath("u:GetSortCapabilitiesResponse/SortCaps", CONTENT_DIRECTORY_XMLNS_SET);
@@ -145,6 +155,8 @@ ContentDirectoryService.prototype.getSortCapabilities=function() {
         });
 
         return ret;
+    }, function onError(reason) {
+        console.error("getSortCapabilities error : "+reason);
     });
 
     return deferred;
@@ -293,6 +305,7 @@ ContentDirectoryService.prototype.browse=function(objectId, browseFlag, options)
 
             if (LOG_DIDL) {
                 console.log("DIDL="+didl);
+
             }
 
             var xmlDeferred;

@@ -3,7 +3,7 @@ import QtMultimedia 5.0
 
 import fbx.async 1.0
 
-Video {
+MediaPlayer {
     id: video
 
     property var playDeferred: ([]);
@@ -17,20 +17,26 @@ Video {
         case MediaPlayer.PlayingState:
             d=playDeferred;
             playDeferred=[];
+           // console.log("PlaybackChanged: "+playbackState+" PLAYING "+d);
             break;
 
         case MediaPlayer.StoppedState:
             d=stopDeferred;
             stopDeferred=[];
+           // console.log("PlaybackChanged: "+playbackState+" STOPPED "+d);
             break;
 
         case MediaPlayer.PausedState:
             d=pauseDeferred;
             pauseDeferred=[];
+           // console.log("PlaybackChanged: "+playbackState+" PAUSED "+d);
+            break;
+
+        default:
+            console.error("PlaybackChanged: "+playbackState+" UNKNOWN STATE");
             break;
         }
 
-        console.log("PlaybackChanged: "+playbackState+" "+d);
 
         if (!d || !d.length) {
             return;
@@ -50,6 +56,8 @@ Video {
 
         playDeferred.push(deferred);
 
+        //console.log("Play video !");
+
         video.play();
 
         return deferred;
@@ -63,6 +71,8 @@ Video {
         var deferred=new Deferred.Deferred();
 
         stopDeferred.push(deferred);
+
+        //console.log("Stop video !");
 
         video.stop();
 
@@ -78,6 +88,8 @@ Video {
         var deferred=new Deferred.Deferred();
 
         pauseDeferred.push(deferred);
+
+        //console.log("Pause video !");
 
         video.pause();
 

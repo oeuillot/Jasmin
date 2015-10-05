@@ -19,7 +19,7 @@ FocusInfo {
 
         x: 30
         y: 20
-        width: parent.width-((resImageSource)?(256+20):0)-60
+        width: parent.width-((imagesList && imagesList.length)?(256+20):0)-60
         height: childrenRect.height+30
 
 

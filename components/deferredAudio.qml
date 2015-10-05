@@ -30,7 +30,7 @@ Audio {
             break;
         }
 
-        console.log("PlaybackChanged: "+playbackState+" "+d);
+        //console.log("PlaybackChanged: "+playbackState+" "+d);
 
         if (!d || !d.length) {
             return;

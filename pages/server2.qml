@@ -55,7 +55,7 @@ Page {
         id: listView
         x: 5
         y: 5
-        width: parent.width-140-5
+        width: parent.width-5
         height: parent.height-5
         focus: true
 
@@ -75,9 +75,19 @@ Page {
                         url: "http://localhost:10293/description.xml"
                     },
                     {
+                        label: "Serveur Lafond 2",
+                        imageURL: "http://192.168.3.37:10293/icons/icon_128.png",
+                        url: "http://192.168.3.37:10293/description.xml"
+                    },
+                    {
                         label: "Serveur Delabarre",
                         imageURL: "http://192.168.3.193:10293/icons/icon_128.png",
                         url: "http://192.168.3.193:10293/description.xml"
+                    },
+                    {
+                        label: "FreeMi Marsilly",
+                        imageURL: "http://192.168.0.109:61234/icon.png",
+                        url: "http://192.168.0.109:61234/"
                     },
 
                     {
@@ -126,7 +136,7 @@ Page {
                       });
 
         }, function onError(reason) {
-            console.log("FAIL "+reason);
+            console.error("FAIL "+reason);
 
             // text.text="La tentative de connexion a échoué : "+reason;
 

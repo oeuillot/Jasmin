@@ -115,19 +115,18 @@ UpnpServer.prototype._fillDeviceDescription=function(xmlDocument) {
 
     var jsDocument=xmlDocument.toObject();
     this.deviceDescription=jsDocument;
-    console.log("DeviceDescription=",Util.inspect(jsDocument, false, {} ));
-    //console.log("DeviceDescription XML=",Util.inspect(xmlDocument, false, {} ));
+    //console.log("DeviceDescription=",Util.inspect(jsDocument, false, {} ));
 
     var url=xmlDocument.byPath("root/device/URLBase", DEVICE_XMLNS_SET).text();
     if (!url) {
         url=this.url;
     }
-    this.urlBase=new Web.Http.URL(url);
 
+    this.urlBase=new Web.Http.URL(url);
     console.log("urlBase="+this.urlBase);
 
     this.name=xmlDocument.byPath("root/device/friendlyName", DEVICE_XMLNS_SET).text() || "Server"
-    console.log("name="+this.name);
+    console.log("Upnp server name="+this.name);
 
     var services={};
     this.services=services;
@@ -147,5 +146,9 @@ UpnpServer.prototype._validServer=function() {
 }
 
 UpnpServer.prototype.relativeURL = function(url) {
+    if (!/:\/\//.exec(url) && url[0]!=="/") {
+        url="/"+url;
+    }
+
     return Web.Http.URL.prototype.relative.call(this.urlBase, url);
 }

@@ -92,6 +92,10 @@ FocusInfo {
                 height: 32
                 x: (rating.visible)?(rating.x+rating.width+32):0;
 
+                onXChanged: {
+                    updateFocusPosition();
+                }
+
                 Text {
                     id: trailerButton
                     text: Fontawesome.Icon.film;
@@ -126,15 +130,13 @@ FocusInfo {
 
                         case Qt.Key_Period:
                         case Qt.Key_MediaTogglePlayPause:
-                            if (!trailer.visible) {
-                                return;
-                            }
-                            event.accepted=true;
                             if (trailer.playbackState===MediaPlayer.PlayingState) {
+                                event.accepted=true;
                                 trailer.$pause();
                                 return;
                             }
                             if (trailer.playbackState===MediaPlayer.PausedState) {
+                                event.accepted=true;
                                 trailer.$play();
                                 return;
                             }
@@ -142,7 +144,7 @@ FocusInfo {
 
                         case Qt.Key_Escape:
                         case Qt.Key_Back:
-                            if (!trailer.visible) {
+                            if (trailer.playbackState===MediaPlayer.StoppedState) {
                                 return;
                             }
                             event.accepted=true;
@@ -159,7 +161,7 @@ FocusInfo {
                                 return;
                             }
 
-                            timer.stop();
+                            timerVideo.stop();
 
                             if (trailer.playbackState!==MediaPlayer.StoppedState) {
                                 trailer.fullscreen();
@@ -199,12 +201,12 @@ FocusInfo {
                             trailerButton.visible=true;
                             trailerButton.forceActiveFocus();
 
-                            timer.start();
+                            timerVideo.start();
                         }
                     }
 
                     Timer {
-                        id: timer
+                        id: timerVideo
                         interval: 5000
                         repeat: false
 
@@ -379,6 +381,112 @@ FocusInfo {
                 grid.height=y+8;
             }
         }
+
+        Component {
+            id: videoComponent
+
+            VideoOutput {
+
+                // ContentRect
+
+                /*
+                x: infosColumn.x+grid.x
+                y: infosColumn.y+grid.y
+                width: grid.width-x
+                height: parent.height-y
+                */
+                x: imageColumn.x
+                y: imageColumn.y
+                width: imageColumn.width
+                height: imageColumn.width
+
+                source: trailer
+
+                fillMode: VideoOutput.PreserveAspectFit
+            }
+        }
+
+
+        DeferredVideo {
+            id: trailer
+
+            autoLoad: true
+
+            property VideoOutput videoView;
+
+            function show(source) {
+                if (!source) {
+                    source=infosColumn.trailers[0].source;
+                }
+
+                return audioPlayer.pause().then(function() {
+                    return trailer.$stop().then(function() {
+                        imageColumn.visible=false;
+
+                        if (videoView) {
+                            videoView.destroy();
+                        }
+
+                        videoView = videoComponent.createObject(videoItem, {
+                                                                    source: trailer
+                                                                });
+
+                        trailer.source=source;
+
+                        return trailer.$play();
+                    });
+                });
+            }
+
+            function hide() {
+                return trailer.$stop().then(function() {
+                    videoView.visible=false;
+                    videoView.destroy();
+
+                    imageColumn.visible=true;
+
+                    //console.log("x="+trailer.x+" y="+trailer.y+" w="+trailer.width+" h="+trailer.height);
+
+                    return Deferred.resolved();
+                });
+            }
+
+            function fullscreen() {
+                console.log("Show fullscreen");
+
+                var x=0;
+                var y=0;
+                var w=videoItem.width;
+                var h=videoItem.height;
+
+                var p=videoView.parent;
+                for(;p;p=p.parent) {
+                    //console.log("P="+p);
+                    if (p.objectName==="fbx.ui.page.Stack") {
+                        break;
+                    }
+
+                    x-=p.x;
+                    y-=p.y;
+                    w=p.width;
+                    h=p.height;
+                }
+                //console.log("X="+x+" y="+y+" w="+w+" h="+h);
+
+                videoView.z=99999;
+                videoView.x=x;
+                videoView.y=y;
+                videoView.width=w
+                videoView.height=h
+            }
+
+
+            onStatusChanged: {
+                //if (status===MediaPlayer.Buffered) {
+                //console.log("Status="+status+" "+metaData.size+" "+metaData.resolution);
+                //}
+            }
+        }
     }
 
     ImageColumn {
@@ -388,66 +496,4 @@ FocusInfo {
         showReversedImage: true
     }
 
-    DeferredVideo {
-        id: trailer
-
-        /*
-        x: infosColumn.x+grid.x
-        y: infosColumn.y+grid.y
-        width: grid.width-x
-        height: parent.height-y
-        */
-        x: imageColumn.x
-        y: imageColumn.y
-        width: imageColumn.width
-        height: imageColumn.width
-
-        autoLoad: true
-        fillMode: VideoOutput.PreserveAspectFit
-        visible: false;
-
-        onStatusChanged: {
-            //if (status===MediaPlayer.Buffered) {
-                console.log("Status="+status+" "+metaData.size+" "+metaData.resolution);
-            //}
-        }
-
-
-        function show(source) {
-            if (!source) {
-                source=infosColumn.trailers[0].source;
-            }
-
-            return audioPlayer.pause().then(function() {
-                return trailer.$stop().then(function() {
-                    imageColumn.visible=false;
-                    trailer.x=imageColumn.x;
-                    trailer.y=imageColumn.y;
-                    trailer.width=imageColumn.width;
-                    trailer.height=imageColumn.height;
-                    trailer.visible=true;
-
-                    trailer.source=source;
-
-                    return trailer.$play();
-                });
-            });
-        }
-
-        function hide() {
-            return trailer.$stop().then(function() {
-                trailer.visible=false;
-                imageColumn.visible=true;
-
-                return Deferred.resolved();
-            });
-        }
-
-        function fullscreen() {
-            trailer.x=0;
-            trailer.y=0;
-            trailer.width=videoItem.width;
-            trailer.height=videoItem.height;
-        }
-    }
 }

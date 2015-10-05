@@ -6,7 +6,7 @@ import "../components" 1.0
 
 Item {
     height: parent.height
-    width: 140
+    width: 120
 
     property AudioPlayer audioPlayer: audioPlayer
 

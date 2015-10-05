@@ -4,7 +4,7 @@
 
 .import "../jasmin/util.js" as Util
 
-function fillModel(contentDirectoryService, meta) {
+function getModelInfo(contentDirectoryService, meta) {
 
     // console.profile();
     //console.log(Util.inspect(meta.result, false, {}));
@@ -89,6 +89,10 @@ function loadModel(contentDirectoryService, objectID, position, pageSize, loadAr
                  }, {
                      name: "rating",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
+
+                 }, {
+                     name: "certificate",
+                     namespaceURI: ContentDirectoryService.JASMIN_MOVIEMETADATA
 
                  }];
 

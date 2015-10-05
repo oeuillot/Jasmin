@@ -115,7 +115,7 @@ FocusInfo {
 
         x: 30
         y: 20
-        width: parent.width-((resImageSource)?(256+20):0)-60
+        width: parent.width-((imagesList && imagesList.length)?(256+20):0)-60
         height: childrenRect.height+20
 
         Component {
@@ -123,7 +123,7 @@ FocusInfo {
 
             FocusScope {
                 id: trackItem
-                width: 380
+                width: 375
                 height: 24
 
                 focus: true
@@ -146,7 +146,7 @@ FocusInfo {
                 }
 
                 Item {
-                    width: 380
+                    width: 375
                     height: 24
 
                     Text {
@@ -359,6 +359,10 @@ FocusInfo {
                 spacing: 8
                 height: 32
                 x: (rating.visible)?(rating.x+rating.width+32):0;
+
+                onXChanged: {
+                    updateFocusPosition();
+                }
 
                 Text {
                     id: playButton

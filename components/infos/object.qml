@@ -25,8 +25,9 @@ FocusInfo {
                 id: title
                 font.bold: false
                 font.pixelSize: 14
+                color: "#666666"
 
-                horizontalAlignment: Text.AlignRight
+                horizontalAlignment: Text.AlignLeft
             }
         }
 
@@ -48,39 +49,78 @@ FocusInfo {
             title: UpnpObject.getText(xml, "dc:title");
         }
 
-        Grid {
+        Item {
             id: grid
             x: 0
             y: titleInfo.y+titleInfo.height;
-            columns: 2
-            spacing: 6
+            width: parent.width
 
             Component.onCompleted: {
                 //console.log("Xml="+Util.inspect(xml, false, {}));
 
+
+                var y=0;
+
+                function addLine(label, value, lc, vc) {
+                    var lab=(lc || labelComponent).createObject(grid, {
+                                                                    text: label,
+                                                                    x: 0,
+                                                                    y: y,
+                                                                    width: 120
+                                                                });
+                    var val=(vc || valueComponent).createObject(grid, {
+                                                                    text: value,
+                                                                    x: 140,
+                                                                    y: y,
+                                                                    width: grid.width-140-8
+                                                                });
+
+                    y+=val.height+8;
+                }
+
                 var hasDate;
 
-                hasDate=!!UpnpObject.addLine(grid, labelComponent, valueComponent, "Date de création :", xml, "fm:birthTime", UpnpObject.dateFormatter);
-
-                var md=UpnpObject.addLine(grid, labelComponent, valueComponent, "Date de modification :", xml, "fm:modifiedTime", UpnpObject.dateFormatter);
-                if (md) {
+                var birthTime=UpnpObject.getText(xml, "fm:birthTime");
+                if (birthTime) {
                     hasDate=true;
+                    addLine("Date de création", UpnpObject.dateFormatter(birthTime));
+                }
+
+                var modifiedTime=UpnpObject.getText(xml, "fm:modifiedTime");
+                if (!modifiedTime) {
+                    modifiedTime=UpnpObject.getText(xml, "sec:modificationDate");
+                }
+                if (modifiedTime) {
+                    hasDate=true;
+                    addLine("Date de modification", UpnpObject.dateFormatter(modifiedTime));
+                }
+
+                if (!hasDate) {
+                    var date=UpnpObject.getText(xml, "dc:date");
+                    if (date) {
+                        addLine("Date", UpnpObject.dateFormatter(date));
+                    }
                 } else {
-                    var sd=UpnpObject.addLine(grid, labelComponent, valueComponent, "Date de modification :", xml, "sec:modificationDate", UpnpObject.dateFormatter);
-                    if (sd) {
-                        hasDate=true;
+                    var year=UpnpObject.getText(xml, "dc:date");
+                    if (year) {
+                        var syear=UpnpObject.dateYearFormatter(year);
+                        if (syear) {
+                            addLine("Année", syear);
+                        }
                     }
                 }
 
-                //UpnpObject.addLine(grid, labelComponent, valueComponent, "Date d'accés :", xml, "fm:accessTime", UpnpObject.dateFormatter);
-                // UpnpObject.addLine(grid, labelComponent, valueComponent, "Date de changement:", xml, "fm:changeTime", UpnpObject.dateFormatter);
-
-                if (!hasDate){
-                    UpnpObject.addLine(grid, labelComponent, valueComponent, "Date :", xml, "dc:date", UpnpObject.dateFormatter);
+                var size=UpnpObject.getText(xml, "res@size");
+                if (size!==undefined) {
+                    addLine("Taille", UpnpObject.sizeFormatter(size));
                 }
-                UpnpObject.addLine(grid, labelComponent, valueComponent, "Année :", xml, "dc:date", UpnpObject.dateYearFormatter);
-                UpnpObject.addLine(grid, labelComponent, valueComponent, "Taille :", xml, "res@size", UpnpObject.sizeFormatter);
-                UpnpObject.addLine(grid, labelComponent, valueComponent, "Nombre de fichiers :", xml, "@childCount");
+
+                var childCount=UpnpObject.getText(xml, "@childCount");
+                if (childCount!==undefined) {
+                    addLine("Nombre de fichiers", String(childCount));
+                }
+
+                grid.height=y+8;
             }
         }
     }

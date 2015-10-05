@@ -9,6 +9,8 @@ import "../jasmin" 1.0
 FocusScope {
     id: widget
 
+    objectName: "net.jasmin.Grid"
+
     property int cellWidth: 154;
 
     property int cellHeight: 190;
@@ -68,6 +70,39 @@ FocusScope {
         widget.onModelSizeChanged.connect(function() {
             updateLayout("onModelSizeChanged");
         });
+    }
+
+    function scrollIntoView(child) {
+        var x=0;
+        var y=0;
+        for(var p=child;p!==grid.contentItem;p=p.parent){
+            x+=p.x;
+            y+=p.y;
+        }
+
+        y=Math.max(y-4, 0);
+
+        if (y<grid.contentY) {
+            grid.contentY=y;
+        }
+        if (y+child.height+8>grid.contentY+grid.height) {
+            grid.contentY=y+child.height+8-grid.height;
+        }
+    }
+
+    function onBack() {
+        var cellDelegates=grid.cellDelegates;
+        grid.cellDelegates=[];
+
+        for(var i=0;i<cellDelegates.length;i++) {
+            var child=cellDelegates[i];
+
+            child.destroy();
+        }
+    }
+
+    function onFront() {
+
     }
 
 
@@ -232,7 +267,11 @@ FocusScope {
 
     function focus(cellIndex) {
         var model=widget.model;
-        var modelSize=Math.max(widget.model.length, widget.modelSize);
+        if (!model) {
+            return false;
+        }
+
+        var modelSize=Math.max(model.length, widget.modelSize);
 
         // console.log("Focus "+cellIndex+" modelSize="+modelSize);
         if (cellIndex<0 || cellIndex>=modelSize) {

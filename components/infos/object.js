@@ -14,13 +14,22 @@ function getText(xml, path, xmlns, separator) {
         return;
     }
 
-    var texts=xml.byPath(path, xmlns || XMLNS);
-    if (!texts || !texts.length) {
-        return;
+    var reg=/^([^@]*)(@.*)?$/i.exec(path);
+    //console.log("reg=",reg);
+    var value=xml;
+    if (reg[1]) {
+        value=xml.byPath(reg[1], xmlns || XMLNS);
+
+        if (!value) {
+            return;
+        }
+    }
+    if (reg[2]) {
+        return value.first().attr(reg[2].slice(1));
     }
 
     var ls=[];
-    texts.forEach(function(x) {
+    value.forEach(function(x) {
         ls.push(x.text());
     });
 
@@ -30,12 +39,12 @@ function getText(xml, path, xmlns, separator) {
 function addLine2(grid, labelComponent, valueComponent, labelText, valueText) {
 
     labelComponent.createObject(grid, {
-                                text: labelText
-                            });
+                                    text: labelText
+                                });
 
     valueComponent.createObject(grid, {
-                                text: valueText
-                            });
+                                    text: valueText
+                                });
 }
 
 function addLine(grid, labelTitle, valueTitle, title, xml, path, formatter) {

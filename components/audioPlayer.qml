@@ -186,7 +186,7 @@ Item {
           togglePlayPauseFlash.flash();
         }
 
-        console.log("Pause playbackState="+playbackState+"/"+Audio.PlayingState);
+        // console.log("Pause playbackState="+playbackState+"/"+Audio.PlayingState);
         if (playbackState===Audio.PlayingState) {
             return audio.$pause().then(function() {
                 playbackState=Audio.StoppedState;
@@ -200,7 +200,7 @@ Item {
           togglePlayPauseFlash.flash();
         }
 
-        console.log("PlayPause playbackState="+playbackState+"/"+Audio.PlayingState);
+        //console.log("PlayPause playbackState="+playbackState+"/"+Audio.PlayingState);
         if (playbackState===Audio.PlayingState) {
             return audio.$pause().then(function() {
                 playbackState=Audio.StoppedState;
@@ -299,7 +299,7 @@ Item {
         property int progress: 0;
 
         onPlaybackStateChanged: {
-            console.log("Playback audio.state="+audio.playbackState+" audioPlayer.state="+audioPlayer.playbackState);
+            // console.log("Playback audio.state="+audio.playbackState+" audioPlayer.state="+audioPlayer.playbackState);
 
             if (audio.playbackState===Audio.StoppedState) {
                 progress=0;
@@ -352,7 +352,7 @@ Item {
                         if (!trackItemYAnimation.running) {
                             if (autoDestroy) {
                                 myTrack.destroy();
-                                console.log("Destroy "+myTrack);
+                                //console.log("Destroy "+myTrack);
                             }
                         }
                     }
