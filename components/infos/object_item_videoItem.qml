@@ -21,6 +21,8 @@ FocusInfo {
     property var infoClass;
     property var objectID;
 
+    property var creationDate: Date.now();
+
 
     Item {
         id: infosColumn
@@ -45,6 +47,12 @@ FocusInfo {
                 color: "#666666"
 
                 horizontalAlignment: Text.AlignLeft
+
+                onContentWidthChanged: {
+                    if (contentWidth>80) {
+                        font.pixelSize--;
+                    }
+                }
             }
         }
 
@@ -86,11 +94,17 @@ FocusInfo {
                 font.bold: false;
             }
 
+            Certificate {
+                id: certiticate
+                x: rating.x+16+((rating.visible)?(rating.width):0);
+                xml: videoItem.xml
+            }
+
 
             Row {
                 spacing: 8
                 height: 32
-                x: (rating.visible)?(rating.x+rating.width+32):0;
+                x: certiticate.x+32+((certiticate.visible)?(certiticate.width):0);
 
                 onXChanged: {
                     updateFocusPosition();
@@ -158,6 +172,11 @@ FocusInfo {
                             event.accepted = true;
 
                             if(!infosColumn.trailers || !infosColumn.trailers.length) {
+                                return;
+                            }
+
+                            if (Date.now()-creationDate<1000) {
+                                // Evite un plantage quand la vidéo demarre trop vide !
                                 return;
                             }
 
@@ -350,11 +369,27 @@ FocusInfo {
                                                                 });
 
                     y+=val.height+8;
+
+                    return {
+                        label: lab,
+                        value: val
+                    };
                 }
 
-                var year=UpnpObject.getText(xml, "dc:data");
+                var originalTitle=UpnpObject.getText(xml, "mo:originalTitle");
+                var title=UpnpObject.getText(xml, "dc:title");
+                var alsoKnownAs=UpnpObject.getText(xml, "mo:alsoKnownAs");
+                if (originalTitle && originalTitle!==title) {
+                    addLine("Titre original", originalTitle);
+                }
+                if (alsoKnownAs && alsoKnownAs!==title) {
+                    addLine("Autre titre", alsoKnownAs);
+                }
+
+                var year=UpnpObject.getText(xml, "dc:date");
                 if (year) {
-                    addLine("Année de sortie", (new Date(year).getFullYear()));
+                    var cy=addLine("Année de sortie", (new Date(year).getFullYear()));
+                    //cy.label.font.pixelSize=12;
                 }
 
                 //console.log("Xml="+Util.inspect(xml, false, {}));
@@ -386,7 +421,6 @@ FocusInfo {
             id: videoComponent
 
             VideoOutput {
-
                 // ContentRect
 
                 /*
@@ -411,6 +445,12 @@ FocusInfo {
             id: trailer
 
             autoLoad: true
+
+            onPlaybackStateChanged: {
+                if (playbackState==MediaPlayer.StoppedState) {
+                    hide();
+                }
+            }
 
             property VideoOutput videoView;
 
@@ -473,7 +513,6 @@ FocusInfo {
                 }
                 //console.log("X="+x+" y="+y+" w="+w+" h="+h);
 
-                videoView.z=99999;
                 videoView.x=x;
                 videoView.y=y;
                 videoView.width=w

@@ -1,13 +1,7 @@
 .import "../../jasmin/upnpServer.js" as UpnpServer
 .import "../../jasmin/contentDirectoryService.js" as ContentDirectoryService
 
-var XMLNS={
-    fm: ContentDirectoryService.JASMIN_FILEMEDATA,
-    dc: ContentDirectoryService.PURL_ELEMENT_XMLS,
-    upnp: UpnpServer.UPNP_METADATA_XMLNS,
-    "": ContentDirectoryService.DIDL_LITE_XMLNS
-}
-
+var XMLNS=ContentDirectoryService.DIDL_XMLNS_SET;
 
 function getText(xml, path, xmlns, separator) {
     if (!xml) {
