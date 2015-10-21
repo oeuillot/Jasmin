@@ -29,7 +29,6 @@ function parseXML(text, xmlns, callbacks) {
     var selfClosingRegExp=/\/$/;
     var attrValueRegExp=/[	 ]*([a-z-_]+)(:[a-z-_]+)?(="[^"]*"|='[^']*')?[	 ]*/i;
 
-    var iter = text.split(/(<[^>]+>)/);
 
     var document={
         nodeType: 9,
@@ -40,6 +39,10 @@ function parseXML(text, xmlns, callbacks) {
     if (callbacks.openDocument) {
         callbacks.openDocument(document);
     }
+
+    var iter = text.split(/(<[^>]+>)/);
+
+    var splitMs=Date.now()-start;
 
     for (var i = 0; i < iter.length; ++i) {
         var progress=i/iter.length;
@@ -53,6 +56,7 @@ function parseXML(text, xmlns, callbacks) {
                 var nodeName = item.slice(1).trim();
 
                 if (!node || node.tagName !== nodeName) {
+                    console.error("Invalid document "+text+" error at ")
                     throw new Error("Malformed document");
                 }
 
@@ -225,7 +229,7 @@ function parseXML(text, xmlns, callbacks) {
     dictionnary[""]=defaultNamespaceURI;
 
     start=Date.now()-start;
-    console.log("Parsing: "+start+"ms size="+text.length+" escape="+d3+"ms");
+    console.log("Parsing: total="+start+"ms split="+splitMs+"ms escape="+d3+"ms size="+text.length);
 
     document.documentElement=poped;
 
@@ -270,6 +274,11 @@ function _unescape(t) {
         }
 
         var i3=t.indexOf(';', i2);
+        if (i3<0) {
+            console.error("Invalid format "+t.substring(i2));
+            break;
+        }
+
         idx=i3+1;
 
         ret.push(lookup[t.substring(i2+1, i3)]);
