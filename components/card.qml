@@ -40,6 +40,7 @@ FocusScope {
     property Item certificateItem;
 
     onSelectedChanged: {
+        //console.log("Selected changed "+selected);
         if (selectedAnimation.running) {
             selectedAnimation.stop();
         }
@@ -56,9 +57,7 @@ FocusScope {
     }
 
     onModelChanged: {
-        //console.log("Xml="+Util.inspect(model, false, {}));
-
-        // console.log("contentDirectoryService="+contentDirectoryService);
+        //console.log("Model changed="+Util.inspect(model, false, {}));
 
         selectedScale=10;
         resImageSource="";
@@ -83,10 +82,13 @@ FocusScope {
         itemType.text= CardScript.computeType(upnpClass);
         itemType.visible=true;
 
+        label.font.pixelSize=16;
+        info.font.pixelSize=14;
         title=CardScript.computeLabel(model, upnpClass) || "";
 
         var ratingV=CardScript.getRating(model);
         rating.rating=ratingV;
+        //console.log("Rating="+ratingV);
 
         if (ratingV < 0) {
             info.text=CardScript.computeInfo(model, upnpClass) || "";
@@ -110,13 +112,12 @@ FocusScope {
         }
 
         var certificate=CardScript.computeCertificate(model);
-        if (certificate) {            
+        if (certificate) {
             if (!certificateItem) {
                 certificateItem=certificateComponent.createObject(card);
             }
 
-            certificateItem.text=certificate;
-            certificateItem.visible=true;
+            certificateItem.xml=model;
         }
     }
 
@@ -234,54 +235,49 @@ FocusScope {
             color: "#404040"
             elide: Text.ElideMiddle
             font.bold: true
-            font.pixelSize: (text && text.length>14)?14:16
-        }
+            font.pixelSize: 16
 
-        Text {
-            id: info
-            visible: (infoType==="description") && !hideInfo
-            y: label.y+label.height
-            x: selectedScale
-            width: parent.width-x;
-            color: "#8A8A92"
-            elide: Text.ElideMiddle
-            font.bold: true
-            font.pixelSize: (text && text.length>14)?12:14
+            onContentWidthChanged: {
+                if (label.contentWidth>parent.width-x && font.pixelSize>12) {
+                    font.pixelSize--;
+                }
+            }
         }
+    }
 
-        Rating {
-            id: rating
-            visible:  (infoType==="rating") && !hideInfo;
-            y: label.y+label.height
-            x: selectedScale
+    Text {
+        id: info
+        visible: (infoType==="description") && !hideInfo
+        y: label.y+label.height
+        x: selectedScale
+        width: parent.width-x;
+        color: "#8A8A92"
+        elide: Text.ElideMiddle
+        font.bold: true
+        font.pixelSize: 14
+
+        onContentWidthChanged: {
+            if (info.contentWidth>parent.width-x && font.pixelSize>12) {
+                font.pixelSize--;
+            }
         }
+    }
+
+    Rating {
+        id: rating
+        visible:  (infoType==="rating") && !hideInfo;
+        y: label.y+label.height
+        x: selectedScale
     }
     Component {
         id: certificateComponent
 
-        Item {
-            x: card.width-certificateText.contentWidth-8-8-selectedScale;
+        Certificate {
+            id: certificate
+            x: parent.width-certificate.width-4-8-selectedScale;
             y: selectedScale+4;
-            width: certificateText.contentWidth+4;
-            height: certificateText.height+4;
-
-            property alias text: certificateText.text;
-
-            Rectangle {
-                width: parent.width
-                height: parent.height
-                color: "#FF0000"
-                opacity: 0.80
-                radius: 10;
-            }
-
-            Text {
-                id: certificateText
-                color: "white"
-                x: 2
-                y: 2
-                font.pixelSize: 14;
-            }
+            bgOpacity: 0.8
+            xml: card.xml
         }
     }
 }
