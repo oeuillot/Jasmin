@@ -15,13 +15,7 @@ FocusScope {
 
     property var model;
 
-    property string resImageSource;
-
     property var contentDirectoryService;
-
-    property Item imageItem;
-
-    property alias title: label.text;
 
     property bool selected: false;
 
@@ -44,11 +38,15 @@ FocusScope {
     }
 
     onModelChanged: {
-        //console.log("Xml="+Util.inspect(model, false, {}));
-
         selectedScale=10;
 
-        resImageSource=model.imageURL || "";
+        if (model.imageURL) {
+            itemImage.visible=true;
+            itemImage.source=model.imageURL;
+        } else {
+            itemImage.visible=false;
+            itemImage.source="";
+        }
 
         label.text=model.label;
     }
@@ -87,6 +85,7 @@ FocusScope {
             }
 
             Image {
+                id: itemImage
                 x: 0
                 y: 0
                 width: parent.width
@@ -100,10 +99,12 @@ FocusScope {
                 sourceSize.width: 256
                 sourceSize.height: 256
 
-                source: resImageSource
-
                 onStatusChanged: {
                     //                            console.log("status="+status);
+                    if (!source) {
+                        return;
+                    }
+
                     if (status===Image.Ready) {
                         itemType.visible=false;
                     } else {
