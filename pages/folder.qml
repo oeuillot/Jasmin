@@ -32,11 +32,15 @@ Page {
 
     property bool autoPop: false;
 
+    property var deferredXMLParsing;
+
     onDidAppear: {        
         pageShown=true;
 
-        listView.pageSizeLoaded[0]=true;
-        listView.loadPage(0);
+        if (!listView.pageSizeLoaded[0]) {
+            listView.pageSizeLoaded[0]=true;
+            listView.loadPage(0);
+        }
     }
 
     onWillAppear: {
@@ -55,7 +59,7 @@ Page {
             listView.pageSizeLoaded[0]=true;
             listView.loadPage(0).then(function() {
 
-                console.log(Date.now()+" little ModelSize="+listView.modelSize);
+                // console.log(Date.now()+" little ModelSize="+listView.modelSize);
                 if (listView.modelSize===0) {
                     emptyFolder.visible=true;
                     backFolderTimer.start();
@@ -66,7 +70,7 @@ Page {
             // Grosse liste, on ne charge que le titre/class
             FolderScript.listModel(contentDirectoryService, listView.objectID).then(function(result) {
 
-                console.log(Date.now()+" big ModelSize="+result.length);
+                // console.log(Date.now()+" big ModelSize="+result.length);
 
                 listView.model=result;
                 listView.updateLayout();
@@ -77,7 +81,7 @@ Page {
     onDidDisappear: {
         //console.log("ON DID DISAPPEAR *********");
         listView.onBack();
-        //listView.model=null;
+        listView.model=null;
     }
 
     Component {
@@ -286,6 +290,10 @@ color: "red";
                     //console.log("SET TOTAL MATCHES to "+result.totalMatches);
                 }
 
+                if (!listView.model) {
+                    listView.model=[];
+                }
+
 
                 var list=result.list;
                 var model=listView.model;
@@ -314,7 +322,9 @@ color: "red";
 
             objectID=modelInfos.objectID;
 
-            listView.model=[];
+            if (!listView.model) {
+                listView.model=[];
+            }
             if (modelInfos.childCount>0) {
                 listView.modelSize=modelInfos.childCount;
             }

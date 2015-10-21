@@ -10,30 +10,32 @@ function getModelInfo(contentDirectoryService, meta) {
     //console.log(Util.inspect(meta.result, false, {}));
 
     var container=meta.result.byPath("DIDL-Lite/container", ContentDirectoryService.DIDL_XMLNS_SET);
-//    console.log("Container=",Util.inspect(container));
+    //    console.log("Container=",Util.inspect(container));
 
     var objectID=container.attr("id");
-//    console.log("ID="+objectID);
+    //    console.log("ID="+objectID);
 
     var childCount= -1;
     var cc=container.attr("childCount");
     if (cc) {
         childCount=parseInt(cc, 10);
     }
-//    console.log("ChildCount="+childCount);
+    //    console.log("ChildCount="+childCount);
 
     return { objectID: objectID, childCount: childCount };
 }
 
-function listModel(contentDirectoryService, objectID) {
+function listModel(contentDirectoryService, objectID, options) {
     var deferred = new Async.Deferred.Deferred();
 
-    var filters=[{
-                     name: "title",
-                     namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
-                 }];
+    options= options || {};
 
-    var sorters=[
+    options.filters=[{
+                         name: "title",
+                         namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
+                     }];
+
+    options.sorters=[
                 {
                     ascending: true,
                     name: "title",
@@ -43,12 +45,9 @@ function listModel(contentDirectoryService, objectID) {
             ];
 
 
-    //    console.log("Request position "+position+" pageSize="+pageSize);
+    //console.log("listModel: Request position "+position+" pageSize="+pageSize);
 
-    var d=contentDirectoryService.browseDirectChildren(objectID, {
-                                              filters: filters,
-                                              sortCriteria: sorters
-                                          });
+    var d=contentDirectoryService.browseDirectChildren(objectID, options);
 
     d.then(function onSuccess(xml){
 
@@ -113,14 +112,14 @@ function loadModel(contentDirectoryService, objectID, position, pageSize, loadAr
             ];
 
 
-    //    console.log("Request position "+position+" pageSize="+pageSize);
+    //console.log("loadModel: Request position "+position+" pageSize="+pageSize);
 
     var d=contentDirectoryService.browseDirectChildren(objectID, {
-                                              filters: filters,
-                                              startingIndex: position,
-                                              requestCount: Math.max(pageSize, 32),
-                                              sortCriteria: sorters
-                                          });
+                                                           filters: filters,
+                                                           startingIndex: position,
+                                                           requestCount: Math.max(pageSize, 32),
+                                                           sortCriteria: sorters
+                                                       });
 
     d.then(function onSuccess(xml){
 
