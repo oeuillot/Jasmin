@@ -442,8 +442,8 @@ FocusScope {
     //                                console.log("Update Y");
                                 }
                                 if (cellDelegate.model!==cellModel) {
+                                    // console.log("Update cellModel "+idx+" "+cellModel);
                                     cellDelegate.model=cellModel;
-     //                               console.log("Update cellModel "+idx+" "+cellModel);
 
                                     if (cellDelegate.delayedUpdateModel) {
                                         registerAsync(idx, cellDelegate);
@@ -469,10 +469,11 @@ FocusScope {
                             cellDelegate.visible=true;
 
                             if (rowIndex<pageIndex || rowIndex>=pageIndex+widget.viewRows) {
-    //                            console.log("Ignore rowIndex="+rowIndex);
+    //                          //  console.log("Ignore rowIndex="+rowIndex);
                                 continue;
                             }
 
+                            // console.log("Set cellModel "+idx+" "+cellModel);
                             cellDelegate.model=cellModel;
 
                             if (cellDelegate.delayedUpdateModel) {
@@ -495,6 +496,8 @@ FocusScope {
                                                  model: cellModel,
                                                  cellIndex: idx
                                              });
+
+                        // console.log("Instanciate cellModel "+idx+" "+cellModel);
 
                         cellDelegate=widget.delegate.createObject(grid.contentItem, params);
 
