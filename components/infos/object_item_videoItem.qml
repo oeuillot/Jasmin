@@ -290,7 +290,7 @@ FocusInfo {
                                 return;
                             }
 
-                            console.log("Res="+res.source);
+                            //console.log("Res="+res.source);
 
                             var upnpServer=new UpnpServer.UpnpServer("http://192.168.3.63:54243/device.xml");
 
@@ -411,6 +411,12 @@ FocusInfo {
                 var synopsys=UpnpObject.getText(xml, "upnp:longDescription") || UpnpObject.getText(xml, "dc:description");
                 if (synopsys) {
                     addLine("Synopsys", synopsys, null, synopsysComponent);
+                }
+
+
+                var ress=UpnpObject.getText(xml, "upnp:res");
+                if (ress) {
+                    addLine("Genre", genres);
                 }
 
                 grid.height=y+8;

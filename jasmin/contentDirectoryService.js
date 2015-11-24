@@ -9,7 +9,7 @@
 .import "upnpServer.js" as UpnpServer
 .import "soapTransport.js" as Soap
 
-var LOG_DIDL=false;
+var LOG_DIDL=true;
 
 var UPNP_CONTENT_DIRECTORY_1="urn:schemas-upnp-org:service:ContentDirectory:1";
 
@@ -288,7 +288,7 @@ ContentDirectoryService.prototype.browse=function(objectId, browseFlag, options)
                                                    _content: params
                                                });
 
-    deferred.then(function onSuccess(response) {
+    function onSuccess(response) {
         var soapBody=response.soapBody;
 
         var ret={
@@ -332,7 +332,14 @@ ContentDirectoryService.prototype.browse=function(objectId, browseFlag, options)
         // console.log("Parsed response="+Util.inspect(ret, false, {}));
 
         return Async.Deferred.resolved(ret);
-    });
+    }
+
+    if (options.deferredXMLParsing) {
+        options.deferredXMLParsing=onSuccess;
+        return deferred;
+    }
+
+    deferred.then(onSuccess);
 
     return deferred;
 }

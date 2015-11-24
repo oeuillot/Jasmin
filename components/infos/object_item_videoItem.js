@@ -8,6 +8,8 @@ function listResources(contentDirectoryService, xml) {
 
     var lst=[];
 
+    var resEx=xml.byPath("resEx", ContentDirectoryService.DIDL_XMLNS_SET);
+
     xml.byPath("res", ContentDirectoryService.DIDL_XMLNS_SET).forEach(function(res) {
 
         //console.log("Test res "+Util.inspect(xml, false, {}));

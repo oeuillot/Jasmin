@@ -1,6 +1,8 @@
 import QtQuick 2.2
 import "../jasmin" 1.0
 
+import "fontawesome.js" as Fontawesome;
+
 Item {
     id: widget
     width: certificateText.contentWidth+6;
@@ -17,17 +19,26 @@ Item {
         }
 
         var certificate = xml.byPath("mo:certificate", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
+
         //console.log("Certificate="+certificate);
         if (!certificate) {
             widget.visible=false;
             return;
         }
 
-        certificateText.text=certificate;
+        if (certificate==="!") {
+            certificateBackground.color="#FF9C32";
+            certificateText.font.family=Fontawesome.Name;
+            certificate=Fontawesome.Icon.warning;
 
-        if (/\+$/.exec(certificate)) {
+        } else if (/\+$/.exec(certificate)) {
             certificateBackground.color="#22BB22";
+
+        } else {
+            certificateBackground.color="#FF0000";
         }
+
+        certificateText.text=certificate;
 
         widget.visible=true;
     }
@@ -36,7 +47,6 @@ Item {
         id: certificateBackground
         width: parent.width
         height: parent.height
-        color: "#FF0000"
         opacity: 0.80
         radius: 10;
     }
