@@ -45,12 +45,12 @@ UpnpServer.prototype.connect=function(){
     console.log("URL="+this.url);
 
     var transaction=Web.Http.Transaction.factory({
-                                                     method: "GET",
                                                      url: this.url,
                                                      headers: {
-                                                         "user-agent": application.name+"/"+application.version+" (QML client; "+application.organization+")"
+                                                         "X-User-Agent": application.name+"/"+application.version+" (QML client; "+application.organization+")"
                                                      }
                                                  });
+    transaction.url=this.url; // Microsoft bug  (there is an ':' in the path of the url)
 
     var deferred = transaction.send();
 
@@ -146,9 +146,43 @@ UpnpServer.prototype._validServer=function() {
 }
 
 UpnpServer.prototype.relativeURL = function(url) {
-    if (!/:\/\//.exec(url) && url[0]!=="/") {
-        url="/"+url;
+    return relativeURL(this.url, url);
+}
+
+function relativeURL(baseURL, url) {
+
+    var reg1=/^(\w+:)?(\/\/[\w\.]+)?(:\d+)?(\/?[^\?#]*)?(\?[^#]*)?(#.*)?$/.exec(baseURL);
+    var reg2=/^(\w+:)?(\/\/[\w\.]+)?(:\d+)?(\/?[^\?#]*)?(\?[^#]*)?(#.*)?$/.exec(url);
+
+    if (!reg2[1] && !reg2[2] && !reg2[3] && url.charAt(0)!=='/') {
+        if (reg1[4]) {
+            var idx=reg1[4].lastIndexOf('/');
+            if (idx>=0) {
+                reg1[4]=reg1[4].substring(0, idx+1)+url;
+            } else {
+                reg1[4]="/"+url;
+            }
+        } else {
+            reg1[4]="/"+url;
+        }
+        reg1[5]=reg2[5];
+
+    } else {
+        for(var i=1;i<reg2.length;i++) {
+            if (reg2[i]) {
+                reg1[i]=reg2[i];
+            }
+        }
     }
 
-    return Web.Http.URL.prototype.relative.call(this.urlBase, url);
+    var u="";
+    for(var i=1;i<reg1.length;i++) {
+        if (reg1[i]) {
+            u+=reg1[i];
+        }
+    }
+
+    //console.log("Merge '"+baseURL+"' with '"+url+"' => "+u);
+
+    return u;
 }

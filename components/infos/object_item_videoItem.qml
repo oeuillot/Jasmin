@@ -23,7 +23,6 @@ FocusInfo {
 
     property var creationDate: Date.now();
 
-
     Item {
         id: infosColumn
 
@@ -206,6 +205,7 @@ FocusInfo {
                             if (!/^video\/(.*)/.exec(l.type)) {
                                 return;
                             }
+                           // console.log("l.type="+l.type+" "+l.additionalInfos.type+" "+l.additionalInfo);
 
                             if (l.additionalInfos.type!=="trailer") {
                                 return;
@@ -251,6 +251,10 @@ FocusInfo {
                     color: "black"
 
                     Keys.onPressed: {
+                        if (Date.now()-creationDate<1000) {
+                            // Parfois, ça va trop vite !
+                            return;
+                        }
 
                         switch(event.key) {
 
@@ -290,8 +294,12 @@ FocusInfo {
                                 return;
                             }
 
-                            //console.log("Res="+res.source);
+                            console.log("Res="+res.source);
 
+                            //Qt.openUrlExternally(res.source);
+                            App.urlOpen(res.source, res.type);
+
+/*
                             var upnpServer=new UpnpServer.UpnpServer("http://192.168.3.63:54243/device.xml");
 
                             var avTransport=new AvTransportService.AvTransportService(upnpServer);
@@ -303,6 +311,7 @@ FocusInfo {
                             }, function onFailed(reason) {
                                 console.error("Cant not connect server: ",reason);
                             });
+                            */
                             return;
                         }
                     }
@@ -427,14 +436,6 @@ FocusInfo {
             id: videoComponent
 
             VideoOutput {
-                // ContentRect
-
-                /*
-                x: infosColumn.x+grid.x
-                y: infosColumn.y+grid.y
-                width: grid.width-x
-                height: parent.height-y
-                */
                 x: imageColumn.x
                 y: imageColumn.y
                 width: imageColumn.width
@@ -446,19 +447,18 @@ FocusInfo {
             }
         }
 
-
         DeferredVideo {
             id: trailer
 
             autoLoad: true
 
+            property VideoOutput videoView;
+
             onPlaybackStateChanged: {
-                if (playbackState==MediaPlayer.StoppedState) {
-                    hide();
+                if (playbackState===MediaPlayer.StoppedState) {
+                    trailer.hide();
                 }
             }
-
-            property VideoOutput videoView;
 
             function show(source) {
                 if (!source) {
@@ -469,12 +469,12 @@ FocusInfo {
                     return trailer.$stop().then(function() {
                         imageColumn.visible=false;
 
-                        if (videoView) {
-                            videoView.destroy();
-                        }
+                            if (videoView) {
+                                videoView.destroy();
+                            }
 
-                        videoView = videoComponent.createObject(videoItem, {
-                                                                    source: trailer
+                            videoView = videoComponent.createObject(videoItem, {
+                                                                        source: trailer
                                                                 });
 
                         trailer.source=source;
@@ -482,7 +482,7 @@ FocusInfo {
                         return trailer.$play();
                     });
                 });
-            }
+                }
 
             function hide() {
                 return trailer.$stop().then(function() {
@@ -505,9 +505,9 @@ FocusInfo {
                 var w=videoItem.width;
                 var h=videoItem.height;
 
-                var p=videoView.parent;
+                var p=videoItem;
                 for(;p;p=p.parent) {
-                    //console.log("P="+p);
+                    console.log("P="+p);
                     if (p.objectName==="fbx.ui.page.Stack") {
                         break;
                     }
@@ -517,8 +517,9 @@ FocusInfo {
                     w=p.width;
                     h=p.height;
                 }
-                //console.log("X="+x+" y="+y+" w="+w+" h="+h);
+                console.log("X="+x+" y="+y+" w="+w+" h="+h);
 
+                videoView.z=99999;
                 videoView.x=x;
                 videoView.y=y;
                 videoView.width=w

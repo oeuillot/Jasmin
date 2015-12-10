@@ -48,7 +48,7 @@ FocusScope {
             itemImage.source="";
         }
 
-        label.text=model.label;
+        label.text=model.name;
     }
 
 

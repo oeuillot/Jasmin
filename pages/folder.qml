@@ -1,3 +1,7 @@
+/**
+  * @author Olivier Oeuillot
+  */
+
 import QtQuick 2.2
 import fbx.ui.page 1.0
 import fbx.ui.control 1.0
@@ -7,6 +11,7 @@ import QtMultimedia 5.0
 import "folder.js" as FolderScript
 import "../components" 1.0
 import "../jasmin" 1.0
+import "../services" 1.0
 
 Page {
     id: page
@@ -44,7 +49,7 @@ Page {
     }
 
     onWillAppear: {
-        console.log("ON WILL APPEAR ********* model="+listView.model);
+       // console.log("ON WILL APPEAR ********* model="+listView.model);
 
         //listView.model=[]
         if (listView.model && listView.model.length) {

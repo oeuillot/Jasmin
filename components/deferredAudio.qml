@@ -3,12 +3,20 @@ import QtMultimedia 5.0
 
 import fbx.async 1.0
 
-Audio {
+Item {
     id: audio
 
     property var playDeferred: ([]);
     property var stopDeferred: ([]);
     property var pauseDeferred: ([]);
+
+    property int playbackState: Audio.StoppedState;
+
+    property int position: 0;
+
+    property var source: null;
+
+    property bool autoLoad: false;
 
     onPlaybackStateChanged: {
         var d;

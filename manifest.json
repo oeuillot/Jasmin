@@ -2,16 +2,15 @@
     "name": "Jasmin",
     "identifier": "net.oeuillot.jasmin",
     "description": "Upnp client pour Freebox Révolution par Olivier Oeuillot",
+    "capabilities": {
+        "net_wan": "required",
+        "net_lan": "required",
+        "net_gw": "required"
+    },
     "entryPoints": {
         "main": {
             "file": "main.qml",
             "default": true
         }
-    },
-    "capabilities": {
-        "net_wan": "required",
-        "net_lan": "required",
-        "net_gw": "required",
-        "gw_settings": "required"
     }
 }

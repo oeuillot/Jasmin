@@ -44,11 +44,11 @@ function listResources(contentDirectoryService, xml) {
 
         var url=res.text();
 
-        var imageSource=contentDirectoryService.upnpServer.relativeURL(url).toString();
+        var imageSource=contentDirectoryService.upnpServer.relativeURL(url);
 
         var additionalInfos={};
         if (additionalInfo) {
-            additionalInfo.split(',').forEach(function(token) {
+            additionalInfo.split(';').forEach(function(token) {
                var req=/([^=]+)(=.*)/.exec(token);
                if (!req) {
                   return;

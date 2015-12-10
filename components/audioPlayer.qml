@@ -25,7 +25,7 @@ Item {
     property int playbackState: Audio.StoppedState;
 
     function setPlayList(contentDirectoryService, xmlArray, albumImageURL, append, offset) {
-        //console.log("setPlay: xml="+xmlArray+" playListIndex="+playListIndex+" shuffle="+shuffle+" append="+append);
+        console.log("setPlay: xml="+xmlArray+" playListIndex="+playListIndex+" shuffle="+shuffle+" append="+append);
 
         if (!append) {
             return clear().then(function() {
@@ -51,11 +51,14 @@ Item {
 
             var protocolInfo=res.attr("protocolInfo");
             if (!protocolInfo) {
+                console.log("No protocolInfo "+res);
                 return;
             }
 
+            console.log("pi="+protocolInfo);
             var ts=protocolInfo.split(':');
             if (ts[0]!=='http-get') {
+                console.log("Ts[0]="+ts[0]);
                 return;
             }
 
@@ -66,7 +69,7 @@ Item {
 
             var imageURL=xml.byPath("upnp:albumArtURI", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
             if (imageURL) {
-                imageURL=contentDirectoryService.upnpServer.relativeURL(imageURL).toString();
+                imageURL=contentDirectoryService.upnpServer.relativeURL(imageURL);
             }
 
             if (!imageURL) {
@@ -78,7 +81,7 @@ Item {
 
             var objectID=xml.attr("id");
 
-            url=contentDirectoryService.upnpServer.relativeURL(url).toString();
+            url=contentDirectoryService.upnpServer.relativeURL(url);
 
             found={
                 objectID: objectID,
@@ -97,7 +100,7 @@ Item {
 
     function _setPlayList(contentDirectoryService, xmlArray, albumImageURL, offset) {
 
-        //console.log("xmlArray="+xmlArray);
+        console.log("xmlArray="+xmlArray);
 
         if (!(xmlArray instanceof Array)) {
             xmlArray=[xmlArray];
@@ -106,6 +109,7 @@ Item {
         xmlArray.forEach(function(xml) {
             var info=_fillInfo(contentDirectoryService, xml, albumImageURL, playList);
             if (!info) {
+                console.log("FillInfo return null for xml="+xml);
                 return;
             }
             if (offset===undefined) {
@@ -292,7 +296,7 @@ Item {
 
     DeferredAudio {
         id: audio
-        autoLoad: true
+        autoLoad: true        
 
         source: (currentTrack && currentTrack.url) || ""
 
@@ -328,7 +332,6 @@ Item {
             cursorProgress2.x=Math.floor(progress*(bgProgress.width-2)/100);
         }
     }
-
 
     Component {
         id: trackItem

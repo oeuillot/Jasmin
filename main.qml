@@ -1,4 +1,5 @@
 import QtQuick 2.4
+import QtMultimedia 5.5
 import "components" 1.0
 import fbx.application 1.0
 import fbx.ui.page 1.0
@@ -6,26 +7,38 @@ import fbx.ui.layout 1.0
 
 import "./pages" 1.0
 import "./jasmin" 1.0
+import "./services" 1.0
 
 Application {
     id: app
 
+    color: "#FEFFFFFF"
+
     property Menu menu;
 
-    property bool started: false;
+    property bool starting: false;
 
-    /*
-    Settings {
+    JSettings {
         id: settings
-        App: app
+
+        onSettingsLoadedChanged: {
+            startup();
+        }
     }
-    */
 
     function startup() {
-        if (started) {
+        if (fontawesome.status!==FontLoader.Ready) {
             return;
         }
-        started=true;
+
+        if (!settings.settingsLoaded) {
+            return;
+        }
+
+        if (!starting) {
+            return;
+        }
+        starting=false;
 
         menu=menuComponent.createObject(app);
 
@@ -33,8 +46,8 @@ Application {
                            audioPlayer: menu.audioPlayer,
                            menu: menu,
                            settings: settings
-//                           xmlParserWorker: xmlParserWorker
                        });
+
     }
 
     FontLoader {
@@ -42,21 +55,12 @@ Application {
         source: "components/fonts/fontawesome-webfont__ttf.png"
 
         onStatusChanged: {
-            console.log("Waiting ...");
-
-            if (fontawesome.status===FontLoader.Ready) {
-                console.log("GO ...");
-                startup();
-            }
+            startup();
         }
     }
 
     JBackground {
-        background: "jasmin"
-    }
-
-    JSettings {
-        id: settings
+        background: "jasmin"        
     }
 
     Stack {
@@ -66,7 +70,7 @@ Application {
 
         x: 0
         y: breadcrumb.height
-        width: parent.width-(menu.visible?menu.width:0)
+        width: parent.width-((menu && menu.visible)?menu.width:0)
         height: parent.height-breadcrumb.height
         focus: true
 
@@ -90,18 +94,6 @@ Application {
         }
     }
 
-    XmlParserWorker {
-        id: xmlParserWorker
-    }
-
-    Waiting {
-        id: waiting
-        x: 0
-        y: 64
-
-        xmlParserWorker: xmlParserWorker
-    }
-
     Component {
         id: menuComponent
 
@@ -115,9 +107,22 @@ Application {
     }
 
     Component.onCompleted: {
-
-        if (fontawesome.status===FontLoader.Ready) {           
-            startup();
-        }
+        starting=true;
+        startup();
     }
+
+    /*
+    Video {
+        id: videoView
+
+        x: 0 //imageColumn.x
+        y: 0 //imageColumn.y
+        width: 256 //imageColumn.width
+        height: 256 //imageColumn.width
+
+        source: "http://192.168.3.193:10293/cds/content/23552?contentHandler=af_metas&resKey=trailer_221413"
+        autoPlay: true
+        autoLoad: true
+    }
+    */
 }

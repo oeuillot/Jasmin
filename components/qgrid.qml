@@ -25,8 +25,8 @@ FocusScope {
 
     property var delegate;
 
-    property int lastFocusIndex: 0;
-    property int focusIndex: 0;
+    property int lastFocusIndex: -1;
+    property int focusIndex: -1;
 
     property int pageCellIndex: 0;
 
@@ -41,7 +41,7 @@ FocusScope {
     property bool userScrolling: false;
 
     onActiveFocusChanged: {
-        //console.log("Grid: Active focus "+activeFocus+" "+focusIndex);
+       console.log("Grid: Active focus "+activeFocus+" "+focusIndex);
 
         if (activeFocus) {
             if (focusIndex<0 && lastFocusIndex>=0) {
@@ -273,7 +273,7 @@ FocusScope {
 
         var modelSize=Math.max(model.length, widget.modelSize);
 
-        // console.log("Focus "+cellIndex+" modelSize="+modelSize);
+        //console.log("Focus "+cellIndex+" modelSize="+modelSize);
         if (cellIndex<0 || cellIndex>=modelSize) {
             return false;
         }
@@ -288,7 +288,7 @@ FocusScope {
             return true;
         }
 
-        //console.log("Invalid cellIndex="+cellDelegate.cellIndex+" modelSize="+modelSize+" model.length="+model.length+" delegateIndex="+delegateIndex);
+        console.log("Invalid cellIndex="+cellDelegate.cellIndex+" modelSize="+modelSize+" model.length="+model.length+" delegateIndex="+delegateIndex);
     }
 
     Flickable {
@@ -432,6 +432,8 @@ FocusScope {
                     var cellModel=model[idx];
                     var cellDelegate=cellDelegates[delegateIndex];
 
+                   // console.log("cellModel #"+idx+" "+cellModel);
+
                     try {
                         if (cellDelegate) {
                             //var now2=Date.now();
@@ -442,7 +444,7 @@ FocusScope {
     //                                console.log("Update Y");
                                 }
                                 if (cellDelegate.model!==cellModel) {
-                                    // console.log("Update cellModel "+idx+" "+cellModel);
+                                    //console.log("Update cellModel "+idx+" "+cellModel);
                                     cellDelegate.model=cellModel;
 
                                     if (cellDelegate.delayedUpdateModel) {
@@ -564,7 +566,7 @@ FocusScope {
 
             var now=Date.now();
 
-            //console.log("Model="+widget.model+" "+(widget.model && widget.model.length));
+          //  console.log("Model="+widget.model+" "+(widget.model && widget.model.length)+" reason="+reason);
 
             var modelSize=Math.max(widget.model.length, widget.modelSize);
 

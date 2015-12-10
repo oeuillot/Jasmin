@@ -8,10 +8,12 @@
 .import "jstoxml.js" as JsToXML
 .import "util.js" as Util
 
-var LOG_TRANSPORT = false;
+var LOG_TRANSPORT = true;
 
 var XMLSOAP_XMLNS={
-    "": "http://schemas.xmlsoap.org/soap/envelope/"
+    "": "http://schemas.xmlsoap.org/soap/envelope/",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "upnp": "urn:schemas-upnp-org:metadata-1-0/upnp/"
 }
 
 var RESPONSE_SOAP_XMLNS={
@@ -50,10 +52,11 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
                                                        headers: {
                                                            "SOAPACTION": "\""+soapAction+"\"",
                                                            "Content-Type": "text/xml; charset=\"utf-8\"",
-                                                           "User-Agent": application.name+"/"+application.version+" (QML client; "+application.organization+")"
+                                                           "X-User-Agent": application.name+"/"+application.version+" (QML client; "+application.organization+")"
                                                        },
                                                        body: xml
                                                    });
+    transaction.url=this.url; // Microsoft bug  (there is an ':' in the path of the url)
 
     var deferred = transaction.send();
 

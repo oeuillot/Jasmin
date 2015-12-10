@@ -42,7 +42,7 @@ AvTransportService.prototype.connect=function() {
 
         //console.log("controlURL=", controlURL);
 
-        var soapTransport=new Soap.SoapTransport(controlURL.toString(), upnpServer.xmlParserWorker);
+        var soapTransport=new Soap.SoapTransport(controlURL, upnpServer.xmlParserWorker);
         self.soapTransport=soapTransport;
 
         return {

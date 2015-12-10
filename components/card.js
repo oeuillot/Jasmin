@@ -41,7 +41,7 @@ function computeImage(xml, contentDirectoryService) {
     var urls={};
 
     xml.byPath("upnp:albumArtURI", ContentDirectoryService.DIDL_XMLNS_SET).forEach(function(res) {
-        var url=contentDirectoryService.upnpServer.relativeURL(res.text()).toString();
+        var url=contentDirectoryService.upnpServer.relativeURL(res.text());
 
         if (urls[url]) {
             return;
@@ -95,7 +95,7 @@ function computeImage(xml, contentDirectoryService) {
 
         var url=res.text();
 
-        var imageSource=contentDirectoryService.upnpServer.relativeURL(url).toString();
+        var imageSource=contentDirectoryService.upnpServer.relativeURL(url);
 
         if (urls[imageSource]) {
             return;

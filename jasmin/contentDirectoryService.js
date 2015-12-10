@@ -9,7 +9,7 @@
 .import "upnpServer.js" as UpnpServer
 .import "soapTransport.js" as Soap
 
-var LOG_DIDL=true;
+var LOG_DIDL=false;
 
 var UPNP_CONTENT_DIRECTORY_1="urn:schemas-upnp-org:service:ContentDirectory:1";
 
@@ -62,7 +62,7 @@ ContentDirectoryService.prototype.connect=function() {
 
         console.log("controlURL=", controlURL);
 
-        var soapTransport=new Soap.SoapTransport(controlURL.toString(), upnpServer.xmlParserWorker);
+        var soapTransport=new Soap.SoapTransport(controlURL, upnpServer.xmlParserWorker);
         self.soapTransport=soapTransport;
 
         var deferred = self.getSortCapabilities().then(function onSuccess(sortCaps) {
