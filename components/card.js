@@ -5,6 +5,7 @@
 .import "../jasmin/upnpServer.js" as UpnpServer
 .import "../jasmin/contentDirectoryService.js" as ContentDirectoryService
 .import "../jasmin/xml.js" as Xml
+.import "../jasmin/xmlParser.js" as XmlParser
 .import "fontawesome.js" as Fontawesome
 
 function computeType(upnpClass) {
@@ -48,8 +49,19 @@ function computeImage(xml, contentDirectoryService) {
         }
 
         urls[url]=true;
+        var u={url: url };
 
-        l.push({url: url });
+        var dlna=res.attr("dlna:profileID");
+        if (dlna) {
+           if (/^JPEG_/.exec(dlna)) {
+                u.transparent=false;
+
+            } else if (/^PNG_/.exec(dlna)) {
+                u.transparent=true;
+            }
+        }
+
+        l.push(u);
     });
 
     xml.byPath("res", ContentDirectoryService.DIDL_XMLNS_SET).forEach(function(res) {
@@ -126,18 +138,43 @@ function getRating(xml) {
     }
 
     var rating=xml.byPath("upnp:rating", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
+    if (rating) {
+        var r= parseFloat(rating);
 
-    if (!rating) {
-        // console.log("NO RATING");
+        return r;
+    }
+    rating=undefined;
+
+    xml.byPath("desc", ContentDirectoryService.DIDL_XMLNS_SET).forEach(function(desc) {
+        if (rating!==undefined) {
+            return;
+        }
+
+        if (desc.attr("id")!=="UserRating") {
+            return;
+        }
+
+        var descContent=XmlParser.parseXML(desc.text(), desc.xmlNode().namespaceURIs);
+        if (!descContent) {
+            return;
+        }
+
+        var $m=Xml.$XML(descContent);
+        var r=$m.byPath("microsoft:userRatingInStars", ContentDirectoryService.RESPONSE_SOAP_XMLNS).first().text();
+        if (!r) {
+            return;
+        }
+
+        rating=parseInt(r);
+    });
+
+    if (rating===undefined) {
         return -1;
     }
 
-    var r= parseFloat(rating);
-
-    //console.log("RATING="+r);
-
-    return r;
+    return rating;
 }
+
 
 function computeInfo(xml, upnpClass, component) {
     //console.log(Util.inspect(xml, false, {}));

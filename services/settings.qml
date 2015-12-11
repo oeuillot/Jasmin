@@ -21,6 +21,10 @@ Item {
     }
 
     function set(name, value) {
+        if (settings[name]===value) {
+            return;
+        }
+
         if (value===undefined) {
             delete settings[name];
         } else {

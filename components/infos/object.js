@@ -3,7 +3,17 @@
 
 var XMLNS=ContentDirectoryService.DIDL_XMLNS_SET;
 
-function getText(xml, path, xmlns, separator) {
+function getText(xml, path, xmlns, separator, role) {
+    var ls=getTextList(xml, path, xmlns, role);
+    if (!ls || !ls.length) {
+        return null;
+    }
+
+    return ls.join(separator || ", ");
+}
+
+
+function getTextList(xml, path, xmlns, role) {
     if (!xml) {
         return;
     }
@@ -19,15 +29,33 @@ function getText(xml, path, xmlns, separator) {
         }
     }
     if (reg[2]) {
-        return value.first().attr(reg[2].slice(1));
+        var vs=[];
+        var attName=reg[2].slice(1);
+        value.forEach(function(x) {
+           var av=x.attr(attName);
+            if (role && role!==av) {
+                return;
+            }
+            vs.push(x);
+        });
+        value=vs;
     }
 
     var ls=[];
     value.forEach(function(x) {
-        ls.push(x.text());
+        var txt=x.text();
+        if (!txt) {
+            return;
+        }
+
+        ls.push(txt);
     });
 
-    return ls.join(separator || ", ");
+    if (!ls.length) {
+        return null;
+    }
+
+    return ls;
 }
 
 function addLine2(grid, labelComponent, valueComponent, labelText, valueText) {

@@ -41,7 +41,7 @@ Item {
         onTriggered: {
             var clientsURL=Config.getServiceHost("/services/upnpClientsList");
 
-            console.log("ClientsURL="+clientsURL+" etag="+etag);
+            //console.log("ClientsURL="+clientsURL+" etag="+etag);
 
             var headers= Config.fillHeader();
 
@@ -59,7 +59,7 @@ Item {
             var self=this;
 
             deferred.then(function onSuccess(response) {
-                console.log("Deferred success: ", response, response.status, response.statusText);
+                //console.log("Deferred success: ", response, response.status, response.statusText);
 
                 if (response.isError() || !response.status) {
                     console.error("Request error="+response.status);

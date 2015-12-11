@@ -16,6 +16,11 @@ FocusInfo {
 
     heightRef: imageColumn;
 
+    property string playingObjectID: (audioPlayer!=null && audioPlayer.playingObjectID);
+    onPlayingObjectIDChanged: {
+        console.log("Item poib="+playingObjectID);
+    }
+
     function playTracks(diskIndex, trackIndex, append) {
 
         var disks=focusScope.metas.tracks;
@@ -139,7 +144,6 @@ FocusInfo {
                 property var xml;
                 property string objectID;
 
-                property bool playingObjectID: (focusScope.audioPlayer!=null && focusScope.audioPlayer.playingObjectID===objectID);
 
                 onActiveFocusChanged: {
                     focusScope.showFocus(trackItem, activeFocus);
@@ -159,10 +163,10 @@ FocusInfo {
 
                         color: "black" //  color: trackItem.activeFocus?"red": "black"
 
-                        horizontalAlignment: (playingObjectID)?Text.AlignLeft:Text.AlignRight
+                        horizontalAlignment: (playingObjectID==objectID)?Text.AlignLeft:Text.AlignRight
 
-                        font.family: (playingObjectID)?"fontawesome":value.font.family
-                        text: (playingObjectID)?((focusScope.audioPlayer.playbackState===Audio.PlayingState)?Fontawesome.Icon.volume_up:Fontawesome.Icon.volume_off):point
+                        font.family: (playingObjectID==objectID)?"fontawesome":value.font.family
+                        text: (playingObjectID==objectID)?((focusScope.audioPlayer.playbackState===Audio.PlayingState)?Fontawesome.Icon.volume_up:Fontawesome.Icon.volume_off):point
 
                         width: 16
                     }
@@ -458,6 +462,7 @@ FocusInfo {
             var d=ObjectContainerAlbum.fillTracks(infosColumn, components, 60, contentDirectoryService, xml);
 
             d.then(function onSuccess(metas) {
+                metas=metas || {};
                 focusScope.metas=metas;
 
                 var ms="";

@@ -205,7 +205,7 @@ FocusInfo {
                             if (!/^video\/(.*)/.exec(l.type)) {
                                 return;
                             }
-                           // console.log("l.type="+l.type+" "+l.additionalInfos.type+" "+l.additionalInfo);
+                            // console.log("l.type="+l.type+" "+l.additionalInfos.type+" "+l.additionalInfo);
 
                             if (l.additionalInfos.type!=="trailer") {
                                 return;
@@ -299,7 +299,7 @@ FocusInfo {
                             //Qt.openUrlExternally(res.source);
                             App.urlOpen(res.source, res.type);
 
-/*
+                            /*
                             var upnpServer=new UpnpServer.UpnpServer("http://192.168.3.63:54243/device.xml");
 
                             var avTransport=new AvTransportService.AvTransportService(upnpServer);
@@ -412,9 +412,9 @@ FocusInfo {
                     addLine("Avec", actors);
                 }
 
-                var genres=UpnpObject.getText(xml, "upnp:genre");
+                var genres=UpnpObject.getTextList(xml, "upnp:genre");
                 if (genres) {
-                    addLine("Genre", genres);
+                    addLine("Genre"+((genres.length>1)?"s":""), genres.join(', '));
                 }
 
                 var synopsys=UpnpObject.getText(xml, "upnp:longDescription") || UpnpObject.getText(xml, "dc:description");
@@ -423,10 +423,10 @@ FocusInfo {
                 }
 
 
-                var ress=UpnpObject.getText(xml, "upnp:res");
-                if (ress) {
-                    addLine("Genre", genres);
-                }
+                //var ress=UpnpObject.getText(xml, "upnp:res");
+                //if (ress) {
+                //    addLine("Genre", genres);
+                //}
 
                 grid.height=y+8;
             }
@@ -465,16 +465,16 @@ FocusInfo {
                     source=infosColumn.trailers[0].source;
                 }
 
-                return audioPlayer.pause().then(function() {
+                return audioPlayer.stop().then(function() {
                     return trailer.$stop().then(function() {
                         imageColumn.visible=false;
 
-                            if (videoView) {
-                                videoView.destroy();
-                            }
+                        if (videoView) {
+                            videoView.destroy();
+                        }
 
-                            videoView = videoComponent.createObject(videoItem, {
-                                                                        source: trailer
+                        videoView = videoComponent.createObject(videoItem, {
+                                                                    source: trailer
                                                                 });
 
                         trailer.source=source;
@@ -482,7 +482,7 @@ FocusInfo {
                         return trailer.$play();
                     });
                 });
-                }
+            }
 
             function hide() {
                 return trailer.$stop().then(function() {

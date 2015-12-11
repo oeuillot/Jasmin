@@ -109,8 +109,6 @@ Page {
         var lastURL=settings.get("lastServerURL");
         console.log("Last url="+lastURL);
 
-        settings.set("moi", 4);
-
         /*
         for(var i=0;i<listView.left;i++) {
             if (listView.model[i].url===lastURL) {
@@ -129,7 +127,8 @@ Page {
             deferredRequest=null;
         }
 
-        //settings["lastServerURL"]=model.url;
+
+        settings.set("lastServer.USN", model.USN);
 
         var upnpServer = new UpnpServer.UpnpServer(model.LOCATION);
 
@@ -177,7 +176,7 @@ Page {
         id: clientsList;
 
         onNewServer: {
-            console.log("Server="+server.ST);
+            //console.log("New Server="+server.ST);
             if (server.ST !== ContentDirectoryService.UPNP_CONTENT_DIRECTORY_1) {
                 return;
             }
@@ -198,19 +197,27 @@ Page {
 
             listView.updateLayout("newServer");
 
+console.log("Last focus="+lastFocus);
             if (!count) {
                 listView.focus(0);
 
             } else if (lastFocus) {
+                var lastServerUSN=settings.get("lastServer.USN");
+
+                var focusIdx=-1;
                 for(var i=0;i<model.length;i++) {
                     var m=model[i];
-                    if (m.USN!==lastFocus) {
+
+                    if (m.USN===lastFocus) {
+                        focusIdx=i;
                         continue;
                     }
-
-                    listView.focus(i);
-                    break;
+                    if (m.USN===lastServerUSN) {
+                        focusIdx=i;
+                        break;
+                    }
                 }
+                listView.focus(focusIdx);
             }
         }
 

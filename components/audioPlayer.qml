@@ -6,6 +6,7 @@ import fbx.ui.control 1.0
 import fbx.async 1.0
 
 import "../jasmin" 1.0
+import "../services" 1.0
 
 import "fontawesome.js" as Fontawesome;
 
@@ -20,9 +21,22 @@ Item {
 
     property var currentTrack: null;
 
-    property string playingObjectID: (currentTrack?currentTrack.objectID:"");
+    property string playingObjectID: "";
 
     property int playbackState: Audio.StoppedState;
+
+    property JSettings settings;
+
+    onCurrentTrackChanged: {
+        //console.log("Current Track"+currentTrack+" "+currentTrack.objectID);
+        playingObjectID=(audioPlayer.currentTrack)?audioPlayer.currentTrack.objectID:"";
+    }
+
+    /*
+    onPlayingObjectIDChanged: {
+        console.log("PlayingObjectId "+playingObjectID);
+    }
+    */
 
     function setPlayList(contentDirectoryService, xmlArray, albumImageURL, append, offset) {
         console.log("setPlay: xml="+xmlArray+" playListIndex="+playListIndex+" shuffle="+shuffle+" append="+append);
@@ -55,10 +69,10 @@ Item {
                 return;
             }
 
-            console.log("pi="+protocolInfo);
+            //console.log("pi="+protocolInfo);
             var ts=protocolInfo.split(':');
             if (ts[0]!=='http-get') {
-                console.log("Ts[0]="+ts[0]);
+                //console.log("Ts[0]="+ts[0]);
                 return;
             }
 
@@ -85,7 +99,7 @@ Item {
 
             found={
                 objectID: objectID,
-                xml: xml,
+//                xml: xml,
                 url: url,
                 imageURL: imageURL,
                 title: title,
@@ -100,7 +114,7 @@ Item {
 
     function _setPlayList(contentDirectoryService, xmlArray, albumImageURL, offset) {
 
-        console.log("xmlArray="+xmlArray);
+        //console.log("xmlArray="+xmlArray);
 
         if (!(xmlArray instanceof Array)) {
             xmlArray=[xmlArray];
@@ -119,6 +133,8 @@ Item {
             playList.splice(offset, 0, info);
             offset++;
         });
+
+        settings.set("audio.playlist", playList);
 
         trackList.updateList();
     }
@@ -187,7 +203,7 @@ Item {
 
     function pause(flash) {
         if (flash) {
-          togglePlayPauseFlash.flash();
+            togglePlayPauseFlash.flash();
         }
 
         // console.log("Pause playbackState="+playbackState+"/"+Audio.PlayingState);
@@ -201,7 +217,7 @@ Item {
     }
     function togglePlayPause(flash) {
         if (flash) {
-          togglePlayPauseFlash.flash();
+            togglePlayPauseFlash.flash();
         }
 
         //console.log("PlayPause playbackState="+playbackState+"/"+Audio.PlayingState);
@@ -262,6 +278,8 @@ Item {
 
         playListIndex=index;
 
+        settings.set("audio.playIndex", index);
+
         trackList.updateList();
 
         if (playListIndex>=playList.length) {
@@ -296,28 +314,28 @@ Item {
 
     DeferredAudio {
         id: audio
-        autoLoad: true        
+        autoLoad: true
 
         source: (currentTrack && currentTrack.url) || ""
 
         property int progress: 0;
 
         onPlaybackStateChanged: {
-            // console.log("Playback audio.state="+audio.playbackState+" audioPlayer.state="+audioPlayer.playbackState);
+            //console.log("Playback audio.state="+audio.playbackState+" audioPlayer.state="+audioPlayer.playbackState);
 
             if (audio.playbackState===Audio.StoppedState) {
                 progress=0;
             }
 
             if (audio.playbackState===Audio.StoppedState && audioPlayer.playbackState===Audio.PlayingState) {
-                // console.log("Identify a forward");
+                //console.log("Identify a forward");
                 forward();
                 return;
             }
         }
 
         onPositionChanged: {
-            //            console.log("Position="+position+"/"+duration);
+            // console.log("Position="+position+"/"+duration);
             if (!duration) {
                 progress=0;
                 return;
@@ -327,7 +345,7 @@ Item {
         }
 
         onProgressChanged: {
-            //console.log("Progress="+progress);
+            // console.log("Progress="+progress);
             cursorProgress.width=Math.floor(progress*bgProgress.width/100);
             cursorProgress2.x=Math.floor(progress*(bgProgress.width-2)/100);
         }

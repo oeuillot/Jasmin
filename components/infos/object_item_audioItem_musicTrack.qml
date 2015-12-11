@@ -23,6 +23,48 @@ FocusInfo {
         height: childrenRect.height+30
 
 
+        Component {
+            id: labelComponent
+
+            Text {
+                font.bold: false
+                font.pixelSize: 14
+                width: 120
+                color: "#666666"
+
+                horizontalAlignment: Text.AlignLeft
+
+                onContentWidthChanged: {
+                    if (contentWidth>80) {
+                        font.pixelSize--;
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: valueComponent
+
+            Text {
+                font.bold: true
+                font.pixelSize: 14
+
+                elide: Text.ElideRight
+            }
+        }
+
+        Component {
+            id: synopsysComponent
+
+            Text {
+                font.bold: true
+                font.pixelSize: 14
+                textFormat: Text.StyledText
+
+                wrapMode: Text.WordWrap
+            }
+        }
+
         TitleInfo {
             id: titleInfo
             x: 0
@@ -123,6 +165,76 @@ FocusInfo {
                         focusScope.showFocus(randomButton, activeFocus);
                     }
                 }
+            }
+        }
+
+
+        Item {
+            id: grid
+            x: 0
+            y: titleInfo.y+titleInfo.height;
+            width: parent.width
+
+            Component.onCompleted: {
+
+                var y=0;
+
+                function addLine(label, value, lc, vc) {
+                    var lab=(lc || labelComponent).createObject(grid, {
+                                                                    text: label,
+                                                                    x: 0,
+                                                                    y: y,
+                                                                    width: 80
+                                                                });
+                    var val=(vc || valueComponent).createObject(grid, {
+                                                                    text: value,
+                                                                    x: 100,
+                                                                    y: y,
+                                                                    width: grid.width-100-8
+                                                                });
+
+                    y+=val.height+8;
+
+                    return {
+                        label: lab,
+                        value: val
+                    };
+                }
+
+                var album=UpnpObject.getText(xml, "upnp:album");
+                if (album && album!==title) {
+                    addLine("Album", album);
+                }
+
+                var originalTrackNumber=UpnpObject.getText(xml, "upnp:originalTrackNumber");
+                if (originalTrackNumber) {
+                    addLine("Numéro piste", originalTrackNumber);
+                }
+
+                var year=UpnpObject.getText(xml, "dc:date");
+                if (year) {
+                    var cy=addLine("Année de sortie", (new Date(year).getFullYear()));
+                }
+
+                var performers=UpnpObject.getTextList(xml, "upnp:artist@role", null, "Performer");
+                if (performers) {
+                    addLine("Interprète"+((performers.length>1)?"s":""), performers.join(', '));
+                }
+                var conductors=UpnpObject.getTextList(xml, "upnp:artist@role", null, "Conductor");
+                if (conductors) {
+                    addLine("Chef"+((conductors.length>1)?"s":"")+" d'orchestre", conductors.join(', '));
+                }
+                var composers=UpnpObject.getTextList(xml, "upnp:author");
+                if (composers) {
+                    addLine("Compositeur"+((composers.length>1)?"s":""), composers.join(', '));
+                }
+
+                var genres=UpnpObject.getTextList(xml, "upnp:genre");
+                if (genres) {
+                    addLine("Genre"+((genres.length>1)?"s":""), genres.join(', '));
+                }
+
+                grid.height=y+8;
             }
         }
     }

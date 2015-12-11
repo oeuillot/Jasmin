@@ -20,6 +20,8 @@ var JASMIN_MUSICMETADATA="urn:schemas-jasmin-upnp.net:musicmetadata/";
 var JASMIN_FILEMEDATA="urn:schemas-jasmin-upnp.net:filemetadata/";
 var JASMIN_MOVIEMETADATA="urn:schemas-jasmin-upnp.net:moviemetadata/";
 
+var MICROSOFT_WMPNSS="urn:schemas-microsoft-com:WMPNSS-1-0/";
+
 var CONTENT_DIRECTORY_XMLNS_SET={
     "": UpnpServer.UPNP_SERVICE_XMLNS,
     "dlna": UpnpServer.DLNA_DEVICE_XMLNS,
@@ -36,6 +38,15 @@ var DIDL_XMLNS_SET = {
     "fm": JASMIN_FILEMEDATA
 }
 
+var RESPONSE_SOAP_XMLNS={
+    "": UpnpServer.UPNP_SERVICE_XMLNS,
+    "upnp": UpnpServer.UPNP_METADATA_XMLNS,
+    "dc": PURL_ELEMENT_XMLS,
+    "mm": JASMIN_MUSICMETADATA,
+    "mo": JASMIN_MOVIEMETADATA,
+    "fm": JASMIN_FILEMEDATA,
+    "microsoft": MICROSOFT_WMPNSS
+}
 
 function ContentDirectoryService(upnpServer) {
     this.upnpServer=upnpServer;
@@ -53,7 +64,7 @@ ContentDirectoryService.prototype.connect=function() {
     var deferred0 = upnpServer.connect().then(function onSuccess() {
 
         var contentDirectoryService=self.getService();
-        console.log("Return contentDirectoryService="+contentDirectoryService);
+        //console.log("Return contentDirectoryService="+contentDirectoryService);
         if (!contentDirectoryService){
             return Async.Deferred.rejected("No content directory service !");
         }
@@ -62,16 +73,16 @@ ContentDirectoryService.prototype.connect=function() {
 
         console.log("controlURL=", controlURL);
 
-        var soapTransport=new Soap.SoapTransport(controlURL, upnpServer.xmlParserWorker);
+        var soapTransport=new Soap.SoapTransport(controlURL, upnpServer.xmlParserWorker, RESPONSE_SOAP_XMLNS);
         self.soapTransport=soapTransport;
 
         var deferred = self.getSortCapabilities().then(function onSuccess(sortCaps) {
             self.sortCaps=sortCaps;
-            console.log("SortCaps="+Util.inspect(sortCaps));
+            //console.log("SortCaps="+Util.inspect(sortCaps));
 
             var deferred2=self.getSearchCapabilities().then(function onSuccess(searchCaps) {
                 self.searchCaps=searchCaps;
-                console.log("SearchCaps="+Util.inspect(searchCaps));
+                // console.log("SearchCaps="+Util.inspect(searchCaps));
 
                 var deferred3=self.getSystemUpdateID().then(function onSuccess(systemUpdateID) {
                     self.systemUpdateID=systemUpdateID;
@@ -125,7 +136,7 @@ ContentDirectoryService.prototype.getSortCapabilities=function() {
                                                    }
                                                });
 
-    console.log("Get SortCapabilities ...");
+    //console.log("Get SortCapabilities ...");
 
     deferred.then(function onSuccess(response) {
         var sc=response.soapBody.byPath("u:GetSortCapabilitiesResponse/SortCaps", CONTENT_DIRECTORY_XMLNS_SET);
@@ -223,8 +234,9 @@ ContentDirectoryService.prototype.browse=function(objectId, browseFlag, options)
     };
     xmlns[PURL_ELEMENT_XMLS]="dc";
     xmlns[UPNP_CONTENT_DIRECTORY_1]="u";
-    xmlns[UpnpServer.UPNP_METADATA_XMLNS]="upnp"
-//    xmlns[DIDL_LITE_XMLNS]="didl"
+    xmlns[UpnpServer.UPNP_METADATA_XMLNS]="upnp";
+    xmlns[MICROSOFT_WMPNSS]="microsoft";
+    //    xmlns[DIDL_LITE_XMLNS]="didl"
 
     var xmlnsAno=0;
 
@@ -271,14 +283,14 @@ ContentDirectoryService.prototype.browse=function(objectId, browseFlag, options)
     var startingIndex=(typeof(options.startingIndex)==="number")?options.startingIndex:0;
     var requestCount=(typeof(options.requestCount)==="number")?options.requestCount:0;
 
-    var params={
-        ObjectID: objectId,
-        BrowseFlag: browseFlag,
-        Filter: (filterParams.length?filterParams.join():"*"),
-        StartingIndex: startingIndex,
-        RequestedCount: requestCount ,
-        SortCriteria: (sortParams.length?sortParams.join():""),
-    };
+    var params=[
+                { ObjectID: objectId },
+                { BrowseFlag: browseFlag },
+                { Filter: (filterParams.length?filterParams.join():"*") },
+                { StartingIndex: startingIndex },
+                { RequestedCount: requestCount },
+                { SortCriteria: (sortParams.length?sortParams.join():"") }
+            ];
 
     var self=this;
 

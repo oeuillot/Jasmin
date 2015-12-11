@@ -40,7 +40,9 @@ Application {
         }
         starting=false;
 
-        menu=menuComponent.createObject(app);
+        menu=menuComponent.createObject(app, {
+                                            settings: settings
+                                        });
 
         pageStack.push("server2.qml", {
                            audioPlayer: menu.audioPlayer,
@@ -60,7 +62,7 @@ Application {
     }
 
     JBackground {
-        background: "jasmin"        
+        background: "jasmin"
     }
 
     Stack {

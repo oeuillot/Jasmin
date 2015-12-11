@@ -3,9 +3,10 @@
 function getServiceHost(path) {
     var url=Qt.resolvedUrl(path);
 
-    //if (/^file\:/.exec(url)) {
-        url="http://192.168.3.34:5000"+path;
-    //}
+    if (/^file\:/.exec(url)) {
+//        url="http://192.168.3.34:5000"+path;
+        url="http://192.168.0.58:5000"+path;
+    }
 
     return url;
 }

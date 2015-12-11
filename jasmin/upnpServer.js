@@ -57,7 +57,7 @@ UpnpServer.prototype.connect=function(){
     var self=this;
 
     deferred=deferred.then(function onSuccess(response) {
-        console.log("Deferred success: ", Util.inspect(response), response.status, response.statusText);
+        //console.log("Deferred success: ", Util.inspect(response), response.status, response.statusText);
 
         if (response.isError() || !response.status) {
             self.errored="Server error "+response.statusText;

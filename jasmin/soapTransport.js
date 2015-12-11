@@ -7,8 +7,10 @@
 .import "xml.js" as Xml
 .import "jstoxml.js" as JsToXML
 .import "util.js" as Util
+.import "upnpServer.js" as UpnpServer
+.import "../services/config.js" as Config
 
-var LOG_TRANSPORT = true;
+var LOG_TRANSPORT = false;
 
 var XMLSOAP_XMLNS={
     "": "http://schemas.xmlsoap.org/soap/envelope/",
@@ -20,9 +22,10 @@ var RESPONSE_SOAP_XMLNS={
     "": "urn:schemas-upnp-org:service-1-0"
 }
 
-function SoapTransport(url, xmlParserWorker) {
+function SoapTransport(url, xmlParserWorker, defaultXmlns) {
     this.url = url;
     this.xmlParserWorker=xmlParserWorker;
+    this.defaultXmlns=defaultXmlns || RESPONSE_SOAP_XMLNS;
 }
 
 SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
@@ -44,16 +47,15 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
         console.log("SOAP url='"+this.url+"' request="+xml);
     }
 
-    var application=Qt.application;
+    var headers=Config.fillHeader({
+                                      "SOAPACTION": "\""+soapAction+"\"",
+                                      "Content-Type": "text/xml; charset=\"utf-8\""
+                                  });
 
     var transaction = Web.Http.Transaction.factory({
                                                        method: "POST",
                                                        url: this.url,
-                                                       headers: {
-                                                           "SOAPACTION": "\""+soapAction+"\"",
-                                                           "Content-Type": "text/xml; charset=\"utf-8\"",
-                                                           "X-User-Agent": application.name+"/"+application.version+" (QML client; "+application.organization+")"
-                                                       },
+                                                       headers: headers,
                                                        body: xml
                                                    });
     transaction.url=this.url; // Microsoft bug  (there is an ':' in the path of the url)
@@ -77,10 +79,10 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
         var deferred;
         try {
             if (self.xmlParserWorker) {
-                deferred=self.xmlParserWorker.parseXML(response.body, RESPONSE_SOAP_XMLNS);
+                deferred=self.xmlParserWorker.parseXML(response.body, self.defaultXmlns);
 
             } else {
-                deferred = Xml.parseXML(response.body, RESPONSE_SOAP_XMLNS);
+                deferred = Xml.parseXML(response.body, self.defaultXmlns);
             }
 
         } catch (x) {
@@ -100,6 +102,7 @@ SoapTransport.prototype.sendAction = function(soapAction, xmlBody) {
 
             if (!soapBody.length) {
                 var message="Soapbody is not found !";
+                console.log("Soapbody=",xmlDocument.xtoString());
                 console.exception(new Error(message));
                 return Async.Deferred.rejected(message);
             }

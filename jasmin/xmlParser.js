@@ -6,7 +6,7 @@ function parseXML(text, xmlns, callbacks) {
     var node;
     callbacks=callbacks || {};
 
-//    console.log("PARSE '"+text+"'");
+   // console.log("PARSE '"+text+"'");
 
     var sp={};
 
@@ -80,12 +80,13 @@ function parseXML(text, xmlns, callbacks) {
                 if (self_closing) {
                     item = item.slice(0, -1);
                 }
+                var nodeNameSpace=null;
 
                 var n = {
                     nodeType: 1,
                 };
 
-                //                console.log("item='"+item+"'");
+                 //        console.log("item='"+item+"'");
 
                 var atts = [];
                 var ai=item.indexOf(' ');
@@ -116,18 +117,22 @@ function parseXML(text, xmlns, callbacks) {
                         //                        console.log("Parse attr'"+attr+"' ",kv);
 
                         if (kv[1]==="xmlns") {
-                            if (!kv[3]) {
+                            if (!kv[3]) { // aucune valeur ?
                                 continue;
                             }
-                            if (!kv[2]) {
+                            if (!kv[2]) { // xmlns="y"
                                 defaultNamespaceURI=kv[3].slice(2, -1);
                                 continue;
                             }
+                            // xmlns:X="y"
 
                             //console.log("Fill dic "+kv[2].slice(1)+" = "+kv[3].slice(2, -1));
 
                             dictionnary[kv[2].slice(1)]=kv[3].slice(2, -1);
                             continue;
+
+                        } else if (kv[1]==='nameSpace') { // Microsoft ?
+                            nodeNameSpace=kv[3].slice(2, -1);
                         }
 
                         var att={
@@ -157,7 +162,7 @@ function parseXML(text, xmlns, callbacks) {
 
                 if (!sp) {
                     n.tagName=item;
-                    n.namespaceURI=defaultNamespaceURI;
+                    n.namespaceURI=nodeNameSpace || defaultNamespaceURI;
 
                 } else if (sp.xmlns) {
                     n.tagName=sp.xmlns+":"+sp.name;
@@ -169,6 +174,8 @@ function parseXML(text, xmlns, callbacks) {
                     n.tagName=sp.name;
                     n.namespaceURI=defaultNamespaceURI;
                 }
+
+                //console.log("Create node "+n.tagName+" "+n.namespaceURI+" ("+sp+")");
 
                 n.namespaceURIs=dictionnary;
 

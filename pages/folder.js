@@ -90,6 +90,10 @@ function loadModel(contentDirectoryService, objectID, position, pageSize, loadAr
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
 
                  }, {
+                     name: "userRatingInStars",
+                     namespaceURI: ContentDirectoryService.MICROSOFT_WMPNSS
+
+                 }, {
                      name: "certificate",
                      namespaceURI: ContentDirectoryService.JASMIN_MOVIEMETADATA
 

@@ -501,14 +501,24 @@ color: "red";
             event.accepted = true;
             break;
 
-        case Qt.Key_Asterisk:
+        case Qt.Key_MediaNext:
         case Qt.Key_AudioForward:
             audioPlayer.forward(true);
             event.accepted = true;
             break;
 
-        case Qt.Key_Slash:
-        case Qt.Key_AudioRewind:
+        case Qt.Key_NumLock:
+            audioPlayer.stop();
+            event.accepted = true;
+            break;
+
+        case Qt.Key_Minus:
+            audioPlayer.start();
+            event.accepted = true;
+            break;
+
+        case Qt.Key_MediaPrevious: // Clavier
+        case Qt.Key_AudioRewind: // Freebox
             audioPlayer.back(true);
             event.accepted = true;
             break;
