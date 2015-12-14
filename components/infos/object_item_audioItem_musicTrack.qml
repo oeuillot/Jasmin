@@ -114,7 +114,7 @@ FocusInfo {
                         }).then(function() {
                             audioPlayer.shuffle=shuffle;
 
-                            audioPlayer.play();
+                            audioPlayer.playAudio();
                         });
                         return;
                     }

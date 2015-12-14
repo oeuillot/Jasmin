@@ -156,12 +156,12 @@ FocusInfo {
                     Text {
                         id: title
                         font.bold: false
-                        font.pixelSize: 12
+                        font.pixelSize: (playingObjectID==objectID)?16:12
                         x: 0
                         y: 2
                         opacity: 0.7
 
-                        color: "black" //  color: trackItem.activeFocus?"red": "black"
+                        color: "black"
 
                         horizontalAlignment: (playingObjectID==objectID)?Text.AlignLeft:Text.AlignRight
 
@@ -261,7 +261,7 @@ FocusInfo {
                     case Qt.Key_Enter:
 
                         playTracks(diskIndex, trackIndex, false).then(function() {
-                            audioPlayer.play();
+                            audioPlayer.playAudio();
                         });
 
                         event.accepted = true;
@@ -335,7 +335,7 @@ FocusInfo {
                 }).then(function() {
                     audioPlayer.shuffle=shuffle;
 
-                    audioPlayer.play();
+                    audioPlayer.playAudio();
                 });
                 return;
 

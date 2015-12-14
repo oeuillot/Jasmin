@@ -12,7 +12,7 @@ import "./services" 1.0
 Application {
     id: app
 
-    color: "#FEFFFFFF"
+    color: "#FEFFFFFF" // Super technique pour contourner une limitation Freebox :-p  (merci mid pour l'astuce)
 
     property Menu menu;
 
@@ -41,7 +41,8 @@ Application {
         starting=false;
 
         menu=menuComponent.createObject(app, {
-                                            settings: settings
+                                            settings: settings,
+                                            videoOutput: videoOutput
                                         });
 
         pageStack.push("server2.qml", {
@@ -57,7 +58,9 @@ Application {
         source: "components/fonts/fontawesome-webfont__ttf.png"
 
         onStatusChanged: {
-            startup();
+            if (status===FontLoader.Ready) {
+                startup();
+            }
         }
     }
 
@@ -104,13 +107,20 @@ Application {
         Menu {
             id: menu
             x: parent.width-menu.width
-            y: breadcrumb.y+breadcrumb.height;
+            y: breadcrumb.y+breadcrumb.height
         }
     }
 
     Component.onCompleted: {
         starting=true;
         startup();
+    }
+
+    VideoOutput {
+        id: videoOutput
+        visible: false
+        z: 65536
+        fillMode: VideoOutput.PreserveAspectFit
     }
 
     /*

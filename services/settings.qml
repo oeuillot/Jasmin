@@ -12,12 +12,17 @@ Item {
 
     property var settings: ({});
 
-    property bool settingsModified: false;
-
     property bool settingsLoaded: false;
+
+    property var _deltas: false;
 
     function get(name) {
         return settings[name];
+    }
+
+
+    function unset(name) {
+        set(name, undefined);
     }
 
     function set(name, value) {
@@ -25,18 +30,31 @@ Item {
             return;
         }
 
+        if (_deltas===false) {
+            _deltas={};
+        }
+
         if (value===undefined) {
             delete settings[name];
+
+            _deltas[name]="";
+
         } else {
             settings[name]=value;
+
+            _deltas[name]=value;
         }
-        settingsModified=true;
 
         timer.restart();
     }
 
     function sync() {
         // retourne une promise
+        if (!_deltas) {
+            return Deferred.resolved();
+        }
+
+        return saveSettings();
     }
 
     Component.onCompleted: {
@@ -54,8 +72,6 @@ Item {
                 return;
             }
 
-            settingsModified=false;
-
             saveSettings();
         }
     }
@@ -67,11 +83,14 @@ Item {
 
         headers['Content-Type']='application/json';
 
+        var deltas=_deltas;
+        _deltas=false;
+
         var transaction=Http.Transaction.factory({
                                                      method: "POST",
                                                      url: clientsURL,
                                                      headers: headers,
-                                                     body: JSON.stringify(settings),
+                                                     body: JSON.stringify(deltas),
                                                      debug: true
                                                  });
 
@@ -106,7 +125,7 @@ Item {
             }
 
             settings=response.jsonParse().data;
-            settingsModified=false;
+            _deltas=false;
 
             return settings;
 

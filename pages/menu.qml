@@ -18,6 +18,8 @@ Item {
 
     property JSettings settings;
 
+    property VideoOutput videoOutput;
+
     Rectangle {
         height: parent.height;
         width: parent.width;
@@ -32,6 +34,11 @@ Item {
         width: parent.width
         height: parent.height
         settings: menu.settings
+        videoOutput: menu.videoOutput
+    }
+
+    Component.onCompleted: {
+        console.log("MenuVideo="+videoOutput);
     }
 }
 

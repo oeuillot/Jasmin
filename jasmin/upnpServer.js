@@ -19,10 +19,11 @@ var DEVICE_XMLNS_SET={
     "s": SOAP_ENVELOPE_XMLNS
 }
 
-function UpnpServer(url, xmlParserWorker) {
+function UpnpServer(url, USN) {
     this.url=url;
     this.errored=undefined;
-    this.xmlParserWorker=xmlParserWorker;
+    this.xmlParserWorker=null;
+    this.USN=USN;
 
     this.deviceDescription=null;
     this.urlBase=null;

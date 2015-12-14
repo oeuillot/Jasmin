@@ -27,6 +27,10 @@ Item {
 
     property JSettings settings;
 
+    property bool videoMode: false;
+
+    property VideoOutput videoOutput;
+
     onCurrentTrackChanged: {
         //console.log("Current Track"+currentTrack+" "+currentTrack.objectID);
         playingObjectID=(audioPlayer.currentTrack)?audioPlayer.currentTrack.objectID:"";
@@ -49,7 +53,6 @@ Item {
         }
 
         // append
-
 
         _setPlayList(contentDirectoryService, xmlArray, albumImageURL, offset);
         return Deferred.resolved();
@@ -99,11 +102,12 @@ Item {
 
             found={
                 objectID: objectID,
-//                xml: xml,
+                //                xml: xml,
                 url: url,
                 imageURL: imageURL,
                 title: title,
-                artist: artist
+                artist: artist,
+                serverUSN: contentDirectoryService.upnpServer.USN
             };
 
             return false; // Break the loop if forEach support it :-)
@@ -134,7 +138,15 @@ Item {
             offset++;
         });
 
-        settings.set("audio.playlist", playList);
+        var sets=[];
+        playList.forEach(function(p) {
+            sets.push({
+                          serverUSN: p.serverUSN,
+                          objectID: p.objectID
+                      });
+        });
+
+        settings.set("audio.playlist", sets);
 
         trackList.updateList();
     }
@@ -143,7 +155,6 @@ Item {
         return stop().then(function() {
             // remove all ...
             playingObjectID="";
-
 
             playList=[];
             playListIndex=0;
@@ -174,30 +185,54 @@ Item {
     }
 
     function stop() {
-        audioPlayer.playbackState=Audio.StoppedState;
-        return audio.$stop().then(function() {
-            //console.log("Set audio player to STOP "+audioPlayer.playbackState);
+        playbackState=Audio.StoppedState;
+        return mediaPlayer.$stop().then(function() {
+            console.log("Set audio player to STOP "+audioPlayer.playbackState);
+            mediaPlayer.source="";
             return true;
         });
     }
 
-    function play(flash) {
+    function playAudio(flash) {
         //console.log("Play: Current playback="+playbackState+" audioPlayback="+audio.playbackState);
+        videoMode=false;
+        videoOutput.visible=false;
 
         if (playbackState===Audio.PlayingState) {
             return Deferred.resolved(playbackState);
         }
         playbackState=Audio.PlayingState;
 
-        if (audio.playbackState===Audio.StoppedState) {
+        if (mediaPlayer.playbackState===Audio.StoppedState) {
             return playIndex(playListIndex);
         }
 
-        if (audio.playbackState===Audio.PausedState) {
+        if (mediaPlayer.playbackState===Audio.PausedState) {
             return togglePlayPause(flash);
         }
 
         return Deferred.resolved(playbackState);
+    }
+
+
+    function playVideo(source) {
+        console.log("Play: Current playback="+playbackState+" audioPlayback="+mediaPlayer.playbackState);
+        if (videoMode && playbackState===Audio.PlayingState) {
+            return Deferred.resolved(playbackState);
+        }
+
+        stop().then(function() {
+            videoMode=true;
+            videoOutput.visible=true;
+            videoOutput.source=mediaPlayer;
+            mediaPlayer.source=source;
+
+            return mediaPlayer.$play().then(function() {
+                playbackState=Audio.PlayingState;
+
+                return playbackState;
+            });
+        });
     }
 
 
@@ -208,7 +243,7 @@ Item {
 
         // console.log("Pause playbackState="+playbackState+"/"+Audio.PlayingState);
         if (playbackState===Audio.PlayingState) {
-            return audio.$pause().then(function() {
+            return mediaPlayer.$pause().then(function() {
                 playbackState=Audio.StoppedState;
             });
         }
@@ -222,18 +257,22 @@ Item {
 
         //console.log("PlayPause playbackState="+playbackState+"/"+Audio.PlayingState);
         if (playbackState===Audio.PlayingState) {
-            return audio.$pause().then(function() {
+            return mediaPlayer.$pause().then(function() {
                 playbackState=Audio.StoppedState;
             });
         }
 
-        if (audio.playbackState===Audio.PausedState) {
-            return audio.$play().then(function() {
+        if (mediaPlayer.playbackState===Audio.PausedState) {
+            return mediaPlayer.$play().then(function() {
                 playbackState=Audio.PlayingState;
             });
         }
 
-        return play();
+        if (!videoMode) {
+            return playAudio();
+        }
+
+        return playVideo();
     }
 
     function forward(flash) {
@@ -276,6 +315,9 @@ Item {
     function playIndex(index) {
         //console.log("PLAY index #"+index);
 
+        videoMode=false;
+        videoOutput.visible=false;
+
         playListIndex=index;
 
         settings.set("audio.playIndex", index);
@@ -286,11 +328,13 @@ Item {
             return Deferred.resolved(false);
         }
 
-        return audio.$stop().then(function() {
+        return mediaPlayer.$stop().then(function() {
 
             currentTrack=playList[playListIndex];;
 
-            return audio.$play().then(function() {
+            mediaPlayer.source=currentTrack.url;
+
+            return mediaPlayer.$play().then(function() {
                 playbackState=Audio.PlayingState;
 
                 return playbackState;
@@ -312,8 +356,65 @@ Item {
         return r;
     }
 
-    DeferredAudio {
-        id: audio
+
+
+    function setVideoPosition(component, offsetX, offsetY, width, height) {
+        console.log("VideoOutput="+videoOutput+" component="+component);
+
+        if (!component) {
+            return;
+        }
+
+        var p=component;
+        if (typeof(offsetX)==="string") {
+            var found=false;
+            for(;p;p=p.parent) {
+                console.log("P="+p);
+                if (p.objectName===offsetX) {
+                    found=true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                console.error("Can not find component '"+offsetX+"'");
+                return;
+            }
+            offsetX=0;
+        }
+
+        var x=offsetX || 0;
+        var y=offsetY || 0;
+        var w=width || p.width;
+        var h=height || p.height;
+
+        for(;p;p=p.parent) {
+            //console.log("P="+p+" "+p.x+" "+p.y);
+            if (p===videoOutput.parent) {
+                break;
+            }
+
+            x+=p.x;
+            y+=p.y;
+        }
+        console.log("X="+x+" y="+y+" w="+w+" h="+h);
+
+        videoOutput.x=x;
+        videoOutput.y=y;
+        videoOutput.width=w
+        videoOutput.height=h
+    }
+
+    function hideVideo() {
+        videoMode=false;
+        videoOutput.visible=false;
+        //videoOutput.source=null;
+    }
+
+    property MediaPlayer $mediaPlayer: mediaPlayer;
+
+    DeferredMediaPlayer {
+        id: mediaPlayer
         autoLoad: true
 
         source: (currentTrack && currentTrack.url) || ""
@@ -323,11 +424,11 @@ Item {
         onPlaybackStateChanged: {
             //console.log("Playback audio.state="+audio.playbackState+" audioPlayer.state="+audioPlayer.playbackState);
 
-            if (audio.playbackState===Audio.StoppedState) {
+            if (mediaPlayer.playbackState===Audio.StoppedState) {
                 progress=0;
             }
 
-            if (audio.playbackState===Audio.StoppedState && audioPlayer.playbackState===Audio.PlayingState) {
+            if (mediaPlayer.playbackState===Audio.StoppedState && audioPlayer.playbackState===Audio.PlayingState) {
                 //console.log("Identify a forward");
                 forward();
                 return;
@@ -463,6 +564,7 @@ Item {
         x: 0
         height: 24+3
         width: parent.width
+        visible: videoMode===false
 
         Rectangle {
             id: bgProgress
@@ -487,24 +589,24 @@ Item {
             width: 2
             height: 5
             color: "black"
-            visible: (audio.playbackState!==Audio.StopState)
+            visible: (mediaPlayer.playbackState!==Audio.StopState)
         }
 
 
         Text {
             x: 1
             y: 1+3
-            font.pixelSize: (audio.position>=60*60*1000)?10:12
-            text: formatTime(audio.position);
+            font.pixelSize: (mediaPlayer.position>=60*60*1000)?10:12
+            text: formatTime(mediaPlayer.position);
         }
 
         Text {
             x: parent.width-contentWidth
             y: 1+3
             //            width: parent.width-1
-            font.pixelSize: ((audio.duration-audio.position)>=60*60*1000)?10:12
-            text: "-"+formatTime(audio.duration-audio.position);
-            visible: audio.duration>0
+            font.pixelSize: ((mediaPlayer.duration-mediaPlayer.position)>=60*60*1000)?10:12
+            text: "-"+formatTime(mediaPlayer.duration-mediaPlayer.position);
+            visible: mediaPlayer.duration>0
             horizontalAlignment: Text.AlignRight
         }
 
@@ -525,7 +627,7 @@ Item {
             }
             Text {
                 id: togglePlayPauseButton
-                text: (audio.playbackState==Audio.PlayingState)?Fontawesome.Icon.pause:Fontawesome.Icon.play
+                text: (mediaPlayer.playbackState==Audio.PlayingState)?Fontawesome.Icon.pause:Fontawesome.Icon.play
                 font.bold: true
                 font.pixelSize: 16
                 font.family: Fontawesome.Name

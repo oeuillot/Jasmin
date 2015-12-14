@@ -513,7 +513,7 @@ color: "red";
             break;
 
         case Qt.Key_Minus:
-            audioPlayer.start();
+            audioPlayer.playAudio();
             event.accepted = true;
             break;
 

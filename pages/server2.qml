@@ -105,18 +105,6 @@ Page {
         } else {
             listView.model=[];
         }
-
-        var lastURL=settings.get("lastServerURL");
-        console.log("Last url="+lastURL);
-
-        /*
-        for(var i=0;i<listView.left;i++) {
-            if (listView.model[i].url===lastURL) {
-                listView.focus(i);
-                break;
-            }
-        }
-        */
     }
 
     function connect(model) {
@@ -126,11 +114,11 @@ Page {
             deferredRequest.cancel();
             deferredRequest=null;
         }
-
+        //settings.unset("lastServer.USN");
 
         settings.set("lastServer.USN", model.USN);
 
-        var upnpServer = new UpnpServer.UpnpServer(model.LOCATION);
+        var upnpServer = new UpnpServer.UpnpServer(model.LOCATION, model.USN);
 
         var contentDirectoryService=new ContentDirectoryService.ContentDirectoryService(upnpServer);
 
