@@ -4,6 +4,8 @@ import QtMultimedia 5.0
 import "../../jasmin" 1.0
 import ".." 1.0
 
+import fbx.async 1.0
+
 import "object.js" as UpnpObject
 import "object_container_album_musicAlbum.js" as ObjectContainerAlbum;
 
@@ -17,9 +19,9 @@ FocusInfo {
     heightRef: imageColumn;
 
     property string playingObjectID: (audioPlayer!=null && audioPlayer.playingObjectID);
-    onPlayingObjectIDChanged: {
-        console.log("Item poib="+playingObjectID);
-    }
+//    onPlayingObjectIDChanged: {
+//        console.log("Item poib="+playingObjectID);
+//    }
 
     function playTracks(diskIndex, trackIndex, append) {
 

@@ -13,6 +13,8 @@ import "fontawesome.js" as Fontawesome;
 Item {
     id: audioPlayer
 
+    property bool log: false;
+
     property var playList: ([]);
 
     property int playListIndex: 0;
@@ -43,7 +45,9 @@ Item {
     */
 
     function setPlayList(contentDirectoryService, xmlArray, albumImageURL, append, offset) {
-        console.log("setPlay: xml="+xmlArray+" playListIndex="+playListIndex+" shuffle="+shuffle+" append="+append);
+        if (log) {
+            console.log("setPlay: xml="+xmlArray+" playListIndex="+playListIndex+" shuffle="+shuffle+" append="+append);
+        }
 
         if (!append) {
             return clear().then(function() {
@@ -75,12 +79,13 @@ Item {
             //console.log("pi="+protocolInfo);
             var ts=protocolInfo.split(':');
             if (ts[0]!=='http-get') {
-                //console.log("Ts[0]="+ts[0]);
+                console.log("No http-get="+ts[0]);
                 return;
             }
 
             var url=res.text();
             if (!url) {
+                console.log("No url");
                 return;
             }
 
@@ -112,6 +117,10 @@ Item {
 
             return false; // Break the loop if forEach support it :-)
         });
+
+        if (!found) {
+            console.error("No res in "+xml.xtoString());
+        }
 
         return found;
     }
@@ -216,7 +225,9 @@ Item {
 
 
     function playVideo(source) {
-        console.log("Play: Current playback="+playbackState+" audioPlayback="+mediaPlayer.playbackState);
+        if (log) {
+            console.log("Play: Current playback="+playbackState+" audioPlayback="+mediaPlayer.playbackState);
+        }
         if (videoMode && playbackState===Audio.PlayingState) {
             return Deferred.resolved(playbackState);
         }
@@ -359,7 +370,9 @@ Item {
 
 
     function setVideoPosition(component, offsetX, offsetY, width, height) {
-        console.log("VideoOutput="+videoOutput+" component="+component);
+        if (log) {
+            console.log("VideoOutput="+videoOutput+" component="+component);
+        }
 
         if (!component) {
             return;
@@ -369,7 +382,7 @@ Item {
         if (typeof(offsetX)==="string") {
             var found=false;
             for(;p;p=p.parent) {
-                console.log("P="+p);
+                //console.log("P="+p);
                 if (p.objectName===offsetX) {
                     found=true;
                     break;
@@ -397,8 +410,9 @@ Item {
             x+=p.x;
             y+=p.y;
         }
-        console.log("X="+x+" y="+y+" w="+w+" h="+h);
-
+        if (log) {
+            console.log("X="+x+" y="+y+" w="+w+" h="+h);
+        }
         videoOutput.x=x;
         videoOutput.y=y;
         videoOutput.width=w

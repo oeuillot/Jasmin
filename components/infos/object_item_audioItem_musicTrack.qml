@@ -94,7 +94,7 @@ FocusInfo {
                         // Ajoute les pistes du disque juste après celui qui est en écoute, sans forcement lancer le PLAY
                         event.accepted = true;
 
-                        return audioPlayer.setPlayList(contentDirectoryService, [xml], resImageSource, true, audioPlayer.playListIndex+1);
+                        return audioPlayer.setPlayList(contentDirectoryService, [xml], resImageSource, true, audioPlayer.playListIndex+(audioPlayer.playbackState!==Audio.StoppedState)?1:0);
 
                     case Qt.Key_PageUp:
                         // Ajoute les pistes du disque après les morceaux

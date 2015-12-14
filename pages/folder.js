@@ -1,8 +1,11 @@
+.pragma library
+
 .import "../jasmin/upnpServer.js" as UpnpServer
 .import "../jasmin/contentDirectoryService.js" as ContentDirectoryService
 .import fbx.async 1.0 as Async
 
 .import "../jasmin/util.js" as Util
+.import "musicFolder.js" as MusicFolder
 
 function getModelInfo(contentDirectoryService, meta) {
 
@@ -147,3 +150,4 @@ function loadModel(contentDirectoryService, objectID, position, pageSize, loadAr
 
     return deferred;
 }
+

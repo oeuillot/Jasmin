@@ -112,6 +112,7 @@ Item {
                 from: 0;
                 to: 1;
             }
+            /*
             NumberAnimation {
                 target: imageIndexItem
                 property: "opacity"
@@ -119,7 +120,9 @@ Item {
                 from: 0;
                 to: 0.7;
             }
+            */
         }
+        /*
         NumberAnimation {
             target: imageIndexItem
             property: "opacity"
@@ -127,6 +130,7 @@ Item {
             from: 0.7;
             to: 0;
         }
+        */
     }
 
     Item {

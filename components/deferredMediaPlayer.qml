@@ -6,6 +6,8 @@ import fbx.async 1.0
 MediaPlayer {
     id: mediaPlayer
 
+    property bool log: false;
+
     property var playDeferred: ([]);
     property var stopDeferred: ([]);
     property var pauseDeferred: ([]);
@@ -17,19 +19,25 @@ MediaPlayer {
         case MediaPlayer.PlayingState:
             d=playDeferred;
             playDeferred=[];
-            console.log("PlaybackChanged: "+playbackState+" PLAYING "+d);
+            if (log) {
+                console.log("PlaybackChanged: "+playbackState+" PLAYING "+d);
+            }
             break;
 
         case MediaPlayer.StoppedState:
             d=stopDeferred;
             stopDeferred=[];
-            console.log("PlaybackChanged: "+playbackState+" STOPPED "+d);
+            if (log) {
+                console.log("PlaybackChanged: "+playbackState+" STOPPED "+d);
+            }
             break;
 
         case MediaPlayer.PausedState:
             d=pauseDeferred;
             pauseDeferred=[];
-            console.log("PlaybackChanged: "+playbackState+" PAUSED "+d);
+            if (log) {
+                console.log("PlaybackChanged: "+playbackState+" PAUSED "+d);
+            }
             break;
 
         default:
@@ -64,7 +72,9 @@ MediaPlayer {
     }
 
     function $stop() {
-        console.log("$Stop current playbackState="+playbackState);
+        if (log) {
+            console.log("$Stop current playbackState="+playbackState);
+        }
 
         if (playbackState===MediaPlayer.StoppedState) {
             return Deferred.resolved(playbackState);
@@ -76,7 +86,9 @@ MediaPlayer {
 
         //console.log("Stop video !");
 
-        console.log("$Stop: defer stop !");
+        if (log) {
+            console.log("$Stop: defer stop !");
+        }
 
         mediaPlayer.stop();
 
