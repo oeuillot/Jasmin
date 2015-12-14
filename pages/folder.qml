@@ -9,6 +9,7 @@ import fbx.async 1.0
 import QtMultimedia 5.0
 
 import "folder.js" as FolderScript
+import "musicFolder.js" as MusicFolder
 import "../components" 1.0
 import "../jasmin" 1.0
 import "../services" 1.0
@@ -39,7 +40,7 @@ Page {
 
     property var deferredXMLParsing;
 
-    onDidAppear: {        
+    onDidAppear: {
         pageShown=true;
 
         if (!listView.pageSizeLoaded[0]) {
@@ -49,7 +50,7 @@ Page {
     }
 
     onWillAppear: {
-       // console.log("ON WILL APPEAR ********* model="+listView.model);
+        // console.log("ON WILL APPEAR ********* model="+listView.model);
 
         //listView.model=[]
         if (listView.model && listView.model.length) {
@@ -107,8 +108,8 @@ Page {
                     }
 
                     event.accepted=true;
-                    return;                                        
-                 }
+                    return;
+                }
 
                 if (upnpClass) {
                     if (!upnpClass.indexOf("object.item.audioItem")) {
@@ -117,13 +118,24 @@ Page {
                             // Ajoute les pistes du disque juste après celui qui est en écoute, sans forcement lancer le PLAY
                             event.accepted = true;
 
-                            return audioPlayer.setPlayList(contentDirectoryService, [model], resImageSource, true, audioPlayer.playListIndex+1);
+                            MusicFolder.browseTrack(contentDirectoryService, model).then(function onSuccess(xml) {
+                                return audioPlayer.setPlayList(contentDirectoryService, [xml], resImageSource, true, audioPlayer.playListIndex+1);
+
+                            }, function onFailed(reason) {
+                                console.error("Can not browse track "+model);
+                            });
+                            return;
 
                         case Qt.Key_PageUp:
                             // Ajoute les pistes du disque après les morceaux
                             event.accepted = true;
 
-                            audioPlayer.setPlayList(contentDirectoryService, [model], resImageSource, true);
+                            MusicFolder.browseTrack(contentDirectoryService, model).then(function onSuccess(xml) {
+                                return audioPlayer.setPlayList(contentDirectoryService, [xml], resImageSource, true);
+
+                            }, function onFailed(reason) {
+                                console.error("Can not browse track "+model);
+                            });
                             return;
                         }
 
@@ -133,17 +145,32 @@ Page {
                             // Ajoute les pistes du disque juste après celui qui est en écoute, sans forcement lancer le PLAY
                             event.accepted = true;
 
-                            var list=getMusicTrackList(model);
+                            MusicFolder.browseTracks(contentDirectoryService, model).then(function(disks) {
+                                var list=[];
+                                disks.forEach(function(disk) {
+                                   disk.forEach(function(track) {
+                                      list.push(track.xml);
+                                   });
+                                });
 
-                            return audioPlayer.setPlayList(contentDirectoryService, list, resImageSource, true, audioPlayer.playListIndex+1);
+                                audioPlayer.setPlayList(contentDirectoryService, list, resImageSource, true, audioPlayer.playListIndex+1);
+                            });
+                            return;
 
                         case Qt.Key_PageUp:
                             // Ajoute les pistes du disque après les morceaux
                             event.accepted = true;
 
-                            var list=getMusicTrackList(model);
+                            MusicFolder.browseTracks(contentDirectoryService, model).then(function(disks) {
+                                var list=[];
+                                disks.forEach(function(disk) {
+                                   disk.forEach(function(track) {
+                                      list.push(track.xml);
+                                   });
+                                });
 
-                            audioPlayer.setPlayList(contentDirectoryService, list, resImageSource, true);
+                                audioPlayer.setPlayList(contentDirectoryService, list, resImageSource, true);
+                            });
                             return;
                         }
                     }
@@ -247,7 +274,7 @@ color: "red";
 
 
                     }, function onFailure(reason) {
-                        console.log("Failure: "+reason);
+                        console.error("Failure: "+reason);
                     });
                     return;
                 }
@@ -257,7 +284,7 @@ color: "red";
 
             info=showInfo(card, infoComponent, {
                               xml: xml,
-                              markerPosition: card.x+card.width/2,                              
+                              markerPosition: card.x+card.width/2,
                               upnpClass: upnpClass,
                               contentDirectoryService: contentDirectoryService,
                               audioPlayer: page.audioPlayer,
@@ -334,7 +361,7 @@ color: "red";
                 listView.modelSize=modelInfos.childCount;
             }
 
-           // console.log("ModelSize="+modelInfos.childCount);
+            // console.log("ModelSize="+modelInfos.childCount);
 
             listView.onUserScrollingChanged.connect(function() {
                 //console.log(Date.now()+" UserScrolling="+listView.userScrolling);
@@ -346,7 +373,7 @@ color: "red";
                         var idx=loadingPages.shift();
 
                         pageSizeLoaded[idx]=false;
-                    }                   
+                    }
                 }
 
                 if (listView.userScrolling) {
