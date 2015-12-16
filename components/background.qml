@@ -10,18 +10,28 @@ Image {
     asynchronous: true
     anchors.fill: parent
     smooth: true
-    source: widget.background ? ("background/" + widget.background + ".png") : ""
+    source: widget.background ? ("background/" + widget.background) : ""
 
     Image {
+        id: logo
         visible: widget.logo != ""
-        anchors {
-            centerIn: parent
-        }
-        width: Math.min(widget.width, widget.height) * widget.logoRatio
-        height: Math.min(widget.width, widget.height) * widget.logoRatio
-        fillMode: Image.PreserveAspectFit
+        anchors.fill: parent
         smooth: true
         asynchronous: true
-        source: widget.logo ? "background/" + widget.logo + ".png" : ""
+        source: widget.logo ? "background/" + widget.logo : ""
+    }
+
+    NumberAnimation {
+        id: logoHide
+        target: logo
+        property: "opacity"
+        duration: 2000
+        from: 1;
+        to: 0;
+    }
+
+
+    function hideLogo() {
+        logoHide.start();
     }
 }

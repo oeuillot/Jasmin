@@ -40,6 +40,8 @@ Page {
 
     property var deferredXMLParsing;
 
+    property var listOptions: ({modelHasIndex: true, recentlyAdded: true});
+
     onDidAppear: {
         pageShown=true;
 
@@ -50,17 +52,17 @@ Page {
     }
 
     onWillAppear: {
-        // console.log("ON WILL APPEAR ********* model="+listView.model);
+        //console.log("ON WILL APPEAR ********* model="+listView.model);
 
         //listView.model=[]
         if (listView.model && listView.model.length) {
-            console.log("ON WILL APPEAR back");
+            //console.log("ON WILL APPEAR back");
             listView.onFront();
             listView.updateLayout();
             return;
         }
 
-        if (listView.modelInfos.childCount<=pageSize*2) {
+        if (listView.modelInfos.childCount<=pageSize*2 && !page.listOptions.modelHasIndex) {
             // Petites pages, on charge directe
             listView.pageSizeLoaded[0]=true;
             listView.loadPage(0).then(function() {
@@ -74,13 +76,37 @@ Page {
 
         } else {
             // Grosse liste, on ne charge que le titre/class
-            FolderScript.listModel(contentDirectoryService, listView.objectID).then(function(result) {
-
-                // console.log(Date.now()+" big ModelSize="+result.length);
-
+            FolderScript.listModel(contentDirectoryService, listView.objectID, page.listOptions).then(function(result) {
+                listView.redirectedModel=null;
+                listView.headers=null;
                 listView.model=result;
+
+                console.log(Date.now()+" big ModelSize="+result.length+" "+listOptions.recentyAdded);
+
+                if (listOptions.recentlyAdded) {
+                    var d=new Date();
+                    d.setDate(d.getDate()-7);
+
+                    FolderScript.prepareRecentlyAdded(contentDirectoryService, listView, result, d, recentlyAdded, allAlbums);
+                }
                 listView.updateLayout();
             });
+        }
+    }
+    Component {
+        id: recentlyAdded
+
+        GridSectionSeparator {
+            title: "Ajoutés récemment"
+        }
+
+    }
+    Component {
+        id: allAlbums
+
+        GridSectionSeparator {
+            title: "Toute la liste"
+            height: 50
         }
     }
 
@@ -199,7 +225,7 @@ Page {
                         listView.open(this, true);
 
                     } else {
-                        //                        console.log("Active focus changed for card "+this.cellIndex);
+                        // console.log("Active focus changed for card "+this.cellIndex);
                         listView.show(this);
                     }
 
@@ -326,11 +352,10 @@ color: "red";
                     listView.model=[];
                 }
 
-
                 var list=result.list;
                 var model=listView.model;
                 var p=result.position;
-                for(var i=0;i<list.length;i++) {
+                for(var i=0;i<list.length;i++) {                  
                     model[p+i]=list[i];
                 }
 
@@ -363,7 +388,7 @@ color: "red";
 
             // console.log("ModelSize="+modelInfos.childCount);
 
-            listView.onUserScrollingChanged.connect(function() {
+            listView.onUserScrollingChanged.connect(function onScroll() {
                 //console.log(Date.now()+" UserScrolling="+listView.userScrolling);
 
                 var cur=listView.pageCellIndex;
@@ -380,36 +405,31 @@ color: "red";
                     return;
                 }
 
-                for(var i=0;i<listView.viewRows;i++) {
-                    var ix=cur+i*listView.viewColumns;
+                var cellCount=listView.viewRows*listView.viewColumns;
+
+                for(var i1=0;i1<cellCount;i1++) {
+                    var ix=cur+i1;
+                    var modelIdx=listView.getModelIndex(ix);
+                    if (modelIdx<0) {
+                        continue;
+                    }
+
                     var pi=Math.floor(ix/pageSize);
 
                     // console.log("Test "+cur+" ix="+ix+" pi="+pi);
 
-                    if (!pageSizeLoaded[pi]) {
-                        pageSizeLoaded[pi]=true;
-                        if (loading) {
-                            loadingPages.unshift(pi);
-                            continue;
-                        } else {
-                            loadPage(pi);
-                        }
+                    if (pageSizeLoaded[pi]) {
+                        continue;
                     }
 
-                    ix=ix+listView.viewColumns-1;
-                    pi=Math.floor(ix/pageSize);
-
-                    if (!pageSizeLoaded[pi]) {
-                        pageSizeLoaded[pi]=true;
-                        if (loading) {
-                            loadingPages.unshift(pi);
-                            continue;
-                        } else {
-                            loadPage(pi);
-                        }
+                    pageSizeLoaded[pi]=true;
+                    if (loading) {
+                        loadingPages.unshift(pi);
+                        continue;
                     }
+
+                    loadPage(pi);
                 }
-
             });
 
             //console.log(Date.now()+" Loading page");

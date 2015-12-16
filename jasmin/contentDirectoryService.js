@@ -20,6 +20,9 @@ var JASMIN_MUSICMETADATA="urn:schemas-jasmin-upnp.net:musicmetadata/";
 var JASMIN_FILEMEDATA="urn:schemas-jasmin-upnp.net:filemetadata/";
 var JASMIN_MOVIEMETADATA="urn:schemas-jasmin-upnp.net:moviemetadata/";
 
+var SEC_DLNA_XMLNS="http://www.sec.co.kr/dlna";
+
+
 var MICROSOFT_WMPNSS="urn:schemas-microsoft-com:WMPNSS-1-0/";
 
 var CONTENT_DIRECTORY_XMLNS_SET={
@@ -32,6 +35,7 @@ var CONTENT_DIRECTORY_XMLNS_SET={
 var DIDL_XMLNS_SET = {
     "": DIDL_LITE_XMLNS,
     "upnp": UpnpServer.UPNP_METADATA_XMLNS,
+    "sec": SEC_DLNA_XMLNS,
     "dc": PURL_ELEMENT_XMLS,
     "mm": JASMIN_MUSICMETADATA,
     "mo": JASMIN_MOVIEMETADATA,
@@ -41,6 +45,7 @@ var DIDL_XMLNS_SET = {
 var RESPONSE_SOAP_XMLNS={
     "": UpnpServer.UPNP_SERVICE_XMLNS,
     "upnp": UpnpServer.UPNP_METADATA_XMLNS,
+    "sec": SEC_DLNA_XMLNS,
     "dc": PURL_ELEMENT_XMLS,
     "mm": JASMIN_MUSICMETADATA,
     "mo": JASMIN_MOVIEMETADATA,
@@ -171,6 +176,15 @@ ContentDirectoryService.prototype.getSortCapabilities=function() {
     });
 
     return deferred;
+}
+
+ContentDirectoryService.prototype.hasSortCapabilities=function(xmlns, name) {
+    if (!this.sortCaps) {
+        return null;
+    }
+
+    var f=this.sortCaps(name+"##"+xmlns);
+    return !!f;
 }
 
 ContentDirectoryService.prototype.getSearchCapabilities=function() {

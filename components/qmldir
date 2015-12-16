@@ -23,3 +23,5 @@ JSettings 1.0 settings.qml
 Rating 1.0 rating.qml
 
 Certificate 1.0 certificate.qml
+
+GridSectionSeparator 1.0 gridSectionSeparator.qml

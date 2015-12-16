@@ -417,6 +417,7 @@ Item {
         videoOutput.y=y;
         videoOutput.width=w
         videoOutput.height=h
+        videoOutput.z=99999;
     }
 
     function hideVideo() {

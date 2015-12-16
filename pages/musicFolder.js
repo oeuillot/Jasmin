@@ -52,25 +52,36 @@ function browseTracks(contentDirectoryService, xml, metas) {
 
   var objectID=xml.attr("id");
 
-  var trackSorters=[
+  var trackFilters=[
               {
-                  ascending: true,
                   name: "originalTrackNumber",
                   namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
               },
               {
-                  ascending: true,
                   name: "date",
                   namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
+              },
+              {
+                  name: "res",
+                  namespaceURI: ContentDirectoryService.DIDL_LITE_XMLNS
               }
-
-
           ];
+
+    if (metas) {
+        trackFilters.push({
+                              name: "artist",
+                              namespaceURI: ContentDirectoryService.UPNP_METADATA_XMLNS
+        });
+        trackFilters.push({
+                              name: "genre",
+                              namespaceURI: ContentDirectoryService.UPNP_METADATA_XMLNS
+        });
+    }
 
   // console.log("Request "+objectID);
 
   var deferred=contentDirectoryService.browseDirectChildren(objectID, {
-      sorters: trackSorters,
+      filters: trackFilters,
       requestCount: 256
 
   }).then(function onSuccess(xml) {

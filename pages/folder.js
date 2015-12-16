@@ -44,8 +44,29 @@ function listModel(contentDirectoryService, objectID, options) {
                     name: "title",
                     namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
                 }
-
             ];
+
+    if (options.recentlyAdded) {
+        options.filters.push({
+                                 name: "date",
+                                 namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
+                             });
+
+        //if (contentDirectoryService.hasSortCapabilities("modifiedTime", ContentDirectoryService.JASMIN_FILEMEDATA)) {
+        options.filters.push({
+                                 name: "modifiedTime",
+                                 namespaceURI: ContentDirectoryService.JASMIN_FILEMEDATA
+                             });
+        //}
+
+        //if (contentDirectoryService.hasSortCapabilities("modificationDate", ContentDirectoryService.SEC_DLNA)) {
+        options.filters.push({
+                                 name: "modificationDate",
+                                 namespaceURI: ContentDirectoryService.SEC_DLNA
+                             });
+        //}
+
+    }
 
 
     //console.log("listModel: Request position "+position+" pageSize="+pageSize);
@@ -79,10 +100,10 @@ function loadModel(contentDirectoryService, objectID, position, pageSize, loadAr
                  }, {
                      name: "class",
                      namespaceURI: UpnpServer.UPNP_METADATA_XMLNS
-                 }, {
+                 },/* {
                      name: "date",
                      namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
-                 }, {
+                 },*/ {
                      name: "res",
                      namespaceURI: ContentDirectoryService.DIDL_LITE_XMLNS
                  }, {
@@ -151,3 +172,78 @@ function loadModel(contentDirectoryService, objectID, position, pageSize, loadAr
     return deferred;
 }
 
+function prepareRecentlyAdded(contentDirectoryService, listView, result, recentDate, recentlyComponent, allComponent) {
+    var recentList=[];
+
+    var hasJMD=true; //contentDirectoryService.hasSortCapabilities("modifiedTime", ContentDirectoryService.JASMIN_FILEMEDATA);
+    var hasSEC=true; //contentDirectoryService.hasSortCapabilities("modificationDate", ContentDirectoryService.SEC_DLNA);
+
+    for(var i=0;i<result.length;i++) {
+        var xml=result[i];
+        var date;
+
+        //console.log("xml="+xml.xtoString());
+
+        if (hasJMD) {
+            date=xml.byPath("fm:modifiedTime", ContentDirectoryService.DIDL_XMLNS_SET).text();
+        }
+
+        if (!date && hasSEC) {
+            //date=xml.byPath("sec:modificationDate", ContentDirectoryService.DIDL_XMLNS_SET).text();
+        }
+
+        //        console.log("Date="+date);
+
+        if (!date) {
+            continue;
+        }
+
+        var ds=new Date(date);
+        if (ds.getTime()<recentDate.getTime()) {
+            continue;
+        }
+
+        recentList.push(i);
+    }
+
+    if (!recentList.length || recentList.length===result.length) {
+        listView.redirectedModel=null;
+        return;
+    }
+
+    listView.headers=[
+                { rowIndex: 0,
+                    component: listView.createComponentHeader(recentlyComponent)
+                },
+                { rowIndex: Math.ceil(recentList.length/listView.viewColumns),
+                    component: listView.createComponentHeader(allComponent)
+                }
+            ];
+
+    listView.redirectedModel=createRedirectedModel(recentList, listView.viewColumns, listView.model);
+}
+
+function createRedirectedModel(recentList, viewColumns, model) {
+    var emptyCells=viewColumns-(recentList.length % viewColumns);
+    //console.log("EMPTY CELLS="+emptyCells);
+    return {
+        get: function(idx) {
+            //console.log("Request idx="+idx);
+            if (idx<recentList.length) {
+                //console.log("Return recentList["+idx+"]=>"+recentList[idx]);
+                return recentList[idx];
+            }
+            idx-=recentList.length;
+            if (idx<emptyCells) {
+                //console.log("Return emptyCells["+idx+"]=>-1");
+                return -1;
+            }
+            idx-=emptyCells;
+
+            //console.log("Return main index "+idx);
+
+            return idx;
+        },
+        length: recentList.length+emptyCells+model.length
+    };
+}

@@ -19,6 +19,7 @@ Page {
     property AudioPlayer audioPlayer;
 
     property JSettings settings;
+    property JBackground background;
 
     property var deferredRequest;
 
@@ -188,6 +189,7 @@ Page {
 console.log("Last focus="+lastFocus);
             if (!count) {
                 listView.focus(0);
+                background.hideLogo();
 
             } else if (lastFocus) {
                 var lastServerUSN=settings.get("lastServer.USN");

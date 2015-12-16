@@ -1,7 +1,7 @@
 /**
  * Copyright Olivier Oeuillot
  */
- 
+
 import QtQuick 2.0
 
 import "../jasmin" 1.0
@@ -19,6 +19,8 @@ FocusScope {
 
     property int verticalSpacing: 0;
 
+    property var redirectedModel;
+
     property var model;
 
     property int modelSize: 0;
@@ -26,6 +28,7 @@ FocusScope {
     property var delegate;
 
     property int lastFocusIndex: -1;
+
     property int focusIndex: -1;
 
     property int pageCellIndex: 0;
@@ -40,8 +43,10 @@ FocusScope {
 
     property bool userScrolling: false;
 
+    property var headers: ([]);
+
     onActiveFocusChanged: {
-       console.log("Grid: Active focus "+activeFocus+" "+focusIndex);
+        // console.log("Grid: Active focus "+activeFocus+" "+focusIndex);
 
         if (activeFocus) {
             if (focusIndex<0 && lastFocusIndex>=0) {
@@ -105,6 +110,9 @@ FocusScope {
 
     }
 
+    function createComponentHeader(componentClass, params) {
+        return componentClass.createObject(grid.contentItem, params || {});
+    }
 
     function setParams(params) {
         return params;
@@ -114,17 +122,69 @@ FocusScope {
         grid.updateLayout(reason || "widget");
     }
 
+    function getModelSize() {
+        var modelSize=Math.max(widget.model.length, widget.modelSize);
+        if (redirectedModel) {
+            modelSize=Math.max(modelSize, redirectedModel.length);
+        }
+
+        return modelSize;
+    }
+
+    function getModelIndex(index) {
+        if (redirectedModel) {
+            index=redirectedModel.get(index);
+            if (index===undefined || index<0) {
+                return -1;
+            }
+        }
+
+        return index;
+    }
+
+    function getCellModel(index) {
+        var modelIndex=getModelIndex(index);
+        if (modelIndex===undefined) {
+            return undefined;
+        }
+
+        return model[modelIndex];
+    }
+
     function show(component, info) {
         var cy=component.y;
+        if (typeof(component.cellIndex)==="number") {
+            var rowIndex=Math.floor(component.cellIndex/viewColumns);
+
+            // console.log("ROWINDEX="+rowIndex);
+
+            if (headers) {
+                headers.forEach(function (header) {
+                    // console.log("<>"+header.rowIndex+"/"+rowIndex+" "+header.component.y+"/"+cy);
+                    if (header.rowIndex===rowIndex) {
+                        cy=Math.min(cy, header.component.y);
+                        // console.log("  => "+cy);
+                    }
+                });
+            }
+        }
+
         var y=cy-grid.contentY;
         var ch=component.height;
         if (info) {
             ch+=info.height;
         }
 
-        var modelSize=Math.max(widget.model.length, widget.modelSize);
+        var modelSize=getModelSize();
 
         var totY=(Math.ceil(modelSize/viewColumns)*(cellHeight+verticalSpacing)-verticalSpacing)+(info?info.height:0);
+        if (headers) {
+            headers.forEach(function(header) {
+                totY+=header.component.height;
+            });
+        }
+
+
         // console.log("DIFF "+totY+"/"+grid.contentHeight);
         if (grid.contentHeight!==totY) {
             grid.contentHeight=totY;
@@ -132,21 +192,21 @@ FocusScope {
 
         // console.log("SHOW height="+ch+" info.height="+(info?info.height:0));
 
-       // console.log("SHOW Index="+component.cellIndex+" y="+y+" cellHeight="+cellHeight+" component.y="+component.y+" total.height="+ch+" grid.contentY="+grid.contentY+" grid.height="+grid.height+" info.h="+(info && info.height));
+        // console.log("SHOW Index="+component.cellIndex+" y="+y+" cellHeight="+cellHeight+" component.y="+component.y+" total.height="+ch+" grid.contentY="+grid.contentY+" grid.height="+grid.height+" info.h="+(info && info.height));
 
         if (ch>grid.height) {
             grid.contentY=info.y;
-           // console.log("0===>"+grid.contentY);
+            // console.log("0===>"+grid.contentY);
             return;
         }
 
         var preloadShowUp=0; //cellHeight;
         if (y<preloadShowUp) {
-            if (component.y-grid.contentY+ch+preloadShowUp+verticalSpacing<grid.height) {
-                var sy=component.y+ch+preloadShowUp+verticalSpacing-grid.height;
-                grid.contentY=Math.max(component.y-preloadShowUp, 0); //Math.max(0, sy);
+            if (cy-grid.contentY+ch+preloadShowUp+verticalSpacing<grid.height) {
+                var sy=cy+ch+preloadShowUp+verticalSpacing-grid.height;
+                grid.contentY=Math.max(cy-preloadShowUp, 0); //Math.max(0, sy);
 
-             //   console.log("1===>"+sy+"="+component.y+"+"+ch+"+"+preloadShowUp+"+"+verticalSpacing+"-"+grid.height);
+                //   console.log("1===>"+sy+"="+component.y+"+"+ch+"+"+preloadShowUp+"+"+verticalSpacing+"-"+grid.height);
                 return;
             }
 
@@ -244,7 +304,6 @@ FocusScope {
     }
 
     function focusTop(cellIndex) {
-        //console.log("FOCUS TOP "+cellIndex);
         return focus(cellIndex-widget.viewColumns);
     }
 
@@ -271,15 +330,22 @@ FocusScope {
             return false;
         }
 
-        var modelSize=Math.max(model.length, widget.modelSize);
+        var modelSize=getModelSize();
 
-        //console.log("Focus "+cellIndex+" modelSize="+modelSize);
+        console.log("Focus "+cellIndex+" modelSize="+modelSize);
         if (cellIndex<0 || cellIndex>=modelSize) {
             return false;
         }
 
-        var delegateIndex=grid.cellIndexToCellDelegate(cellIndex);
-        var cellDelegate=grid.cellDelegates[delegateIndex];
+        var cellDelegate;
+        for(;cellIndex>=0;cellIndex--) {
+            var delegateIndex=grid.cellIndexToCellDelegate(cellIndex);
+            cellDelegate=grid.cellDelegates[delegateIndex];
+
+            if (cellDelegate && cellDelegate.model!==null) {
+                break;
+            }
+        }
 
         //console.log("=>["+cellIndex+","+delegateIndex+"]="+cellDelegate);
 
@@ -333,11 +399,21 @@ FocusScope {
 
                     focusRectangle.visible=true;
 
+                    var rowIndex=Math.floor(focusIndex / viewColumns);
+                    var cellY=rowIndex*(cellHeight+verticalSpacing);
+                    if (headers) {
+                        headers.forEach(function(header) {
+                            if (header.rowIndex<=rowIndex) {
+                                cellY+=header.component.height;
+                            }
+                        });
+                    }
+
                     focusAnimation.stop();
                     animationX.from=focusRectangle.x;
                     animationX.to=(focusIndex % viewColumns)*(cellWidth+horizontalSpacing);
                     animationY.from=focusRectangle.y;
-                    animationY.to=(Math.floor(focusIndex / viewColumns))*(cellHeight+verticalSpacing);
+                    animationY.to=cellY;
                     focusAnimation.start();
                 });
             }
@@ -364,7 +440,7 @@ FocusScope {
                 from: 0
                 to: 0
             }
-       }
+        }
 
         onHeightChanged: {
             //console.log("Width="+width+" height="+height);
@@ -390,6 +466,7 @@ FocusScope {
 
 
         function updateContentYChanged(reason) {
+            var model=widget.model;
             if (!model) {
                 return;
             }
@@ -412,9 +489,15 @@ FocusScope {
             if (info && infoRowIndex<rowIndex) {
                 y+=info.height;
             }
+            if (headers) {
+                headers.forEach(function(header) {
+                    if (header.rowIndex<rowIndex) {
+                        y+=header.component.height;
+                    }
+                });
+            }
 
-            var modelSize=Math.max(widget.model.length, widget.modelSize);
-
+            var modelSize=getModelSize();
             //console.log("contentY="+contentY+" rowY="+rowY+" rowIndex="+rowIndex+" y="+y);
 
             var created=0;
@@ -422,17 +505,41 @@ FocusScope {
             var endRows=grid.viewShadows;
             var startRows=0;
 
+            var redirectedModel=widget.redirectedModel;
+
             var cellDelegates=grid.cellDelegates;
 
             for(var j=startRows;j<endRows;j++, rowIndex++) {
                 var idx=rowIndex*widget.viewColumns;
                 var delegateIndex=cellIndexToCellDelegate(idx);
 
+                if (headers) {
+                    headers.forEach(function(header) {
+                        if (header.rowIndex===rowIndex) {
+                            header.component.y=y;
+
+                            y+=header.component.height;
+                        }
+                    });
+                }
+
                 for(var i=0;i<widget.viewColumns;i++,idx++,delegateIndex++) {
-                    var cellModel=model[idx];
+                    var cellModel;
+                    if (redirectedModel) {
+                        cellModel=redirectedModel.get(idx);
+                        //console.log("=> "+cellModel);
+                        if (cellModel>=0) {
+                            cellModel=model[cellModel];
+                        } else {
+                            cellModel=null;
+                        }
+                    } else {
+                        cellModel=model[idx];
+                    }
+
                     var cellDelegate=cellDelegates[delegateIndex];
 
-                   // console.log("cellModel #"+idx+" "+cellModel);
+                    //console.log("cellModel #"+idx+" "+cellModel);
 
                     try {
                         if (cellDelegate) {
@@ -441,8 +548,14 @@ FocusScope {
                             if (cellDelegate.cellIndex===idx) {
                                 if (cellDelegate.y!==y) {
                                     cellDelegate.y=y;
-    //                                console.log("Update Y");
+                                    //                                console.log("Update Y");
                                 }
+                                if (cellModel===null) {
+                                    cellDelegate.model=null;
+                                    cellDelegate.visible=false;
+                                    continue;
+                                }
+
                                 if (cellDelegate.model!==cellModel) {
                                     //console.log("Update cellModel "+idx+" "+cellModel);
                                     cellDelegate.model=cellModel;
@@ -453,13 +566,13 @@ FocusScope {
                                 }
                                 if (!cellDelegate.visible) {
                                     cellDelegate.visible=true;
-    //                                console.log("Update visible");
+                                    //                                console.log("Update visible");
                                 }
                                 //now2=Date.now()-now2;
                                 // console.log("Time "+now2);
                                 continue;
                             }
-     //                       console.log("Not same index "+idx+"/"+cellDelegate.cellIndex);
+                            //                       console.log("Not same index "+idx+"/"+cellDelegate.cellIndex);
 
                             if (idx>=modelSize) {
                                 cellDelegate.visible=false;
@@ -471,14 +584,14 @@ FocusScope {
                             cellDelegate.visible=true;
 
                             if (rowIndex<pageIndex || rowIndex>=pageIndex+widget.viewRows) {
-    //                          //  console.log("Ignore rowIndex="+rowIndex);
+                                //                          //  console.log("Ignore rowIndex="+rowIndex);
                                 continue;
                             }
 
                             // console.log("Set cellModel "+idx+" "+cellModel);
                             cellDelegate.model=cellModel;
 
-                            if (cellDelegate.delayedUpdateModel) {
+                            if (cellModel!==null && cellDelegate.delayedUpdateModel) {
                                 registerAsync(idx, cellDelegate);
                             }
 
@@ -502,13 +615,16 @@ FocusScope {
                         // console.log("Instanciate cellModel "+idx+" "+cellModel);
 
                         cellDelegate=widget.delegate.createObject(grid.contentItem, params);
+                        if (cellModel===null) {
+                            cellDelegate.visible=false;
+                        }
 
                         cellDelegate.onActiveFocusChanged.connect(delegateActiveFocus(cellDelegate));
 
                         cellDelegates[delegateIndex] = cellDelegate;
                         created++;
 
-                        if (cellDelegate.delayedUpdateModel) {
+                        if (cellModel!==null && cellDelegate.delayedUpdateModel) {
                             registerAsync(idx, cellDelegate);
                         }
                     } finally {
@@ -523,9 +639,9 @@ FocusScope {
             }
 
             now=Date.now()-now;
-//            if (associated || created) {
-//                console.log("updateContentYChanged: reason="+reason+" associated="+associated+" created="+created+" delay="+now+"ms");
-//            }
+            //            if (associated || created) {
+            //                console.log("updateContentYChanged: reason="+reason+" associated="+associated+" created="+created+" delay="+now+"ms");
+            //            }
         }
 
         function delegateActiveFocus(cellDelegate) {
@@ -566,9 +682,9 @@ FocusScope {
 
             var now=Date.now();
 
-          //  console.log("Model="+widget.model+" "+(widget.model && widget.model.length)+" reason="+reason);
+            //  console.log("Model="+widget.model+" "+(widget.model && widget.model.length)+" reason="+reason);
 
-            var modelSize=Math.max(widget.model.length, widget.modelSize);
+            var modelSize=getModelSize();
 
             var ch=Math.floor((modelSize+widget.viewColumns-1)/widget.viewColumns)
 
