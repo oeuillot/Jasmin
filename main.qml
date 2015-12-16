@@ -48,7 +48,8 @@ Application {
         pageStack.push("server2.qml", {
                            audioPlayer: menu.audioPlayer,
                            menu: menu,
-                           settings: settings
+                           settings: settings,
+                           background: background
                        });
 
     }
@@ -65,7 +66,9 @@ Application {
     }
 
     JBackground {
-        background: "jasmin"
+        id: background
+        background: "jasmin.jpg"
+        logo: "logo.png"
     }
 
     Stack {
