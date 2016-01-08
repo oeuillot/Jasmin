@@ -7,7 +7,7 @@ function getServiceHost(path) {
 //        url="http://192.168.3.34:5000"+path;
 //        url="http://192.168.4.14:5000"+path;
 //    url="http://192.168.0.58:5000"+path;
-    url="http://192.168.3.193:5000"+path;
+//    url="http://192.168.3.193:5000"+path;
 //    }
 
     return url;
