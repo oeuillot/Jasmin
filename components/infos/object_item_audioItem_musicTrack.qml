@@ -178,6 +178,7 @@ FocusInfo {
             Component.onCompleted: {
 
                 var y=0;
+                var lines=0;
 
                 function addLine(label, value, lc, vc) {
                     var lab=(lc || labelComponent).createObject(grid, {
@@ -194,7 +195,7 @@ FocusInfo {
                                                                 });
 
                     y+=val.height+8;
-
+                    lines++;
                     return {
                         label: lab,
                         value: val
@@ -232,6 +233,10 @@ FocusInfo {
                 var genres=UpnpObject.getTextList(xml, "upnp:genre");
                 if (genres) {
                     addLine("Genre"+((genres.length>1)?"s":""), genres.join(', '));
+                }
+
+                if (lines<4) {
+                     UpnpObject.addDatesLine(xml, addLine);
                 }
 
                 grid.height=y+8;

@@ -114,6 +114,17 @@ FocusScope {
         return componentClass.createObject(grid.contentItem, params || {});
     }
 
+    function hideHeaders() {
+        var headers=widget.headers;
+        if (!headers) {
+            return;
+        }
+
+        headers.forEach(function(header) {
+           header.component.visible=false;
+        });
+    }
+
     function setParams(params) {
         return params;
     }
@@ -123,9 +134,14 @@ FocusScope {
     }
 
     function getModelSize() {
-        var modelSize=Math.max(widget.model.length, widget.modelSize);
         if (redirectedModel) {
-            modelSize=Math.max(modelSize, redirectedModel.length);
+//            console.log("rlen="+redirectedModel.length+" ml="+model.length+" modelSize="+widget.modelSize);
+            return redirectedModel.length;
+        }
+
+        var modelSize=widget.modelSize;
+        if (model) {
+            modelSize=Math.max(model.length, modelSize);
         }
 
         return modelSize;
@@ -149,6 +165,21 @@ FocusScope {
         }
 
         return model[modelIndex];
+    }
+
+    function showCellByIndex(index) {
+        var delegateIndex=grid.cellIndexToCellDelegate(cellIndex);
+        if (delegateIndex<0) {
+            return false;
+        }
+
+        var cellDelegate=grid.cellDelegates[delegateIndex];
+        if (!cellDelegate) {
+            return false;
+        }
+
+        show(cellDelegate);
+        return true;
     }
 
     function show(component, info) {
@@ -308,7 +339,7 @@ FocusScope {
     }
 
     function focusBottom(cellIndex) {
-        var modelSize=Math.max(widget.model.length, widget.modelSize);
+        var modelSize=getModelSize();
 
         if (cellIndex+widget.viewColumns>=modelSize) {
             if (Math.floor(cellIndex/widget.viewColumns)===Math.floor((modelSize-1)/widget.viewColumns)) {
@@ -332,7 +363,7 @@ FocusScope {
 
         var modelSize=getModelSize();
 
-        console.log("Focus "+cellIndex+" modelSize="+modelSize);
+        // console.log("Focus "+cellIndex+" modelSize="+modelSize);
         if (cellIndex<0 || cellIndex>=modelSize) {
             return false;
         }
@@ -355,6 +386,27 @@ FocusScope {
         }
 
         console.log("Invalid cellIndex="+cellDelegate.cellIndex+" modelSize="+modelSize+" model.length="+model.length+" delegateIndex="+delegateIndex);
+    }
+
+    function updateFocusRect() {
+        if (focusIndex<0){
+            focusRectangle.visible=false;
+            return;
+        }
+
+        focusRectangle.visible=true;
+
+        var rowIndex=Math.floor(focusIndex / viewColumns);
+        var cellY=rowIndex*(cellHeight+verticalSpacing);
+        if (headers) {
+            headers.forEach(function(header) {
+                if (header.rowIndex<=rowIndex) {
+                    cellY+=header.component.height;
+                }
+            });
+        }
+
+        focusRectangle.setPosition((focusIndex % viewColumns)*(cellWidth+horizontalSpacing), cellY);
     }
 
     Flickable {
@@ -381,64 +433,16 @@ FocusScope {
 
         property int viewShadows: 0;
 
-        Rectangle {
+        GridFocus {
             id: focusRectangle
-            color: "red"
-            opacity: 0.4
             width: cellWidth
             height: cellHeight
-            radius: 4
-            visible: Math.max(widget.model.length, widget.modelSize);
+            visible: Math.max(widget.model.length, widget.modelSize)>0;
 
             Component.onCompleted: {
                 widget.onFocusIndexChanged.connect(function() {
-                    if (focusIndex<0){
-                        focusRectangle.visible=false;
-                        return;
-                    }
-
-                    focusRectangle.visible=true;
-
-                    var rowIndex=Math.floor(focusIndex / viewColumns);
-                    var cellY=rowIndex*(cellHeight+verticalSpacing);
-                    if (headers) {
-                        headers.forEach(function(header) {
-                            if (header.rowIndex<=rowIndex) {
-                                cellY+=header.component.height;
-                            }
-                        });
-                    }
-
-                    focusAnimation.stop();
-                    animationX.from=focusRectangle.x;
-                    animationX.to=(focusIndex % viewColumns)*(cellWidth+horizontalSpacing);
-                    animationY.from=focusRectangle.y;
-                    animationY.to=cellY;
-                    focusAnimation.start();
+                    updateFocusRect();
                 });
-            }
-        }
-
-        ParallelAnimation {
-
-            id: focusAnimation
-
-            NumberAnimation {
-                id: animationX
-                target: focusRectangle
-                properties: "x"
-                duration: 100
-                from: 0
-                to: 0
-            }
-
-            NumberAnimation {
-                id: animationY
-                target: focusRectangle
-                properties: "y"
-                duration: 100
-                from: 0
-                to: 0
             }
         }
 
@@ -491,6 +495,7 @@ FocusScope {
             }
             if (headers) {
                 headers.forEach(function(header) {
+                    header.component.visible=false;
                     if (header.rowIndex<rowIndex) {
                         y+=header.component.height;
                     }
@@ -517,6 +522,7 @@ FocusScope {
                     headers.forEach(function(header) {
                         if (header.rowIndex===rowIndex) {
                             header.component.y=y;
+                            header.component.visible=true;
 
                             y+=header.component.height;
                         }
@@ -527,7 +533,7 @@ FocusScope {
                     var cellModel;
                     if (redirectedModel) {
                         cellModel=redirectedModel.get(idx);
-                        //console.log("=> "+cellModel);
+                        //console.log(idx+" => "+cellModel);
                         if (cellModel>=0) {
                             cellModel=model[cellModel];
                         } else {

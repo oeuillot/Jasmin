@@ -2,6 +2,7 @@
 
 .import "../jasmin/upnpServer.js" as UpnpServer
 .import "../jasmin/contentDirectoryService.js" as ContentDirectoryService
+.import "../jasmin/xml.js" as Xml
 .import fbx.async 1.0 as Async
 
 .import "../jasmin/util.js" as Util
@@ -47,22 +48,10 @@ function listModel(contentDirectoryService, objectID, options) {
             ];
 
     if (options.recentlyAdded) {
-        options.filters.push({
-                                 name: "date",
-                                 namespaceURI: ContentDirectoryService.PURL_ELEMENT_XMLS
-                             });
-
-        //if (contentDirectoryService.hasSortCapabilities("modifiedTime", ContentDirectoryService.JASMIN_FILEMEDATA)) {
-        options.filters.push({
-                                 name: "modifiedTime",
-                                 namespaceURI: ContentDirectoryService.JASMIN_FILEMEDATA
-                             });
-        //}
-
-        //if (contentDirectoryService.hasSortCapabilities("modificationDate", ContentDirectoryService.SEC_DLNA)) {
+        //if (contentDirectoryService.hasSortCapabilities("modificationDate", ContentDirectoryService.SEC_DLNA_XMLNS)) {
         options.filters.push({
                                  name: "modificationDate",
-                                 namespaceURI: ContentDirectoryService.SEC_DLNA
+                                 namespaceURI: ContentDirectoryService.SEC_DLNA_XMLNS
                              });
         //}
 
@@ -176,21 +165,12 @@ function prepareRecentlyAdded(contentDirectoryService, listView, result, recentD
     var recentList=[];
 
     var hasJMD=true; //contentDirectoryService.hasSortCapabilities("modifiedTime", ContentDirectoryService.JASMIN_FILEMEDATA);
-    var hasSEC=true; //contentDirectoryService.hasSortCapabilities("modificationDate", ContentDirectoryService.SEC_DLNA);
+    var hasSEC=true; //contentDirectoryService.hasSortCapabilities("modificationDate", ContentDirectoryService.SEC_DLNA_XMLNS);
 
     for(var i=0;i<result.length;i++) {
         var xml=result[i];
-        var date;
 
-        //console.log("xml="+xml.xtoString());
-
-        if (hasJMD) {
-            date=xml.byPath("fm:modifiedTime", ContentDirectoryService.DIDL_XMLNS_SET).text();
-        }
-
-        if (!date && hasSEC) {
-            //date=xml.byPath("sec:modificationDate", ContentDirectoryService.DIDL_XMLNS_SET).text();
-        }
+        var date=xml.byPath("sec:modificationDate", ContentDirectoryService.DIDL_XMLNS_SET).text();
 
         //        console.log("Date="+date);
 
@@ -206,6 +186,8 @@ function prepareRecentlyAdded(contentDirectoryService, listView, result, recentD
         recentList.push(i);
     }
 
+    //console.log("RecentsList="+recentList.length+" rowIndex="+Math.ceil(recentList.length/listView.viewColumns));
+
     if (!recentList.length || recentList.length===result.length) {
         listView.redirectedModel=null;
         return;
@@ -213,7 +195,7 @@ function prepareRecentlyAdded(contentDirectoryService, listView, result, recentD
 
     listView.headers=[
                 { rowIndex: 0,
-                    component: listView.createComponentHeader(recentlyComponent)
+                    component: listView.createComponentHeader(recentlyComponent, { count: recentList.length} )
                 },
                 { rowIndex: Math.ceil(recentList.length/listView.viewColumns),
                     component: listView.createComponentHeader(allComponent)
@@ -224,7 +206,11 @@ function prepareRecentlyAdded(contentDirectoryService, listView, result, recentD
 }
 
 function createRedirectedModel(recentList, viewColumns, model) {
-    var emptyCells=viewColumns-(recentList.length % viewColumns);
+    var emptyCells=recentList.length % viewColumns;
+    if (emptyCells>0) {
+        emptyCells=viewColumns-emptyCells;
+    }
+
     //console.log("EMPTY CELLS="+emptyCells);
     return {
         get: function(idx) {
@@ -240,10 +226,83 @@ function createRedirectedModel(recentList, viewColumns, model) {
             }
             idx-=emptyCells;
 
+            if (idx<model.length) {
+                return idx;
+            }
+
             //console.log("Return main index "+idx);
 
-            return idx;
+            return -1;
         },
         length: recentList.length+emptyCells+model.length
     };
+}
+
+function processSearch(listView, text, searchHeaderComponent) {
+    var model=listView.model;
+
+    var result=[];
+    var proposals=[];
+
+    var t9=["[1]", "[2ABC]", "[3DEF]", "[4GHU]", "[5JKL]", "[6MNO]", "[7PQRS]", "[8TUV]", "[9WXYZ]", "[0]"]
+
+    if (text) {
+        var chars=[];
+        for(var i=0;i<text.length;i++) {
+            var c=text.charAt(i).toUpperCase();
+            for(var j=0;j<t9.length;j++) {
+                if (t9[j].indexOf(c)<0) {
+                    continue;
+                }
+                chars.push(t9[j]);
+                break;
+            }
+        }
+
+        var reg=new RegExp("\\b("+chars.join('')+"\\w*)\\b", "i");
+
+        //console.log("Search reg="+reg);
+
+        var dic={};
+
+        for(i=0;i<model.length;i++) {
+            var xml=model[i];
+
+            if (xml.$title===undefined) {
+                xml.$title=xml.byPath("dc:title", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
+            }
+
+            var r=reg.exec(xml.$title);
+
+            //console.log("Search "+xml.$title+" => ",r);
+
+            if (!r) {
+                continue;
+            }
+
+            result.push(i);
+
+            var t=r[1].toUpperCase();
+            if (dic[t]) {
+                continue;
+            }
+            dic[t]=true;
+
+            proposals.push({text: t, index: i});
+        }
+    }
+
+    proposals.sort(function(m1, m2) {
+        var ret=m1.text.length-m2.text.length;
+        if (ret) {
+            return ret;
+        }
+
+        return m1.text-m2.text;
+    });
+
+
+    listView.redirectedModel=createRedirectedModel(result, listView.viewColumns, []);
+
+    return proposals;
 }

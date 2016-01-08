@@ -60,6 +60,7 @@ FocusInfo {
 
 
                 var y=0;
+                var lines=0;
 
                 function addLine(label, value, lc, vc) {
                     var lab=(lc || labelComponent).createObject(grid, {
@@ -76,48 +77,14 @@ FocusInfo {
                                                                 });
 
                     y+=val.height+8;
+                    lines++;
                 }
 
-                var hasDate;
-
-                var birthTime=UpnpObject.getText(xml, "fm:birthTime");
-                if (birthTime) {
-                    hasDate=true;
-                    addLine("Date de création", UpnpObject.dateFormatter(birthTime));
-                }
-
-                var modifiedTime=UpnpObject.getText(xml, "fm:modifiedTime");
-                if (!modifiedTime) {
-                    modifiedTime=UpnpObject.getText(xml, "sec:modificationDate");
-                }
-                if (modifiedTime) {
-                    hasDate=true;
-                    addLine("Date de modification", UpnpObject.dateFormatter(modifiedTime));
-                }
-
-                if (!hasDate) {
-                    var date=UpnpObject.getText(xml, "dc:date");
-                    if (date) {
-                        addLine("Date", UpnpObject.dateFormatter(date));
-                    }
-                } else {
-                    var year=UpnpObject.getText(xml, "dc:date");
-                    if (year) {
-                        var syear=UpnpObject.dateYearFormatter(year);
-                        if (syear) {
-                            addLine("Année", syear);
-                        }
-                    }
-                }
-
-                var size=UpnpObject.getText(xml, "res@size");
-                if (size!==undefined) {
-                    addLine("Taille", UpnpObject.sizeFormatter(size));
-                }
+                UpnpObject.addDatesLine(xml, addLine);
 
                 var childCount=UpnpObject.getText(xml, "@childCount");
-                if (childCount!==undefined) {
-                    addLine("Nombre de fichiers", String(childCount));
+                if (childCount) {
+                    addLine("Nombre de fichiers", childCount);
                 }
 
                 grid.height=y+8;

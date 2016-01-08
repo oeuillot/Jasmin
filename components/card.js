@@ -128,8 +128,13 @@ function computeLabel(xml) {
     if (!xml) {
         return null;
     }
+    if (xml.$title) {
+        return xml.$title;
+    }
 
-    return xml.byPath("dc:title", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
+    xml.$title=xml.byPath("dc:title", ContentDirectoryService.DIDL_XMLNS_SET).first().text();
+
+    return xml.$title;
 }
 
 function getRating(xml) {

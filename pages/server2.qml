@@ -20,6 +20,7 @@ Page {
 
     property JSettings settings;
     property JBackground background;
+    property SearchBox searchBox;
 
     property var deferredRequest;
 
@@ -135,7 +136,8 @@ Page {
                           meta: cresult.rootMeta,
                           title: upnpServer.name,
                           audioPlayer: page.audioPlayer,
-                          settings: settings
+                          settings: settings,
+                          searchBox: searchBox
                       });
 
         }, function onError(reason) {

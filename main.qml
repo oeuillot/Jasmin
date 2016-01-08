@@ -49,7 +49,8 @@ Application {
                            audioPlayer: menu.audioPlayer,
                            menu: menu,
                            settings: settings,
-                           background: background
+                           background: background,
+                           searchBox: searchBox
                        });
 
     }
@@ -102,6 +103,15 @@ Application {
         }
     }
 
+
+    SearchBox {
+        id: searchBox
+        x: 0 //parent.width-searchBox.width;
+        y: 0
+        visible: false
+    }
+
+
     Component {
         id: menuComponent
 
@@ -121,9 +131,9 @@ Application {
 
     VideoOutput {
         id: videoOutput
-        visible: false
-        z: 65536
         fillMode: VideoOutput.PreserveAspectFit
+        x: -10000
+        y: 0
     }
 
     /*

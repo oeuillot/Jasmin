@@ -21,8 +21,8 @@ Page {
     property var meta;
     property var contentDirectoryService;
     property AudioPlayer audioPlayer;
-
     property JSettings settings;
+    property SearchBox searchBox;
 
     property var fillModelDeferred;
 
@@ -45,10 +45,15 @@ Page {
     onDidAppear: {
         pageShown=true;
 
-        if (!listView.pageSizeLoaded[0]) {
-            listView.pageSizeLoaded[0]=true;
-            listView.loadPage(0);
-        }
+        listView.preparePages();
+    }
+
+    onDidDisappear: {
+        //console.log("ON DID DISAPPEAR *********");
+        listView.onBack();
+        listView.model=null;
+        listView.headers=null;
+        listView.redirectedModel=null;
     }
 
     onWillAppear: {
@@ -69,9 +74,13 @@ Page {
 
                 // console.log(Date.now()+" little ModelSize="+listView.modelSize);
                 if (listView.modelSize===0) {
-                    emptyFolder.visible=true;
+                    messageFolder.text="Le dossier est vide";
+                    messageFolder.visible=true;
                     backFolderTimer.start();
+                    return;
                 }
+
+                listView.preparePages();
             });
 
         } else {
@@ -81,15 +90,17 @@ Page {
                 listView.headers=null;
                 listView.model=result;
 
-                console.log(Date.now()+" big ModelSize="+result.length+" "+listOptions.recentyAdded);
+                //                console.log(Date.now()+" big ModelSize="+result.length+" "+listOptions.recentyAdded);
 
                 if (listOptions.recentlyAdded) {
                     var d=new Date();
-                    d.setDate(d.getDate()-7);
+                    d.setDate(d.getDate()-14);
 
                     FolderScript.prepareRecentlyAdded(contentDirectoryService, listView, result, d, recentlyAdded, allAlbums);
                 }
+
                 listView.updateLayout();
+                listView.preparePages();
             });
         }
     }
@@ -97,10 +108,13 @@ Page {
         id: recentlyAdded
 
         GridSectionSeparator {
-            title: "Ajoutés récemment"
-        }
 
+            property int count: 0
+
+            title: (count>1)?"Ajoutés récemment":"Ajouté récemment"
+        }
     }
+
     Component {
         id: allAlbums
 
@@ -110,10 +124,15 @@ Page {
         }
     }
 
-    onDidDisappear: {
-        //console.log("ON DID DISAPPEAR *********");
-        listView.onBack();
-        listView.model=null;
+    Component {
+        id: searchHeaderComponent
+
+        GridSectionSeparator {
+
+            property int count: 0
+
+            title: "Résultat de la recherche"
+        }
     }
 
     Component {
@@ -174,9 +193,9 @@ Page {
                             MusicFolder.browseTracks(contentDirectoryService, model).then(function(disks) {
                                 var list=[];
                                 disks.forEach(function(disk) {
-                                   disk.forEach(function(track) {
-                                      list.push(track.xml);
-                                   });
+                                    disk.forEach(function(track) {
+                                        list.push(track.xml);
+                                    });
                                 });
 
                                 audioPlayer.setPlayList(contentDirectoryService, list, resImageSource, true, audioPlayer.playListIndex+1);
@@ -190,9 +209,9 @@ Page {
                             MusicFolder.browseTracks(contentDirectoryService, model).then(function(disks) {
                                 var list=[];
                                 disks.forEach(function(disk) {
-                                   disk.forEach(function(track) {
-                                      list.push(track.xml);
-                                   });
+                                    disk.forEach(function(track) {
+                                        list.push(track.xml);
+                                    });
                                 });
 
                                 audioPlayer.setPlayList(contentDirectoryService, list, resImageSource, true);
@@ -253,14 +272,6 @@ Page {
 
         }
     }
-    /*
-    Rectangle {
-        x: 5
-        y: 5
-        width: parent.width-5
-        height: parent.height-5
-color: "red";
-    }*/
 
     QGrid {
         id: listView
@@ -295,7 +306,8 @@ color: "red";
                                       title: card.title,
                                       audioPlayer: page.audioPlayer,
                                       loadArtists: true,
-                                      settings: settings
+                                      settings: settings,
+                                      searchBox: searchBox
                                   });
 
 
@@ -328,6 +340,53 @@ color: "red";
         property var objectID;
         property var modelInfos;
 
+
+        function preparePages() {
+
+            var cur=listView.pageCellIndex;
+
+            if (loadingPages.length) {
+                for(var i=0;i<loadingPages.lenght;i++) {
+                    var idx=loadingPages.shift();
+
+                    pageSizeLoaded[idx]=false;
+                }
+            }
+
+            if (listView.userScrolling) {
+                return;
+            }
+
+            var cellCount=listView.viewRows*listView.viewColumns;
+
+            for(var i1=0;i1<cellCount;i1++) {
+                var ix=cur+i1;
+                var modelIdx=listView.getModelIndex(ix);
+                //console.log("ModelIndex of "+ix+"=>"+modelIdx);
+                if (modelIdx<0) {
+                    continue;
+                }
+
+                var pi=Math.floor(modelIdx/pageSize);
+
+                // console.log("Test "+cur+" ix="+ix+" pi="+pi);
+
+                if (pageSizeLoaded[pi]) {
+                    continue;
+                }
+
+                //                console.log("Need page "+pi);
+
+                pageSizeLoaded[pi]=true;
+                if (loading) {
+                    loadingPages.unshift(pi);
+                    continue;
+                }
+
+                loadPage(pi);
+            }
+        }
+
         function loadPage(pageIndex) {
             if (loading) {
                 console.error("Already loading !!!!");
@@ -355,11 +414,12 @@ color: "red";
                 var list=result.list;
                 var model=listView.model;
                 var p=result.position;
-                for(var i=0;i<list.length;i++) {                  
+                for(var i=0;i<list.length;i++) {
                     model[p+i]=list[i];
                 }
 
                 listView.updateLayout();
+                listView.updateFocusRect();
 
                 //console.log("Loading pages="+loadingPages);
 
@@ -390,46 +450,7 @@ color: "red";
 
             listView.onUserScrollingChanged.connect(function onScroll() {
                 //console.log(Date.now()+" UserScrolling="+listView.userScrolling);
-
-                var cur=listView.pageCellIndex;
-
-                if (loadingPages.length) {
-                    for(var i=0;i<loadingPages.lenght;i++) {
-                        var idx=loadingPages.shift();
-
-                        pageSizeLoaded[idx]=false;
-                    }
-                }
-
-                if (listView.userScrolling) {
-                    return;
-                }
-
-                var cellCount=listView.viewRows*listView.viewColumns;
-
-                for(var i1=0;i1<cellCount;i1++) {
-                    var ix=cur+i1;
-                    var modelIdx=listView.getModelIndex(ix);
-                    if (modelIdx<0) {
-                        continue;
-                    }
-
-                    var pi=Math.floor(ix/pageSize);
-
-                    // console.log("Test "+cur+" ix="+ix+" pi="+pi);
-
-                    if (pageSizeLoaded[pi]) {
-                        continue;
-                    }
-
-                    pageSizeLoaded[pi]=true;
-                    if (loading) {
-                        loadingPages.unshift(pi);
-                        continue;
-                    }
-
-                    loadPage(pi);
-                }
+                listView.preparePages();
             });
 
             //console.log(Date.now()+" Loading page");
@@ -439,7 +460,7 @@ color: "red";
     }
 
     Text {
-        id: emptyFolder
+        id: messageFolder
         visible: false
         text: "Le dossier est vide"
 
@@ -538,6 +559,8 @@ color: "red";
         }
     }
 
+    property var beforeSearch: ({});
+
     Keys.onPressed: {
         Util.logKeyName(event);
 
@@ -593,6 +616,83 @@ color: "red";
             }
             autoPop=true;
 
+            break;
+
+        case Qt.Key_0:
+        case Qt.Key_1:
+        case Qt.Key_2:
+        case Qt.Key_3:
+        case Qt.Key_4:
+        case Qt.Key_5:
+        case Qt.Key_6:
+        case Qt.Key_7:
+        case Qt.Key_8:
+        case Qt.Key_9:
+            break;
+
+        case Qt.Key_Blue:
+        case Qt.Key_F1:
+        case Qt.Key_Search:
+            if (!listView.getModelSize()) {
+                break;
+            }
+
+            if (!beforeSearch) {
+                beforeSearch={
+                    redirectedModel: listView.redirectedModel,
+                    headers: listView.headers || []
+                };
+
+
+                listView.hideHeaders();
+                listView.headers=[
+                            { rowIndex: 0,
+                                component: listView.createComponentHeader(searchHeaderComponent )
+                            }
+                        ];
+            }
+
+            searchBox.show(function onKeyChanged(text) {
+                console.log("KEY CHANGED "+text);
+
+                var ret=FolderScript.processSearch(listView, text, searchHeaderComponent);
+                listView.updateLayout();
+
+                if (ret && ret.length) {
+                    messageFolder.visible=false;
+                    return ret;
+                }
+
+                if (!text) {
+                    messageFolder.text="Recherche par saisie prédictive de 9 touches";
+                    messageFolder.visible=true;
+                    return ret;
+                }
+
+                messageFolder.text="Aucun resultat n'a été trouvé !";
+                messageFolder.visible=true;
+                return ret;
+
+
+            }, function onValidation(text) {
+                console.log("ON VALIDATION "+text);
+
+                // TODO  on laisse le filtrage
+
+                messageFolder.visible=false;
+                listView.forceActiveFocus();
+
+            }, function onCancel() {
+                messageFolder.visible=false;
+
+                listView.hideHeaders();
+                listView.headers=beforeSearch.headers;
+                listView.redirectedModel=beforeSearch.redirectedModel;
+                beforeSearch=null;
+
+                listView.updateLayout();
+                listView.forceActiveFocus();
+            });
             break;
         }
     }

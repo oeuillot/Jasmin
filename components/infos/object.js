@@ -19,7 +19,7 @@ function getTextList(xml, path, xmlns, role) {
     }
 
     var reg=/^([^@]*)(@.*)?$/i.exec(path);
-    //console.log("reg=",reg);
+    // console.log("reg=",reg);
     var value=xml;
     if (reg[1]) {
         value=xml.byPath(reg[1], xmlns || XMLNS);
@@ -28,18 +28,29 @@ function getTextList(xml, path, xmlns, role) {
             return;
         }
     }
+    //    console.log("1=>",value);
     if (reg[2]) {
         var vs=[];
         var attName=reg[2].slice(1);
         value.forEach(function(x) {
-           var av=x.attr(attName);
+            var av=x.attr(attName);
             if (role && role!==av) {
                 return;
             }
+            if (!role) {
+                vs.push(av);
+                return;
+            }
+
             vs.push(x);
         });
+        if (!role) {
+            return vs;
+        }
+
         value=vs;
     }
+    //    console.log("2=>",value);
 
     var ls=[];
     value.forEach(function(x) {
@@ -143,4 +154,58 @@ function humanFileSize(bytes, thresh) {
         ++u;
     } while(Math.abs(bytes) >= thresh && u < units.length - 1);
     return bytes.toFixed(1)+' '+units[u];
+}
+
+function addDatesLine(xml, addLine) {
+    var hasDate;
+    var birthTime=getText(xml, "fm:birthTime");
+    if (!birthTime) {
+        var dcmInfo=getText(xml, "sec:dcmInfo");
+        if (dcmInfo) {
+            var ds=dcmInfo.split(',');
+            ds.forEach(function(d) {
+                var reg=/creationdate=(\d+)/i.exec(d);
+                if (!reg) {
+                    return;
+                }
+
+                birthTime=new Date(parseFloat(reg[1]));
+            });
+        }
+    }
+
+    if (birthTime) {
+        hasDate=true;
+        addLine("Date de création", dateFormatter(birthTime));
+    }
+
+    var modifiedTime=getText(xml, "fm:modifiedTime");
+    if (!modifiedTime) {
+        modifiedTime=getText(xml, "sec:modificationDate");
+    }
+    if (modifiedTime) {
+        hasDate=true;
+        addLine("Date de modification", dateFormatter(modifiedTime));
+    }
+
+    if (!hasDate) {
+        var date=getText(xml, "dc:date");
+        if (date) {
+            addLine("Date", dateFormatter(date));
+        }
+    } else {
+        var year=getText(xml, "dc:date");
+        if (year) {
+            var syear=dateYearFormatter(year);
+            if (syear) {
+                addLine("Année", syear);
+            }
+        }
+    }
+
+    var size=getText(xml, "res@size");
+    if (size) {
+        addLine("Taille", sizeFormatter(size));
+    }
+
 }

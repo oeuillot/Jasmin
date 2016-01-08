@@ -362,6 +362,7 @@ FocusInfo {
             Component.onCompleted: {
 
                 var y=0;
+                var lines=0;
 
                 function addLine(label, value, lc, vc) {
                     var lab=(lc || labelComponent).createObject(grid, {
@@ -378,6 +379,7 @@ FocusInfo {
                                                                 });
 
                     y+=val.height+8;
+                    lines+=Math.ceil(value/80);
 
                     return {
                         label: lab,
@@ -422,6 +424,10 @@ FocusInfo {
                     addLine("Synopsys", synopsys, null, synopsysComponent);
                 }
 
+                if (lines<4) {
+                   UpnpObject.addDatesLine(xml, addLine);
+                }
+
 
                 //var ress=UpnpObject.getText(xml, "upnp:res");
                 //if (ress) {
@@ -455,15 +461,26 @@ FocusInfo {
                 source=infosColumn.trailers[0].source;
             }
 
-            console.log("Audio player has stopped !");
+//            console.log("Audio player has stopped !");
             imageColumn.visible=false;
 
             audioPlayer.setVideoPosition(imageColumn.parent, imageColumn.x, imageColumn.y, imageColumn.width, imageColumn.width);
 
+            audioPlayer.onPlaybackStateChanged.connect(playbackChanged);
+
             return audioPlayer.playVideo(source);
         }
 
+        function playbackChanged() {
+//            console.log("Playback changed ! "+audioPlayer.playbackState);
+            if (audioPlayer.playbackState===Audio.StoppedState) {
+                hideVideo();
+            }
+        }
+
         function hideVideo() {
+            audioPlayer.onPlaybackStateChanged.disconnect(playbackChanged);
+
             return audioPlayer.stop().then(function() {
 
                 audioPlayer.hideVideo();
@@ -477,36 +494,9 @@ FocusInfo {
         }
 
         function fullscreenVideo() {
-            console.log("Show fullscreen");
+ //           console.log("Show fullscreen");
 
             audioPlayer.setVideoPosition(imageColumn, "fbx.ui.page.Stack");
-
-            /*
-            var x=0;
-            var y=0;
-            var w=videoItem.width;
-            var h=videoItem.height;
-
-            var p=videoItem;
-            for(;p;p=p.parent) {
-                console.log("P="+p);
-                if (p.objectName==="fbx.ui.page.Stack") {
-                    break;
-                }
-
-                x-=p.x;
-                y-=p.y;
-                w=p.width;
-                h=p.height;
-            }
-            console.log("X="+x+" y="+y+" w="+w+" h="+h);
-
-            videoView.z=99999;
-            videoView.x=x;
-            videoView.y=y;
-            videoView.width=w
-            videoView.height=h
-            */
         }
 
     }

@@ -25,3 +25,7 @@ Rating 1.0 rating.qml
 Certificate 1.0 certificate.qml
 
 GridSectionSeparator 1.0 gridSectionSeparator.qml
+
+SearchBox 1.0 searchBox.qml
+
+GridFocus 1.0 gridFocus.qml

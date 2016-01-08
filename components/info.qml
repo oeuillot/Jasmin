@@ -99,6 +99,8 @@ FocusScope {
                     ctx=getContext("2d");
                 }
 
+                ctx.save();
+
                 ctx.beginPath();
                 ctx.fillStyle = "#E9E9E9";
                 ctx.moveTo(0, -y);
@@ -115,10 +117,7 @@ FocusScope {
                 ctx.lineTo(-y*2, -y);
                 ctx.stroke();
 
-            }
-
-            onYChanged: {
-                //requestPaint();
+                ctx.restore();
             }
         }
 /*
