@@ -397,10 +397,34 @@ FocusInfo {
                     addLine("Autre titre", alsoKnownAs);
                 }
 
-                var year=UpnpObject.getText(xml, "dc:date");
-                if (year) {
-                    var cy=addLine("Année de sortie", (new Date(year).getFullYear()));
-                    //cy.label.font.pixelSize=12;
+                var episode=UpnpObject.getText(xml, "mo:episode");
+                var season=UpnpObject.getText(xml, "mo:season");
+                if (episode) {
+                    var e=""+parseInt(episode, 10);
+                    if (season) {
+                        e+="  (saison "+parseInt(season, 10)+")";
+                    }
+
+                    addLine("Episode", e);
+                }
+
+                var hasDate=false;
+
+                var airDate=UpnpObject.getText(xml, "mo:airDate");
+                if (airDate) {
+                    var reg=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(airDate);
+                    if (reg) {
+                        addLine("Diffusion", reg[3]+"/"+reg[2]+"/"+reg[1]);
+                        hasDate=true;
+                    }
+                }
+
+                if (!hasDate) {
+                    var year=UpnpObject.getText(xml, "mo:year");
+                    if (year) {
+                        addLine("Année de sortie", year);
+                        hasDate=true;
+                    }
                 }
 
                 //console.log("Xml="+Util.inspect(xml, false, {}));
@@ -505,7 +529,7 @@ FocusInfo {
         id: imageColumn
         imagesList: videoItem.imagesList
         infosColumn: infosColumn
-        showReversedImage: true
+        showReversedImage: false
     }
 
 }

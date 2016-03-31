@@ -103,6 +103,16 @@ FocusScope {
         var imagesList=getImagesList();
 
         if (imagesList && imagesList.length) {
+            var ps=CardScript.filterByType(imagesList, "poster");
+            if (ps.length) {
+                imagesList=ps;
+            }
+
+            ps=CardScript.filterByWidth(imagesList, 160);
+            if (ps.length) {
+                imagesList=ps;
+            }
+
             resImageSource=imagesList[0].url;
             transparentImage=imagesList[0].transparent || false;
 

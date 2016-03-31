@@ -1,5 +1,6 @@
 import QtQuick 2.0
 
+import "../card.js" as CardScript
 
 Item {
     id: imageColumn
@@ -7,7 +8,8 @@ Item {
     y: 30
 
     property var imagesList;
-    property string resImageSource: (imagesList && imagesList.length)?imagesList[0].url:'';
+    property var filtredImagesList: CardScript.filterByWidth(imagesList, 256);
+    property string resImageSource: (filtredImagesList && filtredImagesList.length)?filtredImagesList[0].url:'';
     property Item infosColumn;
 
     property int cycleIndex: 0;
@@ -67,8 +69,8 @@ Item {
         source: resImageSource
     }
 
-    onImagesListChanged: {
-        if (!imagesList || imagesList.length<2) {
+    onFiltredImagesListChanged: {
+        if (!filtredImagesList || filtredImagesList.length<2) {
             timer.stop();
             return;
         }
@@ -102,7 +104,7 @@ Item {
             to: 0;
         }
         ScriptAction {
-            script: resImageSource=imagesList[cycleIndex % imagesList.length].url
+            script: resImageSource=filtredImagesList[cycleIndex % filtredImagesList.length].url
         }
         ParallelAnimation {
             NumberAnimation {
@@ -142,7 +144,7 @@ Item {
 
         opacity: 0
 
-        visible: (imagesList && imagesList.length>1) || false;
+        visible: (filtredImagesList && filtredImagesList.length>1) || false;
 
         Rectangle {
             width: parent.width;
@@ -159,7 +161,7 @@ Item {
             id: idxText
             x: 4
 
-            property int imagesCount: (imagesList && imagesList.length) || 1;
+            property int imagesCount: (filtredImagesList && filtredImagesList.length) || 1;
 
            text: "Image "+((cycleIndex % imagesCount)+1)+"/"+imagesCount;
         }
